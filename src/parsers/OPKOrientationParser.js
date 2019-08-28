@@ -3,7 +3,7 @@ import PhotogrammetricCamera from '../cameras/PhotogrammetricCamera';
 
 export default {
     /** @module OPKOrientationParser */
-    /** Parse an orientation using the IGN Matis internal XML format
+    /** Parse an orientation using the IGN internal XML format
      * @function parse
      * @param {string} text - the text content of the OPK file.
      * @return {Camera[]} - an array of cameras.
@@ -22,7 +22,7 @@ export default {
 				{
 					if(!lines[l].startsWith(header[l]))
 					{
-						console.error("Error parsing OPT file line ",l," : ",lines[l]," should start with ",header[l], source);
+						// console.error("Error parsing OPT file line ",l," : ",lines[l]," should start with ",header[l], source);
 						return null;
 					}
 				}
