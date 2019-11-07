@@ -108,8 +108,10 @@ var fragmentShaderOrientedMaterial = `
         } else {
           diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
         }
+         
       }
-      gl_FragColor = diffuseColor;
+      vec2 uvX = gl_FragCoord.xy / vec2(1920,1080);
+      gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
     #endif
     }
   `;
