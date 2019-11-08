@@ -43,6 +43,11 @@ var vertexShaderOrientedMaterial = `
 
     gl_PointSize = size;
 
+    #ifdef USE_SIZEATTENUATION
+      bool isPerspective = ( projectionMatrix[ 2 ][ 3 ] == - 1.0 );
+      if ( isPerspective ) gl_PointSize *= ( scale / - mvPosition.z );
+	  #endif
+
     ${ShaderChunk.logdepthbuf_vertex}
     ${ShaderChunk.clipping_planes_pars_vertex}
     ${ShaderChunk.worldpos_vertex}
@@ -60,6 +65,10 @@ var vertexShaderOrientedMaterial = `
 var fragmentShaderOrientedMaterial = `
   ${ShaderChunk.common}
   ${ShaderChunk.color_pars_fragment}
+  ${ShaderChunk.map_particle_pars_fragment}
+  ${ShaderChunk.fog_pars_fragment}
+  ${ShaderChunk.logdepthbuf_pars_fragment}
+  ${ShaderChunk.clipping_planes_pars_fragment}
   ${RadialDistortion.chunks.radial_pars_fragment}
   
   uniform bool diffuseColorGrey;
@@ -70,7 +79,7 @@ var fragmentShaderOrientedMaterial = `
     uniform mat4 uvwPreTransform;
     uniform mat4 uvwPostTransform;
     uniform RadialDistortion uvDistortion;
-    uniform sampler2D map;
+    //uniform sampler2D map;
     uniform float borderSharpness;
     uniform float debugOpacity;
   #endif
@@ -82,37 +91,56 @@ var fragmentShaderOrientedMaterial = `
 
   void main() {
 
-     vec4 diffuseColor = vec4(1.,0.,0.,1.);
+     ${ShaderChunk.clipping_planes_fragment}
+     vec3 outgoingLight = vec3( 0.0 );
+     //vec4 diffuseColor = vec4( diffuse, opacity );
+    vec4 diffuseColor = vec4(1.,0.,0.,1.);
+
+
+     ${ShaderChunk.logdepthbuf_fragment}
+     ${ShaderChunk.map_particle_fragment}
+     ${ShaderChunk.color_fragment}
+     ${ShaderChunk.alphatest_fragment}
+   
 
       if (diffuseColorGrey) {
 
         diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
       }
-    #ifdef USE_MAP4
-      // "uvwPreTransform * m" is equal to "camera.preProjectionMatrix * camera.matrixWorldInverse * modelMatrix"
-      // but more stable when both the texturing and viewing cameras have large coordinate values
-      mat4 m = modelMatrix;
-      m[3].xyz -= uvwPosition;
-      vec4 uvw = uvwPreTransform * m * vec4(vPosition, 1.);
-      if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
-      {
-        uvw = uvwPostTransform * uvw;
-        uvw.xyz /= 2. * uvw.w;
-        uvw.xyz += vec3(0.5);
-        vec3 border = min(uvw.xyz, 1. - uvw.xyz);
-        if (all(greaterThan(border,vec3(0.))))
+
+      #ifdef USE_MAP4
+        // "uvwPreTransform * m" is equal to "camera.preProjectionMatrix * camera.matrixWorldInverse * modelMatrix"
+        // but more stable when both the texturing and viewing cameras have large coordinate values
+        mat4 m = modelMatrix;
+        m[3].xyz -= uvwPosition;
+        vec4 uvw = uvwPreTransform * m * vec4(vPosition, 1.);
+        if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
         {
-          vec4 color = texture2D(map, uvw.xy);
-          color.a *= min(1., borderSharpness*min(border.x, border.y));
-          diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a);
-        } else {
-          diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
+          uvw = uvwPostTransform * uvw;
+          uvw.xyz /= 2. * uvw.w;
+          uvw.xyz += vec3(0.5);
+          vec3 border = min(uvw.xyz, 1. - uvw.xyz);
+          if (all(greaterThan(border,vec3(0.))))
+          {
+            vec4 color = texture2D(map, uvw.xy);
+            color.a *= min(1., borderSharpness*min(border.x, border.y));
+            diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a);
+          } else {
+            diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
+          }
+          
         }
-         
-      }
-      vec2 uvX = gl_FragCoord.xy / vec2(1920,1080);
-      gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
-    #endif
+        vec2 uvX = gl_FragCoord.xy / vec2(1920,1080);
+        outgoingLight = diffuseColor.rgb;
+        gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+    
+        ${ShaderChunk.premultiplied_alpha_fragment}
+        ${ShaderChunk.tonemapping_fragment}
+        ${ShaderChunk.encodings_fragment}
+        ${ShaderChunk.fog_fragment}
+  
+      // gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
+      #endif
     }
   `;
 
