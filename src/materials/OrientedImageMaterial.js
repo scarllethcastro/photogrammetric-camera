@@ -22,10 +22,10 @@ var vertexShaderOrientedMaterial = `
   uniform float size;
   uniform float scale;
 
-  #ifdef USE_MAP4
+  //#ifdef USE_MAP4
   varying highp vec3 vPosition;
-  #undef USE_MAP
-  #endif
+  //#undef USE_MAP
+  //#endif
   ${ShaderChunk.common}
   ${ShaderChunk.color_pars_vertex}
   ${ShaderChunk.fog_pars_vertex}
@@ -54,9 +54,9 @@ var vertexShaderOrientedMaterial = `
     ${ShaderChunk.fog_vertex}
     
 
-    #ifdef USE_MAP4
+    //#ifdef USE_MAP4
       vPosition = transformed;
-    #endif
+    //#endif
 
   }
   `;
@@ -72,7 +72,7 @@ var fragmentShaderOrientedMaterial = `
   ${RadialDistortion.chunks.radial_pars_fragment}
   
   uniform bool diffuseColorGrey;
-  #ifdef USE_MAP4
+  //#ifdef USE_MAP4
   
     uniform mat4 modelMatrix;
     uniform vec3 uvwPosition;
@@ -82,12 +82,12 @@ var fragmentShaderOrientedMaterial = `
     //uniform sampler2D map;
     uniform float borderSharpness;
     uniform float debugOpacity;
-  #endif
+  //#endif
 
-  #ifdef USE_MAP4
+  //#ifdef USE_MAP4
   varying highp vec3 vPosition;
-  #undef USE_MAP
-  #endif
+ // #undef USE_MAP
+  //#endif
 
   void main() {
 
@@ -108,12 +108,13 @@ var fragmentShaderOrientedMaterial = `
         diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
       }
 
-      #ifdef USE_MAP4
+     // #ifdef USE_MAP4
         // "uvwPreTransform * m" is equal to "camera.preProjectionMatrix * camera.matrixWorldInverse * modelMatrix"
         // but more stable when both the texturing and viewing cameras have large coordinate values
         mat4 m = modelMatrix;
         m[3].xyz -= uvwPosition;
         vec4 uvw = uvwPreTransform * m * vec4(vPosition, 1.);
+        
         if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
         {
           uvw = uvwPostTransform * uvw;
@@ -130,85 +131,15 @@ var fragmentShaderOrientedMaterial = `
           }
           
         }
-        vec2 uvX = gl_FragCoord.xy / vec2(1920,1080);
+        
         outgoingLight = diffuseColor.rgb;
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
-    
-        ${ShaderChunk.premultiplied_alpha_fragment}
-        ${ShaderChunk.tonemapping_fragment}
-        ${ShaderChunk.encodings_fragment}
-        ${ShaderChunk.fog_fragment}
-  
-      // gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
-      #endif
+
+        vec2 uvX = gl_FragCoord.xy / vec2(1920,1080);
+        gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
+     // #endif
     }
   `;
-
-
-
-
-/*
-ShaderChunk.common = `
-${ShaderChunk.common}
-#ifdef USE_MAP4
-varying highp vec3 vPosition;
-#undef USE_MAP
-#endif
-`;
-
-ShaderChunk.worldpos_vertex = `
-${ShaderChunk.worldpos_vertex}
-#ifdef USE_MAP4
-  vPosition = transformed;
-#endif
-`;
-
-ShaderChunk.color_pars_fragment = `
-${ShaderChunk.color_pars_fragment}
-${RadialDistortion.chunks.radial_pars_fragment}
-uniform bool diffuseColorGrey;
-#ifdef USE_MAP4
-  uniform mat4 modelMatrix;
-  uniform vec3 uvwPosition;
-  uniform mat4 uvwPreTransform;
-  uniform mat4 uvwPostTransform;
-  uniform RadialDistortion uvDistortion;
-  uniform sampler2D map;
-  uniform float borderSharpness;
-  uniform float debugOpacity;
-#endif
-`;
-
-ShaderChunk.color_fragment = `
-${ShaderChunk.color_fragment}
-  if (diffuseColorGrey) {
-    diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
-  }
-#ifdef USE_MAP4
-  // "uvwPreTransform * m" is equal to "camera.preProjectionMatrix * camera.matrixWorldInverse * modelMatrix"
-  // but more stable when both the texturing and viewing cameras have large coordinate values
-  mat4 m = modelMatrix;
-  m[3].xyz -= uvwPosition;
-  vec4 uvw = uvwPreTransform * m * vec4(vPosition, 1.);
-  if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
-  {
-    uvw = uvwPostTransform * uvw;
-    uvw.xyz /= 2. * uvw.w;
-    uvw.xyz += vec3(0.5);
-    vec3 border = min(uvw.xyz, 1. - uvw.xyz);
-    if (all(greaterThan(border,vec3(0.))))
-    {
-      vec4 color = texture2D(map, uvw.xy);
-      color.a *= min(1., borderSharpness*min(border.x, border.y));
-      diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a);
-    } else {
-      diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
-    }
-  }
-
-#endif
-`;
-*/
 
 function definePropertyUniform(object, property, defaultValue) {
     object.uniforms[property] = new Uniform(object[property] || defaultValue);
@@ -248,6 +179,7 @@ class OrientedImageMaterial extends ShaderMaterial {
         if (options.vertexColors) options.defines.USE_COLOR = '';
         if (options.logarithmicDepthBuffer) options.defines.USE_LOGDEPTHBUF = '';
         if (pop(options, 'sizeAttenuation')) options.defines.USE_SIZEATTENUATION = '';
+        pop(options,'color');  // Mod to avoid waring 
         super(options);
         definePropertyUniform(this, 'size', size);
         definePropertyUniform(this, 'diffuse', diffuse);
@@ -267,10 +199,9 @@ class OrientedImageMaterial extends ShaderMaterial {
     setCamera(camera) {
         camera.getWorldPosition(this.uvwPosition);
         this.uvwPreTransform.copy(camera.matrixWorldInverse);
-        this.uvwPreTransform.setPosition({x:0,y:0,z:0});
+        this.uvwPreTransform.setPosition(0,0,0);
         this.uvwPreTransform.premultiply(camera.preProjectionMatrix);
         this.uvwPostTransform.copy(camera.postProjectionMatrix);
-
         // TODO: handle other distorsion types and arrays of distortions
         if (camera.distos && camera.distos.length == 1 && camera.distos[0].type === 'ModRad') {
             this.uvDistortion = camera.distos[0];
