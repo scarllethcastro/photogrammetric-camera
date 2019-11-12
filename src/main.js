@@ -7,3 +7,4 @@ export { default as PhotogrammetricCamera } from './cameras/PhotogrammetricCamer
 export { default as FilesSource } from './sources/FilesSource';
 export { default as FetchSource } from './sources/FetchSource';
 export { default as OrientedImageMaterial } from './materials/OrientedImageMaterial';
+export { default as RadialDistortion } from './cameras/distortions/RadialDistortion';
