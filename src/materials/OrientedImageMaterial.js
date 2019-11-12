@@ -1,6 +1,7 @@
 import { Uniform, ShaderMaterial, ShaderLib, ShaderChunk, Matrix4, Vector3, Vector4, Color } from 'three';
 import { default as RadialDistortion } from '../cameras/distortions/RadialDistortion';
-
+// TEMPORY fix, on waiting THREE v110.
+//ShaderChunk.logdepthbuf_fragment = ShaderChunk.logdepthbuf_fragment.replace('== 1.0', '> 0.5'); 
 function pop(options, property, defaultValue) {
     if (options[property] === undefined) return defaultValue;
     const value = options[property];
@@ -33,8 +34,6 @@ var vertexShaderOrientedMaterial = `
   ${ShaderChunk.logdepthbuf_pars_vertex}
   ${ShaderChunk.clipping_planes_pars_vertex}
 
-
-
   void main() {
     ${ShaderChunk.color_vertex}
     ${ShaderChunk.begin_vertex}
@@ -48,16 +47,15 @@ var vertexShaderOrientedMaterial = `
       if ( isPerspective ) gl_PointSize *= ( scale / - mvPosition.z );
 	  #endif
 
-    ${ShaderChunk.logdepthbuf_vertex}
+
     ${ShaderChunk.clipping_planes_pars_vertex}
     ${ShaderChunk.worldpos_vertex}
     ${ShaderChunk.fog_vertex}
     
-
+    ${ShaderChunk.logdepthbuf_vertex}
     //#ifdef USE_MAP4
       vPosition = transformed;
     //#endif
-
   }
   `;
 
@@ -96,15 +94,14 @@ var fragmentShaderOrientedMaterial = `
      //vec4 diffuseColor = vec4( diffuse, opacity );
     vec4 diffuseColor = vec4(1.,0.,0.,1.);
 
-
-     ${ShaderChunk.logdepthbuf_fragment}
      ${ShaderChunk.map_particle_fragment}
      ${ShaderChunk.color_fragment}
      ${ShaderChunk.alphatest_fragment}
    
+     gl_FragDepthEXT = log2( vFragDepth ) * logDepthBufFC * 0.5;
+     
 
       if (diffuseColorGrey) {
-
         diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
       }
 
@@ -134,8 +131,7 @@ var fragmentShaderOrientedMaterial = `
         
         outgoingLight = diffuseColor.rgb;
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
-
-        vec2 uvX = gl_FragCoord.xy / vec2(1920,1080);
+        
         gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
      // #endif
     }
