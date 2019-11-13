@@ -98,9 +98,10 @@ var fragmentShaderOrientedMaterial = `
      ${ShaderChunk.color_fragment}
      ${ShaderChunk.alphatest_fragment}
    
-     gl_FragDepthEXT = log2( vFragDepth ) * logDepthBufFC * 0.5;
+     #if defined( USE_LOGDEPTHBUF ) && defined( USE_LOGDEPTHBUF_EXT )
+      gl_FragDepthEXT = log2( vFragDepth ) * logDepthBufFC * 0.5;
+     #endif
      
-
       if (diffuseColorGrey) {
         diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
       }
@@ -112,8 +113,9 @@ var fragmentShaderOrientedMaterial = `
         m[3].xyz -= uvwPosition;
         vec4 uvw = uvwPreTransform * m * vec4(vPosition, 1.);
         
-        if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
-        {
+        distort_radial(uvw, uvDistortion);
+    //    if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
+     //   {
           uvw = uvwPostTransform * uvw;
           uvw.xyz /= 2. * uvw.w;
           uvw.xyz += vec3(0.5);
@@ -127,12 +129,14 @@ var fragmentShaderOrientedMaterial = `
             diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
           }
           
-        }
+  //      }
         
         outgoingLight = diffuseColor.rgb;
+        if(uvw.x>1. || uvw.y>1. || uvw.x<0. || uvw.y<0.) diffuseColor.a = 0.;
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
         
-        gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
+        //gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
+        
      // #endif
     }
   `;
