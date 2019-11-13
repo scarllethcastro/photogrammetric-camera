@@ -80,6 +80,7 @@ var fragmentShaderOrientedMaterial = `
     //uniform sampler2D map;
     uniform float borderSharpness;
     uniform float debugOpacity;
+    uniform float opacity;
   //#endif
 
   //#ifdef USE_MAP4
@@ -133,7 +134,7 @@ var fragmentShaderOrientedMaterial = `
         
         outgoingLight = diffuseColor.rgb;
         if(uvw.x>1. || uvw.y>1. || uvw.x<0. || uvw.y<0.) diffuseColor.a = 0.;
-        gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+        gl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );
         
         //gl_FragColor = diffuseColor; // texture2D(map, uvX);//vec4(1.,0.,1.,1.);//diffuseColor;
         
