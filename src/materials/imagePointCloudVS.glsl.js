@@ -5,7 +5,7 @@ ${RadialDistortion.chunks.radial_shaders}
 #ifdef USE_MAP4
     #undef USE_MAP
     varying highp vec3 vPosition;
-    varying float vPaintDebugView;
+    varying float vValid;
 #endif
 
 #ifdef USE_COLOR
@@ -24,14 +24,18 @@ uniform float size;
     uniform float viewSlope;
 #endif
 
+
+varying vec4 debugColor;
+
 void main() {
+    debugColor = vec4(0.);
     #ifdef USE_COLOR
         vColor.xyz = color.xyz;
     #endif
 
     #ifdef USE_MAP4
         vPosition = position;
-        bool paintDebug = false;
+        bool paintDebug = true;
         // "uvwPreTransform * m" is equal to :
         // "camera.preProjectionMatrix * camera.matrixWorldInverse * modelMatrix"
         // but more stable when both the texturing and viewing cameras have large
@@ -39,12 +43,16 @@ void main() {
         mat4 m = modelMatrix;
         m[3].xyz -= uvwViewPosition;
         vec4 uvw = uvwViewPreTrans * m * vec4(vPosition, 1.);
-        if(viewDisto) paintDebug = distort_radial(uvw, uvDistortion, 
-            viewExtrapol, viewSlope);
+
+	{
+		vec2 v = uvw.xy/uvw.w - uvDistortion.C;
+		float r = dot(v, v)/uvDistortion.R.w;
+		debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
+	}
+        if(viewDisto) paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol, viewSlope);
         gl_Position = uvwViewPostTrans * uvw;
         
-        if(paintDebug) vPaintDebugView = 0.;
-        else vPaintDebugView = 1.;
+        vValid = paintDebug ? 1. : 0.;
     #else 
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     #endif

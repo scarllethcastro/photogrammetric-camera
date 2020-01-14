@@ -5,7 +5,7 @@ ${RadialDistortion.chunks.radial_shaders}
 #ifdef USE_MAP4
     #undef USE_MAP
     varying highp vec3 vPosition;
-    varying float vPaintDebugView;
+    varying float vValid;
 #endif
 
 #ifdef USE_COLOR
@@ -15,6 +15,7 @@ ${RadialDistortion.chunks.radial_shaders}
 uniform bool diffuseColorGrey;
 uniform vec3 diffuse;
 uniform float opacity;
+varying vec4 debugColor;
 
 #ifdef USE_MAP4
     uniform mat4 modelMatrix;
@@ -65,7 +66,10 @@ void main() {
                 diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
             }
 
-            if(vPaintDebugView == 0.) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.333333), debugOpacity);
+            if(vValid < 0.99) discard;
+//diffuseColor.rgb = vec3(1.,vec2(dot(diffuseColor.rgb, vec3(0.333333))));
+		//diffuseColor.g = vValid;
+      	diffuseColor.rgb = mix(diffuseColor.rgb, debugColor.rgb, debugColor.a);
         }
     #endif
 
