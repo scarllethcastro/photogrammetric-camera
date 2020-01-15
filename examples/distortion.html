@@ -102,8 +102,6 @@
                     textureDisto : true,
                     viewExtrapol : true,
                     viewDisto : false,
-                    viewSlope : 2.3,
-                    textureSlope : 2.3,
                     debugOpacity : true,
                 };
                 textureMaterial = new TextureMaterial(textureMaterialUniforms);
@@ -363,7 +361,7 @@
                     environmentPlane.position.x = 0;
                     environmentPlane.position.y = 0;
                     environmentPlane.position.z = -2;
-environmentPlane.updateMatrixWorld();
+                    environmentPlane.updateMatrixWorld();
                 }
 
                 function setTexture(camera) {
@@ -481,18 +479,16 @@ environmentPlane.updateMatrixWorld();
                 function updatesceneInfoFromGUI(){
                     sceneMaterial.viewDisto = textureMaterial.viewDisto;
                     sceneMaterial.viewExtrapol = textureMaterial.viewExtrapol;
-                    sceneMaterial.viewSlope = textureMaterial.viewSlope;
                     sceneMaterial.debugOpacity = textureMaterial.debugOpacity;
                 }
                 function updateRmaxFromGUI(value) {
                     textureMaterial.uvDistortion.R.w = value * value * textureMaterial.r2max;
                 };
 
-		var param = { rmax: 1 };
+		        var param = { rmax: 1 };
                 var textureGUI = gui.addFolder('Texture Camera'); // Texture
                 textureGUI.add(textureMaterial, 'textureDisto').name('apply distortion');
                 textureGUI.add(textureMaterial, 'textureExtrapol').name('apply extrapol');
-                textureGUI.add(textureMaterial, 'textureSlope', 0, 5).name('extrapol slope');
                 textureGUI.add(param, 'rmax', 0, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
 
                 var viewGUI = gui.addFolder('View Camera'); // View
@@ -500,8 +496,6 @@ environmentPlane.updateMatrixWorld();
                 viewGUI.add(textureMaterial, 'viewDisto').name('apply distortion')
                     .listen().onChange(updatesceneInfoFromGUI);
                 viewGUI.add(textureMaterial, 'viewExtrapol').name('apply extrapol')
-                .listen().onChange(updatesceneInfoFromGUI);
-                viewGUI.add(textureMaterial, 'viewSlope', 0, 5).name('extrapol slope')
                 .listen().onChange(updatesceneInfoFromGUI);
 
                 // Debug Options
@@ -554,15 +548,13 @@ environmentPlane.updateMatrixWorld();
                 if (viewMaterials[nextCamera.name])
                     viewMaterials[nextCamera.name].setValues(viewMaterialUniforms);
 
-                //viewCamera.getWorldPosition(environmentSphere.position);
-                //environmentSphere.position.set(0,0,0);
                 // Material update
                 textureMaterial.setCamera(textureCamera, viewCamera);
                 sceneMaterial.setCamera(textureCamera, viewCamera);
                 render();
             }
 
-            scenes.Maurepas();
+            //scenes.Maurepas();
         </script>
     </body>
 </html>

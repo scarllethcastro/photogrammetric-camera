@@ -21,7 +21,6 @@ uniform float opacity;
     uniform RadialDistortion uvDistortion;
     uniform bool viewDisto;
     uniform bool viewExtrapol;
-    uniform float viewSlope;
 
     uniform sampler2D map;
     uniform float borderSharpness;
@@ -43,8 +42,7 @@ void main() {
         bool paintDebug = false;
         if(viewDisto){
             uvw = uvwViewInvPostTrans*uvw;
-            paintDebug = distort_radial_inverse(uvw, uvDistortion,
-                viewExtrapol, viewSlope);
+            paintDebug = distort_radial_inverse(uvw, uvDistortion, viewExtrapol);
             uvw = uvwViewPostTrans*uvw;
         }
 
@@ -56,7 +54,7 @@ void main() {
             vec4 color = texture2D(map, uvw.xy);
             color.a *= min(1., borderSharpness*min(border.x, border.y));
             diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a); 
-            if(paintDebug) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.333333), debugOpacity);
+            //if(paintDebug) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.333333), debugOpacity);
         }
         
         vec3 outgoingLight = diffuseColor.rgb;

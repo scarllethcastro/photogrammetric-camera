@@ -44,8 +44,6 @@ class ImageMaterial extends ShaderMaterial {
         const viewDisto = pop(options, 'viewDisto', false);
         const textureExtrapol = pop(options, 'textureExtrapol', false);
         const viewExtrapol = pop(options, 'viewExtrapol', false);
-        const textureSlope = pop(options, 'textureSlope', 1.);
-        const viewSlope = pop(options, 'viewSlope', 1.);
 
         const map = pop(options, 'map', null);
         const alphaMap = pop(options, 'alphaMap', null);
@@ -82,8 +80,6 @@ class ImageMaterial extends ShaderMaterial {
         definePropertyUniform(this, 'viewDisto', viewDisto);
         definePropertyUniform(this, 'textureExtrapol', textureExtrapol);
         definePropertyUniform(this, 'viewExtrapol', viewExtrapol);
-        definePropertyUniform(this, 'textureSlope', textureSlope);
-        definePropertyUniform(this, 'viewSlope', viewSlope);
 
 
         definePropertyUniform(this, 'opacity', this.opacity);

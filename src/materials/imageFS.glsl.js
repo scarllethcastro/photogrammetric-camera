@@ -15,7 +15,6 @@ ${RadialDistortion.chunks.radial_shaders}
 uniform bool diffuseColorGrey;
 uniform vec3 diffuse;
 uniform float opacity;
-varying vec4 debugColor;
 
 #ifdef USE_MAP4
     uniform mat4 modelMatrix;
@@ -25,7 +24,6 @@ varying vec4 debugColor;
     uniform RadialDistortion uvDistortion;
     uniform bool textureDisto;
     uniform bool textureExtrapol;
-    uniform float textureSlope;
 
     uniform sampler2D map;
     uniform float borderSharpness;
@@ -51,9 +49,14 @@ void main() {
         m[3].xyz -= uvwTexturePosition;
         vec4 uvw = uvwTexturePreTrans * m * vec4(vPosition, 1.);
         bool paintDebug = true;
+
+        vec2 v = uvw.xy/uvw.w - uvDistortion.C;
+        float r = dot(v, v)/uvDistortion.R.w;
+        vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
+
         if( uvw.w > 0.){
             if (textureDisto) paintDebug = distort_radial(uvw, uvDistortion,
-                textureExtrapol, textureSlope);
+                textureExtrapol);
             uvw = uvwTexturePostTrans * uvw;
             uvw.xyz /= 2. * uvw.w;
             uvw.xyz += vec3(0.5);
@@ -67,9 +70,7 @@ void main() {
             }
 
             if(vValid < 0.99) discard;
-//diffuseColor.rgb = vec3(1.,vec2(dot(diffuseColor.rgb, vec3(0.333333))));
-		//diffuseColor.g = vValid;
-      	diffuseColor.rgb = mix(diffuseColor.rgb, debugColor.rgb, debugColor.a);
+      	    diffuseColor.rgb = mix(diffuseColor.rgb, debugColor.rgb, debugColor.a);
         }
     #endif
 

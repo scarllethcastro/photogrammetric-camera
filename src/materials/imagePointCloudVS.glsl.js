@@ -21,14 +21,9 @@ uniform float size;
     uniform RadialDistortion uvDistortion;
     uniform bool viewDisto;
     uniform bool viewExtrapol;
-    uniform float viewSlope;
 #endif
 
-
-varying vec4 debugColor;
-
 void main() {
-    debugColor = vec4(0.);
     #ifdef USE_COLOR
         vColor.xyz = color.xyz;
     #endif
@@ -43,13 +38,7 @@ void main() {
         mat4 m = modelMatrix;
         m[3].xyz -= uvwViewPosition;
         vec4 uvw = uvwViewPreTrans * m * vec4(vPosition, 1.);
-
-	{
-		vec2 v = uvw.xy/uvw.w - uvDistortion.C;
-		float r = dot(v, v)/uvDistortion.R.w;
-		debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
-	}
-        if(viewDisto) paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol, viewSlope);
+        if(viewDisto) paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol);
         gl_Position = uvwViewPostTrans * uvw;
         
         vValid = paintDebug ? 1. : 0.;
