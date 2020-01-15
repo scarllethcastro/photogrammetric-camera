@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<htlm lang="en">
+<html lang="en">
     <head>
         <meta charset="utf-8"/>
         <title>Photogrammetric Camera - Distortion</title>
@@ -48,7 +48,7 @@
             var todos = [], todoTimestamp = 0, duration = 0.3;
             var renderOptions = {method: 1};
 
-            viewCamera.zoom = 0.8;
+            viewCamera.zoom = 0.1;
             viewCamera.up.set(0, 0, 1);
 
             /* ------------------------- Main ------------------------ */
@@ -89,7 +89,7 @@
                     fragmentShader : imageFS
                 };
                 textureMaterialUniforms = {
-                    wireframe: true,
+                    wireframe: false,
                     map: uvTexture,
                     size: 2,
                     sizeAttenuation: false,
@@ -97,7 +97,14 @@
                     blending: THREE.NormalBlending,
                     transparent: true,
                     vertexShader : imagePointCloudVS,
-                    fragmentShader : imageFS
+                    fragmentShader : imageFS,
+                    textureExtrapol : true,
+                    textureDisto : true,
+                    viewExtrapol : true,
+                    viewDisto : false,
+                    viewSlope : 2.3,
+                    textureSlope : 2.3,
+                    debugOpacity : true,
                 };
                 textureMaterial = new TextureMaterial(textureMaterialUniforms);
                 textureMaterial.map = null;
@@ -110,7 +117,7 @@
                 sceneMaterial = new TextureMaterial(sceneMaterialUniforms);
 
                 /* Main Scene ---------------------------------------- */
-                // Cameras 
+                // Cameras
                 cameras = new THREE.Group();
                 cameras.visible = false;
 
@@ -122,16 +129,17 @@
 
                 // Environment
                 environmentPlane = new THREE.Mesh(
-                    new THREE.PlaneBufferGeometry(1000, 1000, 200, 200), textureMaterial);
-                environmentPlane.scale.x = width/100; environmentPlane.scale.y = height/100;
-                scene.add(environmentPlane);
+                    new THREE.PlaneBufferGeometry(15, 15, 200, 200), textureMaterial);
+                //environmentPlane.scale.x = width/100; environmentPlane.scale.y = height/100;
+                viewCamera.add(environmentPlane);
 
                 environmentSphere = new THREE.Mesh(
-                    new THREE.SphereBufferGeometry(-1, 500, 500), textureMaterial);
+                    new THREE.SphereBufferGeometry(-1, 1000, 1000), textureMaterial);
                 environmentSphere.scale.set(sphereRadius, sphereRadius, sphereRadius);
+		environmentSphere.visible = false;
                 viewCamera.add(environmentSphere);
-                
-                // Point cloud 
+
+                // Point cloud
                 plys = new THREE.Group();
                 scene.add(plys);
 
@@ -200,7 +208,7 @@
                     nextCamera.updateMatrixWorld();
                 }
 
-                function keyDown(event){ 
+                function keyDown(event){
                     switch(event.key){
                         case '+': textureMaterial.size++; break;
                         case '-': textureMaterial.size--; break;
@@ -264,7 +272,7 @@
                             controls.target.copy(json.target);
                         }
                         json.ply.forEach(url => todos.push(() => loadPly(url, source)));
-                        json.ori.forEach((orientationUrl, i) => todos.push(() => 
+                        json.ori.forEach((orientationUrl, i) => todos.push(() =>
                             loadOrientedImage(orientationUrl, json.img[i], source)));
                     });
                 }
@@ -346,11 +354,16 @@
                     console.log('View:', camera.name);
                     prevCamera.set(viewCamera);
                     nextCamera.set(camera);
-                    prevCamera.timestamp = 0; 
-                    nextCamera.zoom = viewCamera.zoom; 
+                    prevCamera.timestamp = 0;
+                    nextCamera.zoom = viewCamera.zoom;
                     setMaterial(viewMaterials[camera.name], camera);
                     onWindowResize();
                     controls.enabled = false;
+
+                    environmentPlane.position.x = 0;
+                    environmentPlane.position.y = 0;
+                    environmentPlane.position.z = -2;
+environmentPlane.updateMatrixWorld();
                 }
 
                 function setTexture(camera) {
@@ -358,6 +371,7 @@
                     console.log('Texture:', camera.name);
                     textureCamera = camera;
                     setMaterial(textureMaterial, camera);
+	            textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
                 }
 
                 function setCamera(camera){
@@ -426,7 +440,7 @@
                     viewCamera.set(camera);
                     nextCamera.set(camera);
                     textureCamera = viewCamera;
-                    viewCamera.zoom = 0.8;
+                    viewCamera.zoom = 0.1;
                     nextCamera.timestamp = undefined;
                     textureMaterial.map = null;
                     Object.keys(textures).forEach(key => textures[key].dispose());
@@ -470,11 +484,16 @@
                     sceneMaterial.viewSlope = textureMaterial.viewSlope;
                     sceneMaterial.debugOpacity = textureMaterial.debugOpacity;
                 }
-                
+                function updateRmaxFromGUI(value) {
+                    textureMaterial.uvDistortion.R.w = value * value * textureMaterial.r2max;
+                };
+
+		var param = { rmax: 1 };
                 var textureGUI = gui.addFolder('Texture Camera'); // Texture
                 textureGUI.add(textureMaterial, 'textureDisto').name('apply distortion');
                 textureGUI.add(textureMaterial, 'textureExtrapol').name('apply extrapol');
                 textureGUI.add(textureMaterial, 'textureSlope', 0, 5).name('extrapol slope');
+                textureGUI.add(param, 'rmax', 0, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
 
                 var viewGUI = gui.addFolder('View Camera'); // View
                 viewGUI.add(viewCamera, 'zoom', 0, 2).listen().onChange(updateViewCameraFromGUI);
@@ -542,6 +561,8 @@
                 sceneMaterial.setCamera(textureCamera, viewCamera);
                 render();
             }
+
+            scenes.Maurepas();
         </script>
     </body>
-</htlm>
+</html>

@@ -97,11 +97,6 @@ bool distort_radial(inout vec4 p, RadialDistortion disto, bool extrapol, float m
     vec2 r = p.xy - disto.C;
     float r2 = dot(r, r);
 
-    float r_max = sqrt(disto.R.w);
-
-    float rd_max = sqrt(disto.R.w)*(1. + polynom(disto.R.xyz, disto.R.w));
-    float rd2_max = dot(rd_max, rd_max);
-
     // If we are inside the maximum radius
     if(r2 < disto.R.w){
         // the same as: p.xy = disto.C + r * (1.+polynom(disto.R.xyz, r2));
@@ -109,8 +104,10 @@ bool distort_radial(inout vec4 p, RadialDistortion disto, bool extrapol, float m
     }
     // Otherwise extrapolate
     else if(extrapol){
-        float g_r2_max = 1. + polynom(disto.R.xyz, disto.R.w);
-        p.xy = disto.C + (m*r + normalize(r)*r_max*(g_r2_max - m));
+        // float g_r2_max = 1. + polynom(disto.R.xyz, disto.R.w);
+    	// float r_max = sqrt(disto.R.w);
+        // p.xy = disto.C + (m*r + normalize(r)*r_max*(g_r2_max - m));
+	p.xy += r * polynom(disto.R.xyz, disto.R.w); // same as p.xy = disto.C + r * g_r2_max;
     }else return false;
 
     return true;
