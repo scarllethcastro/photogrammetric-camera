@@ -82,14 +82,9 @@ struct RadialDistortion {
     vec4 R;
 };
 
-float polynom(vec3 R, float r2) {
-    float r4 = r2*r2;
-    return dot(R, vec3(r2, r4, r2*r4));
-}
-
-float derivpolynom(vec3 R, float r2){
-    float r4 = r2*r2;
-    return dot(R, vec3(3.*r2, 5.*r4, 7.*r2*r4));
+float polynom(vec3 R, float x) {
+    float x2 = x*x;
+    return dot(R, vec3(x, x2, x*x2));
 }
 
 bool distort_radial(inout vec4 p, RadialDistortion disto, bool extrapol) {
@@ -97,55 +92,55 @@ bool distort_radial(inout vec4 p, RadialDistortion disto, bool extrapol) {
     vec2 r = p.xy - disto.C;
     float r2 = dot(r, r);
 
-    // If we are inside the maximum radius
-    if(r2 < disto.R.w){
-        // the same as: p.xy = disto.C + r * (1.+polynom(disto.R.xyz, r2));
-        p.xy += r*polynom(disto.R.xyz, r2);
-    }
-    // Otherwise extrapolate
-    else if(extrapol){
-        // the same as: p.xy = disto.C + r * (1.+polynom(disto.R.xyz, r_max));
-	    p.xy += r*polynom(disto.R.xyz, disto.R.w);
-    }else return false;
+    if (r2 > disto.R.w)
+        if (extrapol) r2 = disto.R.w;
+        else return false;
 
+    // the same as: p.xy = disto.C + r * (1.+polynom(disto.R.xyz, r2));
+    p.xy += r*polynom(disto.R.xyz, r2);
     return true;
 }
 
-const int N = 500;
-const float m_error_max = 0.5;
+const int N = 10;
+const float m_err2_max = 0.5;
 bool distort_radial_inverse(inout vec4 p, RadialDistortion disto, bool extrapol) {
     p /= p.w;
-    vec2 rd = p.xy - disto.C;
-    float rd2 = dot(rd, rd);
-
-    float rd_max = sqrt(disto.R.w)*(1. + polynom(disto.R.xyz, disto.R.w));
-    float rd2_max = dot(rd_max, rd_max);
+    vec2 v = p.xy - disto.C;
+    float rd2 = dot(v, v);
+    float r2_max = disto.R.w;
+    float r_max = sqrt(r2_max);
+    float rd_max = r_max *(1. + polynom(disto.R.xyz, r2_max));
+    float rd2_max = rd_max * rd_max;
+    vec3 derivative = disto.R.xyz * vec3(3.,5.,7.);
+    float ratio = r_max / rd_max;
 
     // If we are inside the maximum radius
     if(rd2 < rd2_max){
-        float y = sqrt(rd2), r = y, r2 = r*r; // initialization of the iteration
-        float err = y - r*(1.+polynom(disto.R.xyz, r2)), err2 = err*err;
+        float rd = sqrt(rd2), r = rd * ratio, r2 = r*r; // initialization of the iteration
+        float Pr2 = 1. + polynom(disto.R.xyz, r2);
+        float err = rd - r*Pr2, err2 = err*err;
         // If we are inside the maximum radius, we want to invert
-        // the function g(r) in order to find r from y = d(r) = r*g(r^2)
+        // the function g(r) in order to find r from rd = d(r) = r*polynom(r^2)
         // in an iterative way, were:
-        // r(0) = y
-        // r(n+1) = r(n) + (y-d(r(n))) / d'(r(n))
-        for (int i = 0; i < N; i++) { // iterate max 50 times
-            if (err2 < m_error_max || r2 > rd2_max) break;
-            // New estimate of r such that d(r) = y
-            float D = 1. + derivpolynom(disto.R.xyz, r2); // = d'(r)
-            if (D < 0.1) r += err;
-            else r += err/D;
+        // r(0) = rd * ratio
+        // r(n+1) = r(n) + (rd-d(r(n))) / d'(r(n))
+        for (int i = 0; i < N; i++) { // iterate max N times
+            if (err2 < m_err2_max) break;
+            // New estimate of r such that d(r) = rd
+            float D = 1. + polynom(derivative, r2); // = d'(r)
+            r = clamp(r + err/D, 0., r_max);
             r2 = r*r;
-            err = y - r*(1.+polynom(disto.R.xyz, r2)), err2 = err*err;
+            Pr2 = 1. + polynom(disto.R.xyz, r2);
+            err = rd - r*Pr2;
+            err2 = err*err;
         }
-        if(err2 > m_error_max) return false;
-        float ratio = r/y;    
-        p.xy = disto.C + ratio*rd;
+        if(err2 > m_err2_max) return false;
+        p.xy = disto.C + (r/rd)*v;
 
-    }else if (extrapol){
-        p.xy = disto.C + (rd/(1.+polynom(disto.R.xyz, disto.R.w)));
-    }else return false;
+    } else if (extrapol){
+         p.xy = disto.C + ratio*v;
+
+    } else return false;
 
     return true;
 }
