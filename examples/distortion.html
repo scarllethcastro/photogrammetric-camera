@@ -48,7 +48,7 @@
             var todos = [], todoTimestamp = 0, duration = 0.3;
             var renderOptions = {method: 1};
 
-            viewCamera.zoom = 0.1;
+            viewCamera.zoom = 0.06;
             viewCamera.up.set(0, 0, 1);
 
             /* ------------------------- Main ------------------------ */
@@ -127,14 +127,14 @@
 
                 // Environment
                 environmentPlane = new THREE.Mesh(
-                    new THREE.PlaneBufferGeometry(15, 15, 200, 200), textureMaterial);
+                    new THREE.PlaneBufferGeometry(400, 400, 20, 20), textureMaterial);
                 //environmentPlane.scale.x = width/100; environmentPlane.scale.y = height/100;
                 viewCamera.add(environmentPlane);
 
                 environmentSphere = new THREE.Mesh(
                     new THREE.SphereBufferGeometry(-1, 1000, 1000), textureMaterial);
                 environmentSphere.scale.set(sphereRadius, sphereRadius, sphereRadius);
-		environmentSphere.visible = false;
+		        environmentSphere.visible = false;
                 viewCamera.add(environmentSphere);
 
                 // Point cloud
@@ -155,13 +155,26 @@
                     Maurepas: function(){
                         clean();
                         //loadJSON('http://mathieu.bredif.free.fr/cors.php?url=data/maurepas/');
-                        loadJSON('data/maurepas/');
+                        loadJSON('data/datasets/maurepas/');
                     },
                     Frejus: function(){
                         clean();
                         loadJSON('data/frejus/');
+                    },
+                    FrejusDisto: function(){
+                        clean();
+                        loadJSON('data/datasets/frejus_distorted/');
 
-                    }
+                    },
+                    Pierrerue: function(){
+                        clean();
+                        loadJSON('data/datasets/pierrerue/');
+
+                    },
+                    Nanterre: function(){
+                        clean();
+                        loadJSON('data/datasets/nanterre/');
+                    },
                 };
 
                 // Controls
@@ -313,7 +326,7 @@
                         var check = '[?]';
                         if (camera.check) check = camera.check() ? '[Y]' : '[N]';
                         console.log(check, name);
-                        camera.far = 10000;
+                        camera.far = 15000;
                         camera.updateProjectionMatrix();
                         camera.add(cameraHelper(camera));
                         cameras.add(camera);
@@ -365,7 +378,7 @@
 
                     environmentPlane.position.x = 0;
                     environmentPlane.position.y = 0;
-                    environmentPlane.position.z = -2;
+                    environmentPlane.position.z = -50;
                     environmentPlane.updateMatrixWorld();
                 }
 
@@ -443,13 +456,13 @@
                     viewCamera.set(camera);
                     nextCamera.set(camera);
                     textureCamera = viewCamera;
-                    viewCamera.zoom = 0.1;
+                    viewCamera.zoom = 0.06;
                     nextCamera.timestamp = undefined;
                     textureMaterial.map = null;
                     Object.keys(textures).forEach(key => textures[key].dispose());
                     while(cameras.children.length) cameras.remove(cameras.children[0]);
                     while(plys.children.length) plys.remove(plys.children[0]);
-                    environmentPlane.position.z = 0;
+                    environmentPlane.position.z = -50;
                     controls.target.set(0, 0, 0);
                 }
             }
@@ -497,6 +510,7 @@
                 textureGUI.add(param, 'rmax', 0, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
 
                 var viewGUI = gui.addFolder('View Camera'); // View
+                //viewGUI.add(cameras, 'visible');
                 viewGUI.add(viewCamera, 'zoom', 0, 2).listen().onChange(updateViewCameraFromGUI);
                 viewGUI.add(textureMaterial, 'viewDisto').name('apply distortion')
                     .listen().onChange(updatesceneInfoFromGUI);
@@ -547,7 +561,7 @@
                       controls.enabled = true;
                     }
                     viewCamera.near = 1;
-                    viewCamera.far = 10000;
+                    viewCamera.far = 15000;
                     viewCamera.updateProjectionMatrix();
                 }
                 if (viewMaterials[nextCamera.name])

@@ -46,7 +46,7 @@ void main() {
 
         vec2 v = uvw.xy/uvw.w - uvDistortion.C;
         float r = dot(v, v)/uvDistortion.R.w;
-        vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
+        vec4 debugColor = vec4(vec3(0.), fract(clamp(r*r*r*r*r,0.,1.)));
 
         if( uvw.w > 0.){
             if (textureDisto) paintDebug = distort_radial(uvw, 
