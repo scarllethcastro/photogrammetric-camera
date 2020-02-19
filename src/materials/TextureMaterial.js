@@ -49,7 +49,7 @@ class ImageMaterial extends ShaderMaterial {
         const alphaMap = pop(options, 'alphaMap', null);
         const scale = pop(options, 'scale', 1);
         const borderSharpness = pop(options, 'borderSharpness', 10000);
-        const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
+        const diffuseColorGrey = pop(options, 'diffuseColorGrey', false);
         const debugOpacity = pop(options, 'debugOpacity', 0);
 
         options.vertexShader = options.vertexShader || ShaderLib.points.vertexShader;

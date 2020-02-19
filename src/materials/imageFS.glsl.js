@@ -27,6 +27,7 @@ uniform float opacity;
 #endif
     
 void main() {
+    
     vec4 diffuseColor = vec4(diffuse, opacity);
     #ifdef USE_COLOR
         diffuseColor.rgb *= vColor;
@@ -46,7 +47,7 @@ void main() {
 
         vec2 v = uvw.xy/uvw.w - uvDistortion.C;
         float r = dot(v, v)/uvDistortion.R.w;
-        vec4 debugColor = vec4(vec3(0.), fract(clamp(r*r*r*r*r,0.,1.)));
+        vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
 
         if( uvw.w > 0.){
             if (textureDisto) paintDebug = distort_radial(uvw, 
@@ -61,6 +62,7 @@ void main() {
                 diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a);
             }else if(paintDebug){
                 diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), 0.4*debugOpacity);
+                //diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.), 0.5*debugOpacity);
             }
             //if(vPaintDebugView == 0.) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.333333), debugOpacity);
             if(vValid < 0.99) discard;

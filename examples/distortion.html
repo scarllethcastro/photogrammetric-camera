@@ -42,7 +42,7 @@
             var textureMaterialUniforms = {}, viewMaterialUniforms = {};
             var wireMaterial, textureMaterial, viewMaterials = {}, sceneMaterial;
             var textures = {};
-            var environmentSphere, environmentPlane, plane, plys;
+            var environmentSphere, environmentPlane, plane, pointclouds, meshes;
             var sphereRadius = 500, epsilonRadius = 100;
             var scenes;
             var todos = [], todoTimestamp = 0, duration = 0.3;
@@ -102,7 +102,7 @@
                     textureDisto : true,
                     viewExtrapol : true,
                     viewDisto : false,
-                    debugOpacity : true,
+                    debugOpacity : true
                 };
                 textureMaterial = new TextureMaterial(textureMaterialUniforms);
                 textureMaterial.map = null;
@@ -126,8 +126,10 @@
                 scene.add(cameras);
 
                 // Environment
-                environmentPlane = new THREE.Mesh(
-                    new THREE.PlaneBufferGeometry(400, 400, 20, 20), textureMaterial);
+                plane = new THREE.PlaneBufferGeometry(400, 400, 200, 200);
+                plane.colors =  [new THREE.Color('red')];
+                environmentPlane = new THREE.Mesh(plane, textureMaterial);
+                //environmentPlane.colors =  [new THREE.Color('red')];
                 //environmentPlane.scale.x = width/100; environmentPlane.scale.y = height/100;
                 viewCamera.add(environmentPlane);
 
@@ -137,9 +139,13 @@
 		        environmentSphere.visible = false;
                 viewCamera.add(environmentSphere);
 
-                // Point cloud
-                plys = new THREE.Group();
-                scene.add(plys);
+                // Point clouds
+                pointclouds = new THREE.Group();
+                scene.add(pointclouds);
+
+                // Meshes
+                meshes = new THREE.Group();
+                scene.add(meshes);
 
                 var plyLoader = new THREE.PLYLoader();
                 var parsePly = (source) => (data => plyLoader.parse(data));
@@ -159,7 +165,7 @@
                     },
                     Frejus: function(){
                         clean();
-                        loadJSON('data/frejus/');
+                        loadJSON('data/datasets/frejus/');
                     },
                     FrejusDisto: function(){
                         clean();
@@ -173,7 +179,7 @@
                     },
                     Nanterre: function(){
                         clean();
-                        loadJSON('data/datasets/nanterre/');
+                        loadJSON('data/datasets/nanterre_original/');
                     },
                 };
 
@@ -259,10 +265,16 @@
                     loadImage(imageUrl, source).then(() => loadOrientation(orientationUrl, source));
                 }
 
-                function loadPly(url, source){
+                function loadPlyPC(url, source){
                     return source.open(url, 'arrayBuffer')
                     .then(parsePly(source))
-                    .then(handlePly(url));
+                    .then(handlePointCloud(url));
+                }
+
+                function loadPlyMesh(url, source){
+                    return source.open(url, 'arrayBuffer')
+                    .then(parsePly(source))
+                    .then(handleMesh(url));
                 }
 
                 function loadJSON(path, file){
@@ -287,7 +299,8 @@
                         if(json.target){
                             controls.target.copy(json.target);
                         }
-                        json.ply.forEach(url => todos.push(() => loadPly(url, source)));
+                        json.pc.forEach(url => todos.push(() => loadPlyPC(url, source)));
+                        json.mesh.forEach(url => todos.push(() => loadPlyMesh(url, source)));
                         json.ori.forEach((orientationUrl, i) => todos.push(() =>
                             loadOrientedImage(orientationUrl, json.img[i], source)));
                     });
@@ -348,18 +361,34 @@
                     };
                 }
 
-                function handlePly(name){
+                function handlePointCloud(name){
                     return function(geometry){
                         // Show the name of the file to be loaded
                         console.log(name);
                         // Create the point cloud
                         var points = new THREE.Points(geometry, textureMaterial);
-                        plys.add(points);
+                        pointclouds.add(points);
                         // Find center of the geometry
                         geometry.computeBoundingBox();
                         var center = new THREE.Vector3();
                         geometry.boundingBox.getCenter(center);
                         points.updateMatrixWorld(true);
+                    }
+                }
+
+                function handleMesh(name){
+                    return function(geometry){
+                        // Show the name of the file to be loaded
+                        console.log(name);
+                        // Create the mesh
+                        geometry.computeVertexNormals();
+                        var mesh = new THREE.Mesh(geometry, textureMaterial);
+                        meshes.add(mesh);
+                        // Find center of the geometry
+                        geometry.computeBoundingBox();
+                        var center = new THREE.Vector3();
+                        geometry.boundingBox.getCenter(center);
+                        mesh.updateMatrixWorld(true);
                     }
                 }
 
@@ -461,7 +490,8 @@
                     textureMaterial.map = null;
                     Object.keys(textures).forEach(key => textures[key].dispose());
                     while(cameras.children.length) cameras.remove(cameras.children[0]);
-                    while(plys.children.length) plys.remove(plys.children[0]);
+                    while(pointclouds.children.length) pointclouds.remove(pointclouds.children[0]);
+                    while(meshes.children.length) meshes.remove(meshes.children[0]);
                     environmentPlane.position.z = -50;
                     controls.target.set(0, 0, 0);
                 }
@@ -524,7 +554,8 @@
                 debugGUI.add(textureMaterial, 'wireframe');
                 debugGUI.add(environmentSphere, 'visible').name('sphere');
                 debugGUI.add(environmentPlane, 'visible').name('plane');
-                debugGUI.add(plys, 'visible').name('pointcloud');
+                debugGUI.add(pointclouds, 'visible').name('pointcloud');
+                debugGUI.add(meshes, 'visible').name('mesh');
             }
 
             function render(){
@@ -573,7 +604,7 @@
                 render();
             }
 
-            //scenes.Maurepas();
+            scenes.Maurepas();
         </script>
     </body>
 </html>
