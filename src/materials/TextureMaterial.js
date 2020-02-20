@@ -110,13 +110,20 @@ class ImageMaterial extends ShaderMaterial {
             .getInverse(viewCamera.postProjectionMatrix);
 
         // TODO: handle other distorsion types and arrays of distortions
-        if (textureCamera.distos && textureCamera.distos.length == 1 
+        if (textureCamera.distos && textureCamera.distos.length == 1
             && (textureCamera.distos[0].type === 'ModRad'
             || textureCamera.distos[0].type === 'eModele_FishEye_10_5_5')) {
-            this.uvDistortion = textureCamera.distos[0];
-            if (this.uvDistortion.type === 'ModRad') this.distortionType = 1;
-            else this.distortionType = 2;
-        } else {
+            
+            if (textureCamera.distos[0].type === 'ModRad'){
+                this.uvDistortion.type = textureCamera.distos[0].type;
+                this.uvDistortion.C = textureCamera.distos[0].C;
+                this.uvDistortion.R = textureCamera.distos[0].R;
+                this.distortionType = 1;
+            }else{
+                this.uvDistortion = textureCamera.distos[0];
+            }
+
+        }else {
             this.uvDistortion = {F: 0., C: new THREE.Vector2(), R: new THREE.Vector4(),
                 P: new THREE.Vector2(), l: new THREE.Vector2()};
             this.uvDistortion.R.w = Infinity;

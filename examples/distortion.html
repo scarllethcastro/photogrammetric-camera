@@ -46,7 +46,7 @@
             var sphereRadius = 500, epsilonRadius = 100;
             var scenes;
             var todos = [], todoTimestamp = 0, duration = 0.3;
-            var renderOptions = {method: 1};
+            var param = { method: 1, rmax: 1 };
 
             viewCamera.zoom = 0.8;
             viewCamera.up.set(0, 0, 1);
@@ -423,7 +423,8 @@
                     console.log('Texture:', camera.name);
                     textureCamera = camera;
                     setMaterial(textureMaterial, camera);
-	            textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
+                    textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
+                    textureMaterial.uvDistortion.R.w = param.rmax*param.rmax*textureMaterial.r2max;
                 }
 
                 function setCamera(camera){
@@ -434,7 +435,7 @@
                 function setMaterial(material, camera) {
                     material.map = textures[camera.name] || uvTexture;
                     material.setCamera(camera, camera);
-                    if(renderOptions.method == 1) material.vertexShader = imagePointCloudVS;
+                    if(param.method == 1) material.vertexShader = imagePointCloudVS;
                     else material.vertexShader = imageMeshVS;
                     material.needsUpdate = true;
                 }
@@ -509,12 +510,12 @@
 
                 // Selection of rendering method
                 function updateRenderingFromGUI(){
-                    if(renderOptions.method == 1) textureMaterial.vertexShader = imagePointCloudVS;
+                    if(param.method == 1) textureMaterial.vertexShader = imagePointCloudVS;
                     else textureMaterial.vertexShader = imageMeshVS;
                     textureMaterial.needsUpdate = true;
                 }
 
-                gui.add(renderOptions, 'method', {Single: 1, Double: 2}).name('rendering method')
+                gui.add(param, 'method', {Single: 1, Double: 2}).name('rendering method')
                 .listen().onChange(updateRenderingFromGUI);
 
                 // Scene options
@@ -537,10 +538,9 @@
                     sceneMaterial.debugOpacity = textureMaterial.debugOpacity;
                 }
                 function updateRmaxFromGUI(value) {
-                    textureMaterial.uvDistortion.R.w = value * value * textureMaterial.r2max;
+                    textureMaterial.uvDistortion.R.w = value*value*textureMaterial.r2max;
                 };
 
-		        var param = { rmax: 1 };
                 var textureGUI = gui.addFolder('Texture Camera'); // Texture
                 textureGUI.add(textureMaterial, 'textureDisto').name('apply distortion');
                 textureGUI.add(textureMaterial, 'textureExtrapol').name('apply extrapol');
@@ -566,7 +566,7 @@
             }
 
             function render(){
-                if(renderOptions.method == 2){
+                if(param.method == 2){
                     // Render onto our off screen texture
                     renderer.render(scene, viewCamera, texturedScene);
                     // Finally, draw to the screen
