@@ -48,7 +48,7 @@
             var todos = [], todoTimestamp = 0, duration = 0.3;
             var renderOptions = {method: 1};
 
-            viewCamera.zoom = 0.06;
+            viewCamera.zoom = 0.8;
             viewCamera.up.set(0, 0, 1);
 
             /* ------------------------- Main ------------------------ */
@@ -98,9 +98,9 @@
                     transparent: true,
                     vertexShader : imagePointCloudVS,
                     fragmentShader : imageFS,
-                    textureExtrapol : true,
-                    textureDisto : true,
-                    viewExtrapol : true,
+                    textureExtrapol : false,
+                    textureDisto : false,
+                    viewExtrapol : false,
                     viewDisto : false,
                     debugOpacity : true
                 };
@@ -180,6 +180,13 @@
                     Nanterre: function(){
                         clean();
                         loadJSON('data/datasets/nanterre_original/');
+                    },
+                    SaintMartin: function(){
+                        clean();
+                        loadJSON('data/datasets/saint_martin/');
+                        //var path = 'data/datasets/saint_martin/';
+                        //var source = new FetchSource(path);
+                        //loadOrientedImage('ori/Orientation-IMGP4135.JPG.xml', 'img/IMGP4135.JPG', source);
                     },
                 };
 
@@ -485,7 +492,7 @@
                     viewCamera.set(camera);
                     nextCamera.set(camera);
                     textureCamera = viewCamera;
-                    viewCamera.zoom = 0.06;
+                    viewCamera.zoom = 0.8;
                     nextCamera.timestamp = undefined;
                     textureMaterial.map = null;
                     Object.keys(textures).forEach(key => textures[key].dispose());
@@ -604,7 +611,7 @@
                 render();
             }
 
-            scenes.Maurepas();
+            scenes.SaintMartin();
         </script>
     </body>
 </html>

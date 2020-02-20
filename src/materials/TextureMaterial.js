@@ -39,11 +39,12 @@ class ImageMaterial extends ShaderMaterial {
         const uvwViewPreTrans = pop(options, 'uvwPreTransform', new Matrix4());
         const uvwViewPostTrans = pop(options, 'uvwPostTransform', new Matrix4());
         const uvwViewInvPostTrans = pop(options, 'uvwViewInvPostTrans', new Matrix4());
-        const uvDistortion = pop(options, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
+        const uvDistortion = pop(options, 'uvDistortion', {});
         const textureDisto = pop(options, 'textureDisto', false);
         const viewDisto = pop(options, 'viewDisto', false);
         const textureExtrapol = pop(options, 'textureExtrapol', false);
         const viewExtrapol = pop(options, 'viewExtrapol', false);
+        const distortionType = pop(options, 'distortionType', 0);
 
         const map = pop(options, 'map', null);
         const alphaMap = pop(options, 'alphaMap', null);
@@ -80,7 +81,7 @@ class ImageMaterial extends ShaderMaterial {
         definePropertyUniform(this, 'viewDisto', viewDisto);
         definePropertyUniform(this, 'textureExtrapol', textureExtrapol);
         definePropertyUniform(this, 'viewExtrapol', viewExtrapol);
-
+        definePropertyUniform(this, 'distortionType', distortionType);
 
         definePropertyUniform(this, 'opacity', this.opacity);
         definePropertyUniform(this, 'map', map);
@@ -110,10 +111,14 @@ class ImageMaterial extends ShaderMaterial {
 
         // TODO: handle other distorsion types and arrays of distortions
         if (textureCamera.distos && textureCamera.distos.length == 1 
-            && textureCamera.distos[0].type === 'ModRad') {
+            && (textureCamera.distos[0].type === 'ModRad'
+            || textureCamera.distos[0].type === 'eModele_FishEye_10_5_5')) {
             this.uvDistortion = textureCamera.distos[0];
+            if (this.uvDistortion.type === 'ModRad') this.distortionType = 1;
+            else this.distortionType = 2;
         } else {
-            this.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
+            this.uvDistortion = {F: 0., C: new THREE.Vector2(), R: new THREE.Vector4(),
+                P: new THREE.Vector2(), l: new THREE.Vector2()};
             this.uvDistortion.R.w = Infinity;
         }
     }

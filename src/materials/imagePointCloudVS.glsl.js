@@ -1,7 +1,7 @@
-import { default as RadialDistortion } from '../cameras/distortions/RadialDistortion';
+import { default as Distortion } from '../cameras/distortions/Distortion';
 
 export default /* glsl */`
-${RadialDistortion.chunks.radial_shaders}
+${Distortion.chunks.shaders}
 #ifdef USE_MAP4
     #undef USE_MAP
     varying highp vec3 vPosition;
@@ -18,7 +18,8 @@ uniform float size;
     uniform vec3 uvwViewPosition;
     uniform mat4 uvwViewPreTrans;
     uniform mat4 uvwViewPostTrans;
-    uniform RadialDistortion uvDistortion;
+    uniform Distos uvDistortion;
+    uniform int distortionType;
     uniform bool viewDisto;
     uniform bool viewExtrapol;
 #endif
@@ -38,7 +39,15 @@ void main() {
         mat4 m = modelMatrix;
         m[3].xyz -= uvwViewPosition;
         vec4 uvw = uvwViewPreTrans * m * vec4(vPosition, 1.);
-        if(viewDisto) paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol);
+
+        if(viewDisto){
+            if (distortionType == 1){
+                paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol);
+            }else{
+                distort_fisheye(uvw, uvDistortion, viewExtrapol);
+            }
+        }
+
         gl_Position = uvwViewPostTrans * uvw;
         
         vValid = paintDebug ? 1. : 0.;

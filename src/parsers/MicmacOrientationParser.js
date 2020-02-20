@@ -76,6 +76,7 @@ function parseDistortion(xml) {
                 }
             }
             disto.R = params;
+            disto.l = new Vector2();
             disto.project = PolynomDistortion.project;
             return disto;
         case 'ModPhgrStd':
@@ -98,10 +99,11 @@ function parseDistortion(xml) {
         case 'eModele_FishEye_10_5_5':
         case 'eModele_EquiSolid_FishEye_10_5_5':
             disto.F = states[0];
-            disto.C = params.slice(0, 2);
-            disto.R = params.slice(2, 12);
-            disto.P = params.slice(12, 22);
-            disto.l = params.slice(22);
+            disto.C = new Vector2().fromArray(params.slice(0, 2));
+            disto.R = new Vector4().fromArray(params.slice(2, 5)); //disto.R = params.slice(2, 12);
+            disto.R.w = RadialDistortion.r2max(params.slice(2, 5));
+            disto.P = new Vector2().fromArray(params.slice(12, 14));// disto.P = params.slice(12, 22);
+            disto.l = new Vector2().fromArray(params.slice(22, 24)); //disto.l = params.slice(22);
             disto.equisolid = disto.type === 'eModele_EquiSolid_FishEye_10_5_5';
             disto.project = FishEyeDistortion.project;
             return disto;

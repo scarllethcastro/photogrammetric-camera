@@ -1,7 +1,7 @@
-import { default as RadialDistortion } from '../cameras/distortions/RadialDistortion';
+import { default as Distortion } from '../cameras/distortions/Distortion';
 
 export default /* glsl */`
-${RadialDistortion.chunks.radial_shaders}
+${Distortion.chunks.shaders}
 #ifdef USE_MAP4
     #undef USE_MAP
     varying highp vec4 vUvw;
@@ -18,7 +18,8 @@ uniform float opacity;
 #ifdef USE_MAP4
     uniform mat4 uvwViewPostTrans;
     uniform mat4 uvwViewInvPostTrans;
-    uniform RadialDistortion uvDistortion;
+    uniform Distos uvDistortion;
+    uniform int distortionType;
     uniform bool viewDisto;
     uniform bool viewExtrapol;
 
@@ -42,7 +43,8 @@ void main() {
         bool paintDebug = false;
         if(viewDisto){
             uvw = uvwViewInvPostTrans*uvw;
-            paintDebug = distort_radial_inverse(uvw, uvDistortion, viewExtrapol);
+
+            if (distortionType == 1) distort_radial_inverse(uvw, uvDistortion, viewExtrapol);
             uvw = uvwViewPostTrans*uvw;
         }
 
@@ -54,7 +56,6 @@ void main() {
             vec4 color = texture2D(map, uvw.xy);
             color.a *= min(1., borderSharpness*min(border.x, border.y));
             diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a); 
-            //if(paintDebug) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.333333), debugOpacity);
         }
         
         vec3 outgoingLight = diffuseColor.rgb;
