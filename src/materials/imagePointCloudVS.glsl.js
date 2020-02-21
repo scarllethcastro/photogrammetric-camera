@@ -44,7 +44,7 @@ void main() {
             if (distortionType == 1){
                 paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol);
             }else{
-                distort_fisheye(uvw, uvDistortion, viewExtrapol);
+                paintDebug = distort_fisheye(uvw, uvDistortion, viewExtrapol);
             }
         }
 

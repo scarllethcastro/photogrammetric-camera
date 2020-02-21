@@ -45,6 +45,7 @@ void main() {
             uvw = uvwViewInvPostTrans*uvw;
 
             if (distortionType == 1) distort_radial_inverse(uvw, uvDistortion, viewExtrapol);
+            else distort_fisheye_inverse(uvw, uvDistortion, viewExtrapol);
             uvw = uvwViewPostTrans*uvw;
         }
 

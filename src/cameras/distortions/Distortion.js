@@ -42,7 +42,7 @@ const chunks = {
     
         // If we are inside the maximum radius
         if(rd2 < rd2_max){
-            float rd = sqrt(rd2), r = rd * ratio, r2 = r*r; // initialization of the iteration
+            float rd = sqrt(rd2), r = rd*ratio, r2 = r*r; // initialization of the iteration
             float Pr2 = 1. + polynom(disto.R.xyz, r2);
             float err = rd - r*Pr2, err2 = err*err;
             // If we are inside the maximum radius, we want to invert
@@ -71,10 +71,8 @@ const chunks = {
         return true;
     }
 
-    bool distort_fisheye(inout vec4 p, Distos disto, bool extrapol) {
-        p /= p.w;
-        // Initialization of the variables
-        vec2 AB = (p.xy - disto.C)/disto.F;
+    void fisheye(inout vec2 p, Distos disto){
+        vec2 AB = (p - disto.C)/disto.F;
         float R = sqrt(dot(AB, AB));
         float theta = atan(R);
         float lambda = theta/R;
@@ -92,10 +90,45 @@ const chunks = {
         // Tangential distortion
         p.x += disto.P.x*(r2 + (2.*x2)) + 2.*disto.P.y*xy;
         p.y += disto.P.y*(r2 + 2.*y2) + 2.*disto.P.x*xy;
+    }
+
+    bool distort_fisheye(inout vec4 p, Distos disto, bool extrapol) {
+        p /= p.w;
+        vec2 v = p.xy - disto.C;
+        float v2 = dot(v, v);
+
+        if (v2 > disto.R.w)
+            if (extrapol) p.xy = normalize(v)*sqrt(disto.R.w) + disto.C;
+            else return false;
+
+        fisheye(p.xy, disto);
 
         // Unapply N normalization
-        p.xy = disto.C + disto.F*p.xy;
+        if (v2 > disto.R.w){
+            float d2 = dot(p.xy, p.xy);
+            p.xy = disto.C + (v*disto.F*sqrt(d2))/sqrt(disto.R.w);
+        }
+        else p.xy = disto.C + disto.F*p.xy;
+        return true;
+    }
 
+    bool distort_fisheye_inverse(inout vec4 p, Distos disto, bool extrapol) {
+        p /= p.w;
+        vec2 v = p.xy - disto.C;
+        float rd2 = dot(v, v);
+
+        float r2_max = disto.R.w;
+        float r_max = sqrt(r2_max);
+        vec2 point_rmax = normalize(v)*r_max + disto.C;
+        fisheye(point_rmax, disto);
+        float rd_max = disto.F*sqrt(dot(point_rmax, point_rmax));
+        float rd2_max = rd_max*rd_max;
+        float ratio = r_max/rd_max;
+
+        // If we are inside the maximum radius
+        if(rd2 < rd2_max){ 
+        }
+        else p.xy = disto.C + ratio*v;
         return true;
     }
 `,

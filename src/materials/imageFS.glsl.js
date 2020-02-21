@@ -28,7 +28,6 @@ uniform float opacity;
 #endif
     
 void main() {
-    
     vec4 diffuseColor = vec4(diffuse, opacity);
     #ifdef USE_COLOR
         diffuseColor.rgb *= vColor;
@@ -44,21 +43,20 @@ void main() {
         mat4 m = modelMatrix;
         m[3].xyz -= uvwTexturePosition;
         vec4 uvw = uvwTexturePreTrans * m * vec4(vPosition, 1.);
-        vec4 debugColor = vec4(0.);
+        bool paintDebug = true;
+
+        vec2 v = uvw.xy/uvw.w - uvDistortion.C;
+        float r = dot(v, v)/uvDistortion.R.w;
+        vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
 
         if( uvw.w > 0.){
-
             // Radial Distortion
-            if (distortionType == 1){
-                vec2 v = uvw.xy/uvw.w - uvDistortion.C;
-                float r = dot(v, v)/uvDistortion.R.w;
-                debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
-                if (textureDisto) distort_radial(uvw, uvDistortion, textureExtrapol);
-            }else{
-                if (textureDisto) distort_fisheye(uvw, uvDistortion, textureExtrapol);
+            if (textureDisto){
+                if (distortionType == 1) paintDebug = distort_radial(uvw, uvDistortion, textureExtrapol);
+                else paintDebug = distort_fisheye(uvw, uvDistortion, textureExtrapol);
             }
             
-            uvw = uvwTexturePostTrans * uvw;
+            uvw = uvwTexturePostTrans*uvw;
             uvw.xyz /= 2. * uvw.w;
             uvw.xyz += vec3(0.5);
             vec3 border = min(uvw.xyz, 1. - uvw.xyz);
@@ -67,7 +65,7 @@ void main() {
                 vec4 color = texture2D(map, uvw.xy);
                 color.a *= min(1., borderSharpness*min(border.x, border.y));
                 diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a);
-            }else {
+            }else if(paintDebug) {
                 diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), 0.4*debugOpacity);
             }
 

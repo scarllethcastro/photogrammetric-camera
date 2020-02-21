@@ -423,7 +423,7 @@
                     console.log('Texture:', camera.name);
                     textureCamera = camera;
                     setMaterial(textureMaterial, camera);
-                    textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
+                    textureMaterial.r2max = camera.r2max*3.;
                     textureMaterial.uvDistortion.R.w = param.rmax*param.rmax*textureMaterial.r2max;
                 }
 
@@ -544,7 +544,7 @@
                 var textureGUI = gui.addFolder('Texture Camera'); // Texture
                 textureGUI.add(textureMaterial, 'textureDisto').name('apply distortion');
                 textureGUI.add(textureMaterial, 'textureExtrapol').name('apply extrapol');
-                textureGUI.add(param, 'rmax', 0, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
+                textureGUI.add(param, 'rmax', 0.01, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
 
                 var viewGUI = gui.addFolder('View Camera'); // View
                 //viewGUI.add(cameras, 'visible');
