@@ -1,0 +1,7 @@
+{
+    "target": {"x": -920, "y": 1213, "z": 577},
+    "autocal": ["ori/AutoCal_Foc-50000_Cam-Cam.xml"],
+    "ori":  ["ori/Orientation-1957_DUR_452_0007.jpg.xml", "ori/Orientation-1957_DUR_452_0011_1.jpg.xml", "ori/Orientation-1957_DUR_452_0012.jpg.xml", "ori/Orientation-1957_DUR_452_0015.jpg.xml", "ori/Orientation-1957_DUR_452_0021.jpg.xml"],
+    "img":  ["img/1957_DUR_452_0007.jpg", "img/1957_DUR_452_0011_1.jpg", "img/1957_DUR_452_0012.jpg", "img/1957_DUR_452_0015.jpg", "img/1957_DUR_452_0021.jpg"],
+    "ply":  ["ply/nanterre.ply"]
+}

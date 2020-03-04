@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+<ExportAPERO>
+     <CalibrationInternConique>
+          <KnownConv>eConvApero_DistM2C</KnownConv>
+          <PP>866.486714256488654 565.074252223923736</PP>
+          <F>759.664150359664745</F>
+          <SzIm>1728 1152</SzIm>
+          <RayonUtile>986.47882896694739</RayonUtile>
+          <CalibDistortion>
+               <ModUnif>
+                    <TypeModele>eModele_FishEye_10_5_5</TypeModele>
+                    <Params>866.724919633760805</Params>
+                    <Params>566.924608836789957</Params>
+                    <Params>0.014218442990696389</Params>
+                    <Params>-0.00878368570859046002</Params>
+                    <Params>-0.00205756858199476278</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0.000145433113246688057</Params>
+                    <Params>0.000555575351028752716</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Params>0</Params>
+                    <Etats>720</Etats>
+               </ModUnif>
+          </CalibDistortion>
+     </CalibrationInternConique>
+</ExportAPERO>
