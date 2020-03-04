@@ -40,13 +40,7 @@ void main() {
         m[3].xyz -= uvwViewPosition;
         vec4 uvw = uvwViewPreTrans * m * vec4(vPosition, 1.);
 
-        if(viewDisto){
-            if (distortionType == 1){
-                paintDebug = distort_radial(uvw, uvDistortion, viewExtrapol);
-            }else{
-                paintDebug = distort_fisheye(uvw, uvDistortion, viewExtrapol);
-            }
-        }
+        if (viewDisto) paintDebug = distort(uvw, uvDistortion, distortionType, viewExtrapol);
 
         gl_Position = uvwViewPostTrans * uvw;
         

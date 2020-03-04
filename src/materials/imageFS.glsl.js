@@ -21,6 +21,7 @@ uniform float opacity;
     uniform Distos uvDistortion;
     uniform int distortionType;
     uniform bool textureDisto;
+    uniform bool viewDisto;
     uniform bool textureExtrapol;
     uniform sampler2D map;
     uniform float borderSharpness;
@@ -50,11 +51,7 @@ void main() {
         vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
 
         if( uvw.w > 0.){
-            // Radial Distortion
-            if (textureDisto){
-                if (distortionType == 1) paintDebug = distort_radial(uvw, uvDistortion, textureExtrapol);
-                else paintDebug = distort_fisheye(uvw, uvDistortion, textureExtrapol);
-            }
+            if (textureDisto) paintDebug = distort(uvw, uvDistortion, distortionType, textureExtrapol);
             
             uvw = uvwTexturePostTrans*uvw;
             uvw.xyz /= 2. * uvw.w;

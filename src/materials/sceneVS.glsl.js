@@ -13,6 +13,7 @@ void main() {
         vec2 vUv = (uv*2.)-1.;
         vUvw = vec4(vUv, 0., 1.);
     #endif
+
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
 }
 `;

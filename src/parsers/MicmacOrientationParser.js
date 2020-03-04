@@ -43,13 +43,14 @@ function parseDistortion(xml) {
         case 'ModNoDist':
             return undefined;
         case 'ModRad':
-            const R = parseChildNumbers(xml, 'CoeffDist', []); // radial distortion coefficients
+            var R = parseChildNumbers(xml, 'CoeffDist', []); // radial distortion coefficients
             if(R.length == 0) return undefined;
             if(R.length > 3) {
                 console.warn('ModRad is currently limited to degrees 3,5,7: Neglecting higher order coefficients.');
             }
             R[1] = R[1] || 0;
             R[2] = R[2] || 0;
+            R[3] = undefined;
             R[3] = RadialDistortion.r2max(R);
             disto.R = new Vector4().fromArray(R);
             disto.C = parseVector2(xml, 'CDist'); // distortion center in pixels
@@ -62,7 +63,7 @@ function parseDistortion(xml) {
         case 'eModelePolyDeg6':
         case 'eModelePolyDeg7':
             disto.S = states[0];
-            disto.C = states.slice(1, 3);
+            disto.C = new Vector2().fromArray(states.slice(1, 3));
             disto.degree = Number(disto.type.substr('eModelePolyDeg'.length));
 
             // degree could be decreased if params has a long enough tail of zeroes
@@ -80,10 +81,19 @@ function parseDistortion(xml) {
             disto.project = PolynomDistortion.project;
             return disto;
         case 'ModPhgrStd':
-            disto.C = parseNumbers(xml, 'CDist'); // distortion center in pixels
-            disto.R = parseChildNumbers(xml, 'CoeffDist'); // radial distortion coefficients
-            disto.P = parseNumbers(xml, 'P1', [0]).concat(parseNumbers(xml, 'P2', [0]));
-            disto.b = parseNumbers(xml, 'b1', [0]).concat(parseNumbers(xml, 'b2', [0]));
+            disto.C = parseVector2(xml, 'CDist'); // distortion center in pixels
+            R = parseChildNumbers(xml, 'CoeffDist', []); // radial distortion coefficients
+            if(R.length == 0) return undefined;
+            if(R.length > 3) {
+                console.warn('ModRad is currently limited to degrees 3,5,7: Neglecting higher order coefficients.');
+            }
+            R[1] = R[1] || 0;
+            R[2] = R[2] || 0;
+            R[3] = undefined;
+            R[3] = RadialDistortion.r2max(R);
+            disto.R = new Vector4().fromArray(R);
+            disto.P = new Vector2().fromArray(parseNumbers(xml, 'P1', [0]).concat(parseNumbers(xml, 'P2', [0])));
+            disto.b = new Vector2().fromArray(parseNumbers(xml, 'b1', [0]).concat(parseNumbers(xml, 'b2', [0])));
             disto.project = FraserDistortion.project;
             return disto;
         case 'eModeleEbner':

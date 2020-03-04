@@ -45,6 +45,8 @@ class ImageMaterial extends ShaderMaterial {
         const textureExtrapol = pop(options, 'textureExtrapol', false);
         const viewExtrapol = pop(options, 'viewExtrapol', false);
         const distortionType = pop(options, 'distortionType', 0);
+        const mapDisto = pop(options, 'mapDistortion', null);
+        const mapUndisto = pop(options, 'mapDistortion', null);
 
         const map = pop(options, 'map', null);
         const alphaMap = pop(options, 'alphaMap', null);
@@ -82,6 +84,8 @@ class ImageMaterial extends ShaderMaterial {
         definePropertyUniform(this, 'textureExtrapol', textureExtrapol);
         definePropertyUniform(this, 'viewExtrapol', viewExtrapol);
         definePropertyUniform(this, 'distortionType', distortionType);
+        definePropertyUniform(this, 'mapDisto', mapDisto);
+        definePropertyUniform(this, 'mapUndisto', mapUndisto);
 
         definePropertyUniform(this, 'opacity', this.opacity);
         definePropertyUniform(this, 'map', map);
@@ -110,22 +114,33 @@ class ImageMaterial extends ShaderMaterial {
             .getInverse(viewCamera.postProjectionMatrix);
 
         // TODO: handle other distorsion types and arrays of distortions
-        if (textureCamera.distos && textureCamera.distos.length == 1
-            && (textureCamera.distos[0].type === 'ModRad'
-            || textureCamera.distos[0].type === 'eModele_FishEye_10_5_5')) {
-            
-            if (textureCamera.distos[0].type === 'ModRad'){
-                this.uvDistortion.type = textureCamera.distos[0].type;
-                this.uvDistortion.C = textureCamera.distos[0].C;
-                this.uvDistortion.R = textureCamera.distos[0].R;
-                this.distortionType = 1;
-            }else{
-                this.uvDistortion = textureCamera.distos[0];
+        if (textureCamera.distos && textureCamera.distos.length == 1) {
+            switch (textureCamera.distos[0].type){
+                case 'ModRad':
+                    this.uvDistortion.C = textureCamera.distos[0].C;
+                    this.uvDistortion.R = textureCamera.distos[0].R;
+                    this.distortionType = 1;
+                    break;
+                case 'ModPhgrStd':
+                    this.uvDistortion.C = textureCamera.distos[0].C;
+                    this.uvDistortion.R = textureCamera.distos[0].R;
+                    this.uvDistortion.P = textureCamera.distos[0].P;    
+                    this.uvDistortion.b = textureCamera.distos[0].b;
+                    this.distortionType = 3;
+                    break;
+                case 'eModele_FishEye_10_5_5':
+                case 'eModele_EquiSolid_FishEye_10_5_5':
+                    this.uvDistortion.F = textureCamera.distos[0].F;
+                    this.uvDistortion.C = textureCamera.distos[0].C;
+                    this.uvDistortion.R = textureCamera.distos[0].R;
+                    this.uvDistortion.P = textureCamera.distos[0].P;
+                    this.distortionType = 4;
+                default:
+                    break;
             }
-
-        }else {
+        }else{
             this.uvDistortion = {F: 0., C: new THREE.Vector2(), R: new THREE.Vector4(),
-                P: new THREE.Vector2(), l: new THREE.Vector2()};
+                P: new THREE.Vector2(), l: new THREE.Vector2(), b: new THREE.Vector2()};
             this.uvDistortion.R.w = Infinity;
         }
     }

@@ -125,12 +125,14 @@
                 scene.add(viewCamera);
                 scene.add(cameras);
 
+                // Distorted and Undistorted planes
+                //var materialPlane = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide});
+                //planeUndisto = new THREE.Mesh(new THREE.PlaneBufferGeometry(400, 400, 200, 200), materialPlane);
+                //viewCamera.add(planeUndisto);
+
                 // Environment
                 plane = new THREE.PlaneBufferGeometry(400, 400, 200, 200);
-                plane.colors =  [new THREE.Color('red')];
                 environmentPlane = new THREE.Mesh(plane, textureMaterial);
-                //environmentPlane.colors =  [new THREE.Color('red')];
-                //environmentPlane.scale.x = width/100; environmentPlane.scale.y = height/100;
                 viewCamera.add(environmentPlane);
 
                 environmentSphere = new THREE.Mesh(
@@ -167,19 +169,13 @@
                         clean();
                         loadJSON('data/datasets/frejus/');
                     },
-                    FrejusDisto: function(){
-                        clean();
-                        loadJSON('data/datasets/frejus_distorted/');
-
-                    },
                     Pierrerue: function(){
                         clean();
                         loadJSON('data/datasets/pierrerue/');
-
                     },
                     Nanterre: function(){
                         clean();
-                        loadJSON('data/datasets/nanterre_original/');
+                        loadJSON('data/datasets/nanterre/');
                     },
                     SaintMartin: function(){
                         clean();
@@ -333,7 +329,7 @@
                     }
                 }
 
-                /* Handeling ----------------------------------------- */
+                /* Handling ----------------------------------------- */
                 function handleOrientation(name) {
                     return function(camera) {
                         if (!camera) return;
@@ -423,7 +419,9 @@
                     console.log('Texture:', camera.name);
                     textureCamera = camera;
                     setMaterial(textureMaterial, camera);
-                    textureMaterial.r2max = camera.r2max*3.;
+                    if(textureMaterial.uvDistortion.R.w) textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
+                    else textureMaterial.r2max = textureCamera.view.width*textureCamera.view.width*3.;
+                    //textureMaterial.r2max = camera.r2max*3.;
                     textureMaterial.uvDistortion.R.w = param.rmax*param.rmax*textureMaterial.r2max;
                 }
 
@@ -611,7 +609,7 @@
                 render();
             }
 
-            scenes.SaintMartin();
+            scenes.Sample();
         </script>
     </body>
 </html>

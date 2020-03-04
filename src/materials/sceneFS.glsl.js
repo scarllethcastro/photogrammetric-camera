@@ -40,12 +40,10 @@ void main() {
 
     #ifdef USE_MAP4
         vec4 uvw = vUvw;
-        bool paintDebug = false;
+        bool paintDebug = true;
         if(viewDisto){
             uvw = uvwViewInvPostTrans*uvw;
-
-            if (distortionType == 1) distort_radial_inverse(uvw, uvDistortion, viewExtrapol);
-            else distort_fisheye_inverse(uvw, uvDistortion, viewExtrapol);
+            paintDebug = distort_inverse(uvw, uvDistortion, distortionType, viewExtrapol);
             uvw = uvwViewPostTrans*uvw;
         }
 
@@ -53,10 +51,12 @@ void main() {
         uvw.xyz += vec3(0.5);
         vec3 border = min(uvw.xyz, 1. - uvw.xyz);
 
-        if (all(greaterThan(border,vec3(0.)))){
+        if (all(greaterThan(border,vec3(0.))) && paintDebug){
             vec4 color = texture2D(map, uvw.xy);
             color.a *= min(1., borderSharpness*min(border.x, border.y));
             diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a); 
+        }else if(paintDebug){
+            diffuseColor.rgb = vec3(0.); 
         }
         
         vec3 outgoingLight = diffuseColor.rgb;
