@@ -1,8 +1,0 @@
-{
-    "autocal": ["ori/AutoCal_Foc-24000_Cam-DSLRA850.xml"],
-    "ori":  ["ori/Orientation-facade1DSC05896.JPG.xml"],
-    "img":  ["img/facade1DSC05896.JPG"],
-	"point":  ["ply/pierrerue.ply"],
-	"pc":  [],
-    "mesh":  []
-}
