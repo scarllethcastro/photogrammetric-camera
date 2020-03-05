@@ -1,8 +1,0 @@
-{
-    "target": {"x": 9790, "y": 8980, "z": 83},
-	"plane" : {"position": { "z": 80.4 }},
-    "autocal": ["ori/AutoCal_Foc-18000_Cam-Canon_EOS_70D.xml"],
-    "ori":  ["ori/Orientation-Maurepas_ToitureSud_4488.JPG.xml"],
-    "img":  ["img/Maurepas_ToitureSud_4488.JPG"],
-    "ply":  ["ply/Maurepas_FacadeSud_3-Nuage3D_SousEch.ply", "ply/Maurepas_ToitureSud_3-Nuage3D_SousEch.ply"]
-}
