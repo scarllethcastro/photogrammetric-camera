@@ -7,5 +7,9 @@
 /lib/
 /out/
 *.log
-.DS_Store
-/exaples/data/datasets/
+*.DS_Store
+*.xml
+*.jpg
+*.json
+*.ply
+*._img
