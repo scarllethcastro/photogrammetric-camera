@@ -40,16 +40,11 @@ class ImageMaterial extends ShaderMaterial {
         const uvwViewPostTrans = pop(options, 'uvwPostTransform', new Matrix4());
         const uvwViewInvPostTrans = pop(options, 'uvwViewInvPostTrans', new Matrix4());
         const uvDistortion = pop(options, 'uvDistortion', {});
-        const textureDisto = pop(options, 'textureDisto', false);
-        const viewDisto = pop(options, 'viewDisto', false);
-        const textureExtrapol = pop(options, 'textureExtrapol', false);
-        const viewExtrapol = pop(options, 'viewExtrapol', false);
-        const distortionType = pop(options, 'distortionType', 0);
-        const mapDisto = pop(options, 'mapDistortion', null);
-        const mapUndisto = pop(options, 'mapDistortion', null);
 
         const map = pop(options, 'map', null);
+        const lutMap = pop(options, 'lutMap', null);
         const alphaMap = pop(options, 'alphaMap', null);
+        const lutMapSize = pop(options, 'lutMapSize', 0);
         const scale = pop(options, 'scale', 1);
         const borderSharpness = pop(options, 'borderSharpness', 10000);
         const diffuseColorGrey = pop(options, 'diffuseColorGrey', false);
@@ -62,6 +57,7 @@ class ImageMaterial extends ShaderMaterial {
             options.defines.USE_MAP4 = '';
         }
         if (alphaMap) options.defines.USE_ALPHAMAP = '';
+        if (lutMap) options.defines.USE_LUTCOLOR = '';
         if (options.vertexColors) options.defines.USE_COLOR = '';
         if (options.logarithmicDepthBuffer) options.defines.USE_LOGDEPTHBUF = '';
         if (pop(options, 'sizeAttenuation')) options.defines.USE_SIZEATTENUATION = '';
@@ -79,17 +75,12 @@ class ImageMaterial extends ShaderMaterial {
         definePropertyUniform(this, 'uvwViewPostTrans', uvwViewPostTrans);
         definePropertyUniform(this, 'uvwViewInvPostTrans', uvwViewInvPostTrans);
         definePropertyUniform(this, 'uvDistortion', uvDistortion);
-        definePropertyUniform(this, 'textureDisto', textureDisto);
-        definePropertyUniform(this, 'viewDisto', viewDisto);
-        definePropertyUniform(this, 'textureExtrapol', textureExtrapol);
-        definePropertyUniform(this, 'viewExtrapol', viewExtrapol);
-        definePropertyUniform(this, 'distortionType', distortionType);
-        definePropertyUniform(this, 'mapDisto', mapDisto);
-        definePropertyUniform(this, 'mapUndisto', mapUndisto);
 
         definePropertyUniform(this, 'opacity', this.opacity);
         definePropertyUniform(this, 'map', map);
+        definePropertyUniform(this, 'lutMap', lutMap);
         definePropertyUniform(this, 'alphaMap', alphaMap);
+        definePropertyUniform(this, 'lutMapSize', lutMapSize);
         definePropertyUniform(this, 'scale', scale);
         definePropertyUniform(this, 'borderSharpness', borderSharpness);
         definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
@@ -113,7 +104,7 @@ class ImageMaterial extends ShaderMaterial {
         this.uvwViewInvPostTrans = new THREE.Matrix4()
             .getInverse(viewCamera.postProjectionMatrix);
 
-        // TODO: handle other distorsion types and arrays of distortions
+        // Handles different distortion types
         if (textureCamera.distos && textureCamera.distos.length == 1) {
             switch (textureCamera.distos[0].type){
                 case 'ModRad':

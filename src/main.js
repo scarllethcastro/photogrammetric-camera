@@ -1,15 +1,15 @@
 import * as THREE from 'three';
+import {EffectComposer, EffectPass, RenderPass, ShaderPass, BlurEffect} from 'postprocessing';
 
-export { THREE };
+export { THREE, EffectComposer, EffectPass, RenderPass, ShaderPass, BlurEffect };
+// export { EffectComposer } from './three/examples/jsm/postprocessing/EffectComposer.js';
+// export { RenderPass } from './three/examples/jsm/postprocessing/RenderPass.js';
+// export { ShaderPass } from './three/examples/jsm/postprocessing/ShaderPass.js';
 export { default as MatisOrientationParser } from './parsers/MatisOrientationParser';
 export { default as MicmacOrientationParser } from './parsers/MicmacOrientationParser';
 export { default as PhotogrammetricCamera } from './cameras/PhotogrammetricCamera';
-export { default as distortRadial } from './cameras/distortions/RadialDistortion';
 export { default as FilesSource } from './sources/FilesSource';
 export { default as FetchSource } from './sources/FetchSource';
-export { default as TextureMaterial } from './materials/TextureMaterial';
-export { default as imagePointCloudVS } from './materials/imagePointCloudVS.glsl';
-export { default as imageMeshVS } from './materials/imageMeshVS.glsl';
+export { default as ImageMaterial } from './materials/ImageMaterial';
+export { default as imageVS } from './materials/imageVS.glsl';
 export { default as imageFS } from './materials/imageFS.glsl';
-export { default as sceneVS } from './materials/sceneVS.glsl';
-export { default as sceneFS } from './materials/sceneFS.glsl';

@@ -31,7 +31,9 @@
   "peerDependencies": {
     "three": "^0.89.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "postprocessing": "^6.12.0"
+  },
   "directories": {
     "example": "examples"
   },

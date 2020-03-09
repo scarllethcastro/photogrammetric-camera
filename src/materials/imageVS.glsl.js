@@ -2,7 +2,6 @@ export default /* glsl */`
 #ifdef USE_MAP4
     #undef USE_MAP
     varying highp vec3 vPosition;
-    varying float vValid;
 #endif
 
 #ifdef USE_COLOR
@@ -18,7 +17,6 @@ void main() {
 
     #ifdef USE_MAP4
         vPosition = position;
-        vValid = 1.;
     #endif
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);

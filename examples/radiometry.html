@@ -11,6 +11,12 @@
         <script>
             // Three library
             var THREE = ThreePhotogrammetricCamera.THREE;
+            var EffectComposer = ThreePhotogrammetricCamera.EffectComposer;
+            var RenderPass = ThreePhotogrammetricCamera.RenderPass;
+            var ShaderPass = ThreePhotogrammetricCamera.ShaderPass;
+            var EffectPass = ThreePhotogrammetricCamera.EffectPass;
+            var BlurEffect = ThreePhotogrammetricCamera.BlurEffect;
+            
             // Photogrammetric camera
             var PhotogrammetricCamera = ThreePhotogrammetricCamera.PhotogrammetricCamera;
             // Parsers
@@ -18,37 +24,34 @@
             // Fetch files
             var FetchSource = ThreePhotogrammetricCamera.FetchSource;
             // Materials
-            var TextureMaterial = ThreePhotogrammetricCamera.TextureMaterial;
-            var imagePointCloudVS = ThreePhotogrammetricCamera.imagePointCloudVS;
-            var imageMeshVS = ThreePhotogrammetricCamera.imageMeshVS;
+            var ImageMaterial = ThreePhotogrammetricCamera.ImageMaterial;
+            var imageVS = ThreePhotogrammetricCamera.imageVS;
             var imageFS = ThreePhotogrammetricCamera.imageFS;
-            var sceneVS = ThreePhotogrammetricCamera.sceneVS;
-            var sceneFS = ThreePhotogrammetricCamera.sceneFS;
         </script>
         <script src="js/dat.gui.min.js"></script>
         <script src="js/PLYLoader.js"></script>
         <script src="js/OrbitControls.js"></script>
         <script>
             /* ---------------------- Variables ---------------------- */
-            var renderer;
+            var renderer, composer;
             var width, height;
             var cameras, scene, controls;
             var prevCamera = new PhotogrammetricCamera();
             var viewCamera = new PhotogrammetricCamera();
             var nextCamera = new PhotogrammetricCamera();
             var textureCamera = new PhotogrammetricCamera();
-            var texturedScene;
-            var rtScene, rtCamera, rtPlane;
             var textureMaterialUniforms = {}, viewMaterialUniforms = {};
-            var wireMaterial, textureMaterial, viewMaterials = {}, sceneMaterial;
+            var wireMaterial, textureMaterial, viewMaterials = {};
             var textures = {};
-            var environmentSphere, environmentPlane, plane, pointclouds, meshes;
+            var environmentSphere, environmentPlane, pointclouds, meshes;
             var sphereRadius = 500, epsilonRadius = 100;
             var scenes;
             var todos = [], todoTimestamp = 0, duration = 0.3;
-            var param = { method: 1, rmax: 1 };
+            var then = 0;
 
-            viewCamera.zoom = 0.8;
+            var colorPass, colorShader;
+
+            viewCamera.zoom = 0.5;
             viewCamera.up.set(0, 0, 1);
 
             /* ------------------------- Main ------------------------ */
@@ -80,12 +83,15 @@
 
                 var textureLoader = new THREE.TextureLoader();
                 const uvTexture = textureLoader.load('data/uv.jpg');
+
+                const lutTexture = makeIdentityLutTexture(THREE.LinearFilter);
+
                 viewMaterialUniforms = {
                     map: uvTexture,
                     opacity: 1,
                     transparent: true,
                     blending: THREE.NormalBlending,
-                    vertexShader : imagePointCloudVS,
+                    vertexShader : imageVS,
                     fragmentShader : imageFS
                 };
                 textureMaterialUniforms = {
@@ -96,23 +102,12 @@
                     vertexColors: THREE.VertexColors,
                     blending: THREE.NormalBlending,
                     transparent: true,
-                    vertexShader : imagePointCloudVS,
-                    fragmentShader : imageFS,
-                    textureExtrapol : false,
-                    textureDisto : false,
-                    viewExtrapol : false,
-                    viewDisto : false,
-                    debugOpacity : true
+                    vertexShader : imageVS,
+                    fragmentShader : imageFS
                 };
-                textureMaterial = new TextureMaterial(textureMaterialUniforms);
-                textureMaterial.map = null;
 
-                sceneMaterialUniforms = {
-                    map: uvTexture,
-                    vertexShader: sceneVS,
-                    fragmentShader: sceneFS
-                };
-                sceneMaterial = new TextureMaterial(sceneMaterialUniforms);
+                textureMaterial = new ImageMaterial(textureMaterialUniforms);
+                textureMaterial.map = null;
 
                 /* Main Scene ---------------------------------------- */
                 // Cameras
@@ -124,11 +119,6 @@
                 scene.background = new THREE.Color(0xf0f0f0);
                 scene.add(viewCamera);
                 scene.add(cameras);
-
-                // Distorted and Undistorted planes
-                //var materialPlane = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide});
-                //planeUndisto = new THREE.Mesh(new THREE.PlaneBufferGeometry(400, 400, 200, 200), materialPlane);
-                //viewCamera.add(planeUndisto);
 
                 // Environment
                 plane = new THREE.PlaneBufferGeometry(400, 400, 200, 200);
@@ -149,6 +139,7 @@
                 meshes = new THREE.Group();
                 scene.add(meshes);
 
+                // Ply loader for point clouds and meshes
                 var plyLoader = new THREE.PLYLoader();
                 var parsePly = (source) => (data => plyLoader.parse(data));
 
@@ -159,31 +150,7 @@
                         var path = 'https://raw.githubusercontent.com/micmacIGN/Documentation/master/FilesSamples/';
                         var source = new FetchSource(path);
                         loadOrientation('Orientation-00.xml', source);
-                    },
-                    Maurepas: function(){
-                        clean();
-                        //loadJSON('http://mathieu.bredif.free.fr/cors.php?url=data/maurepas/');
-                        loadJSON('data/datasets/maurepas/');
-                    },
-                    Frejus: function(){
-                        clean();
-                        loadJSON('data/datasets/frejus/');
-                    },
-                    Pierrerue: function(){
-                        clean();
-                        loadJSON('data/datasets/pierrerue/');
-                    },
-                    Nanterre: function(){
-                        clean();
-                        loadJSON('data/datasets/nanterre/');
-                    },
-                    SaintMartin: function(){
-                        clean();
-                        loadJSON('data/datasets/saint_martin/');
-                        //var path = 'data/datasets/saint_martin/';
-                        //var source = new FetchSource(path);
-                        //loadOrientedImage('ori/Orientation-IMGP4135.JPG.xml', 'img/IMGP4135.JPG', source);
-                    },
+                    }
                 };
 
                 // Controls
@@ -196,28 +163,42 @@
                 window.addEventListener('resize', onWindowResize, false);
                 window.addEventListener('keydown', keyDown, false);
 
-                // Scene is textured
-                texturedScene = new THREE.WebGLRenderTarget(width, height, {minFilter: THREE.LinearFilter,
-                    magFilter: THREE.NearestFilter});
+                // Post-processing
+                composer = new EffectComposer(renderer, {frameBufferType: THREE.HalfFloatType});
+                composer.addPass(new RenderPass(scene, viewCamera));
 
-                /* Render to Texture Scene --------------------------- */
-                // Camera
-                rtCamera = new THREE.OrthographicCamera(width/-2, width/2, height/2, height/-2, 1, 1000);
-                rtCamera.zoom = 1.3;
+                const colorShader = new THREE.ShaderMaterial({
+                    defines: { LABEL: "value" },
+                    uniforms: { 
+                        tDiffuse: new THREE.Uniform(null),
+                        color: new THREE.Uniform(new THREE.Color(0x88CCFF))
+                    },
+                    vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
+                    }
+                    `,
+                    fragmentShader: `
+                    uniform vec3 color;
+                    uniform sampler2D tDiffuse;
+                    varying vec2 vUv;
+                    void main() {
+                        vec4 previousPassColor = texture2D(tDiffuse, vUv);
+                        //gl_FragColor = vec4(
+                        //    previousPassColor.rgb * color,
+                        //    previousPassColor.a);
+                        gl_FragColor = previousPassColor;
+                    }
+                    `
+                });
 
-                // Scene
-                rtScene = new THREE.Scene();
-
-                // Material
-                sceneMaterial.map = texturedScene.texture;
-
-                // Plane to display the buffered textured scene
-                rtPlane = new THREE.PlaneBufferGeometry(100, 100);
-                rtDisplayImage = new THREE.Mesh(rtPlane, sceneMaterial);
-                rtDisplayImage.position.z = -5;
-                rtDisplayImage.scale.x = width/100;
-				rtDisplayImage.scale.y = height/100;
-                rtScene.add(rtDisplayImage);
+                colorPass = new ShaderPass(colorShader, "tDiffuse");
+                colorPass.renderToScreen = true;
+                //composer.addPass(colorPass);
+                //colorPass = new EffectPass(viewCamera, new BlurEffect());
+                composer.addPass(colorPass);
 
                 /* Callbacks ----------------------------------------- */
                 function onWindowResize(){
@@ -258,57 +239,6 @@
                     .then(handleOrientation(name));
                 }
 
-                function loadImage(url, source){
-                    return source.open(url, 'dataURL')
-                    .then(parseImage(source))
-                    .then(handleImage(url));
-                }
-
-                function loadOrientedImage(orientationUrl, imageUrl, source){
-                    loadImage(imageUrl, source).then(() => loadOrientation(orientationUrl, source));
-                }
-
-                function loadPlyPC(url, source){
-                    return source.open(url, 'arrayBuffer')
-                    .then(parsePly(source))
-                    .then(handlePointCloud(url));
-                }
-
-                function loadPlyMesh(url, source){
-                    return source.open(url, 'arrayBuffer')
-                    .then(parsePly(source))
-                    .then(handleMesh(url));
-                }
-
-                function loadJSON(path, file){
-                    file = file || 'index.json';
-                    var source = new FetchSource(path);
-                    source.open(file, 'text').then((json)=> {
-                        json = JSON.parse(json);
-                        if(json.plane && json.plane.position){
-                            const position = json.plane.position;
-                            if (position.x !== undefined) environmentPlane.position.x = position.x;
-                            if (position.y !== undefined) environmentPlane.position.y = position.y;
-                            if (position.z !== undefined) environmentPlane.position.z = position.z;
-                            controls.target.copy(environmentPlane.position);
-                            const scale = json.plane.scale || 1000;
-                        }
-                        if(json.sphere){
-                            sphereRadius = json.sphere.radius;
-                            if(sphereRadius != undefined){
-                                environmentSphere.scale.set(sphereRadius, sphereRadius, sphereRadius);
-                            }
-                        }
-                        if(json.target){
-                            controls.target.copy(json.target);
-                        }
-                        json.pc.forEach(url => todos.push(() => loadPlyPC(url, source)));
-                        json.mesh.forEach(url => todos.push(() => loadPlyMesh(url, source)));
-                        json.ori.forEach((orientationUrl, i) => todos.push(() =>
-                            loadOrientedImage(orientationUrl, json.img[i], source)));
-                    });
-                }
-
                 /* Parsing --------------------------------------------- */
                 function parseOrientation(source){
                     var parsers = [MicmacOrientationParser];
@@ -318,14 +248,6 @@
                             if (parsed) return parsed;
                         }
                         return undefined;
-                    }
-                }
-
-                function parseImage(source){
-                    return (data) => {
-                        return new Promise((resolve, reject) => {
-                            textureLoader.load(data, resolve, undefined, reject)
-                        }).finally(() => source.close(data, 'dataURL'));
                     }
                 }
 
@@ -352,49 +274,12 @@
                     };
                 }
 
-                function handleImage(name) {
-                    return function(texture) {
-                        if (!texture) return;
-                        const match = name.match(/([^\/]*)\.[\w\d]/i);
-                        texture.name = match ? match[1] : name;
-                        textures[texture.name] = texture;
-                        const camera = cameras.getObjectByName(texture.name);
-                        setCamera(camera);
-                        return texture;
-                    };
+                /* Gets ---------------------------------------------- */
+                function getCamera(camera, delta = 0){
+                    const array = cameras.children;
+                    const index = array.findIndex(cam => cam.name == camera.name);
+                    return array[(index + delta + array.length) % array.length];
                 }
-
-                function handlePointCloud(name){
-                    return function(geometry){
-                        // Show the name of the file to be loaded
-                        console.log(name);
-                        // Create the point cloud
-                        var points = new THREE.Points(geometry, textureMaterial);
-                        pointclouds.add(points);
-                        // Find center of the geometry
-                        geometry.computeBoundingBox();
-                        var center = new THREE.Vector3();
-                        geometry.boundingBox.getCenter(center);
-                        points.updateMatrixWorld(true);
-                    }
-                }
-
-                function handleMesh(name){
-                    return function(geometry){
-                        // Show the name of the file to be loaded
-                        console.log(name);
-                        // Create the mesh
-                        geometry.computeVertexNormals();
-                        var mesh = new THREE.Mesh(geometry, textureMaterial);
-                        meshes.add(mesh);
-                        // Find center of the geometry
-                        geometry.computeBoundingBox();
-                        var center = new THREE.Vector3();
-                        geometry.boundingBox.getCenter(center);
-                        mesh.updateMatrixWorld(true);
-                    }
-                }
-
 
                 /* Sets ---------------------------------------------- */
                 function setView(camera) {
@@ -407,7 +292,6 @@
                     setMaterial(viewMaterials[camera.name], camera);
                     onWindowResize();
                     controls.enabled = false;
-
                     environmentPlane.position.x = 0;
                     environmentPlane.position.y = 0;
                     environmentPlane.position.z = -50;
@@ -419,10 +303,6 @@
                     console.log('Texture:', camera.name);
                     textureCamera = camera;
                     setMaterial(textureMaterial, camera);
-                    if(textureMaterial.uvDistortion.R.w) textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
-                    else textureMaterial.r2max = textureCamera.view.width*textureCamera.view.width*3.;
-                    //textureMaterial.r2max = camera.r2max*3.;
-                    textureMaterial.uvDistortion.R.w = param.rmax*param.rmax*textureMaterial.r2max;
                 }
 
                 function setCamera(camera){
@@ -433,16 +313,7 @@
                 function setMaterial(material, camera) {
                     material.map = textures[camera.name] || uvTexture;
                     material.setCamera(camera, camera);
-                    if(param.method == 1) material.vertexShader = imagePointCloudVS;
-                    else material.vertexShader = imageMeshVS;
                     material.needsUpdate = true;
-                }
-
-                /* Gets ---------------------------------------------- */
-                function getCamera(camera, delta = 0){
-                    const array = cameras.children;
-                    const index = array.findIndex(cam => cam.name == camera.name);
-                    return array[(index + delta + array.length) % array.length];
                 }
 
                 /* Additional functions ------------------------------ */
@@ -467,7 +338,7 @@
                         geometry.addGroup(0, 12, 0);
                         geometry.addGroup(12, 6, 1);
 
-                        viewMaterials[camera.name] = new TextureMaterial(viewMaterialUniforms);
+                        viewMaterials[camera.name] = new ImageMaterial(viewMaterialUniforms);
                         viewMaterials[camera.name].map = textures[camera.name] || uvTexture;
 
                         var mesh = new THREE.Mesh(geometry, [wireMaterial, viewMaterials[camera.name]]);
@@ -491,7 +362,7 @@
                     viewCamera.set(camera);
                     nextCamera.set(camera);
                     textureCamera = viewCamera;
-                    viewCamera.zoom = 0.8;
+                    viewCamera.zoom = 0.5;
                     nextCamera.timestamp = undefined;
                     textureMaterial.map = null;
                     Object.keys(textures).forEach(key => textures[key].dispose());
@@ -501,86 +372,63 @@
                     environmentPlane.position.z = -50;
                     controls.target.set(0, 0, 0);
                 }
+
+                /* Radiometry  --------------------------------------- */
+                function makeIdentityLutTexture(){
+                    const identityLUT = new Uint8Array([
+                    0,   0,   0, 255,  // black
+                    255,   0,   0, 255,  // red
+                    0,   0, 255, 255,  // blue
+                    255,   0, 255, 255,  // magenta
+                    0, 255,   0, 255,  // green
+                    255, 255,   0, 255,  // yellow
+                    0, 255, 255, 255,  // cyan
+                    255, 255, 255, 255,  // white
+                    ]);
+
+                    return function(filter) {
+                        const texture = new THREE.DataTexture(identityLUT, 4, 2, THREE.RGBAFormat);
+                        texture.minFilter = filter;
+                        texture.magFilter = filter;
+                        texture.needsUpdate = true;
+                        texture.flipY = false;
+                        return texture;
+                    };
+                }
             }
 
             function initGUI(){
                 var gui = new dat.GUI();
-
-                // Selection of rendering method
-                function updateRenderingFromGUI(){
-                    if(param.method == 1) textureMaterial.vertexShader = imagePointCloudVS;
-                    else textureMaterial.vertexShader = imageMeshVS;
-                    textureMaterial.needsUpdate = true;
-                }
-
-                gui.add(param, 'method', {Single: 1, Double: 2}).name('rendering method')
-                .listen().onChange(updateRenderingFromGUI);
-
-                // Scene options
-                var scenesGUI = gui.addFolder('Scenes');
-                for(const key in scenes) scenesGUI.add(scenes, key);
-                scenesGUI.closed = false;
-
-                // Camera options
+                
+                // Updating functions
                 function updateViewCameraFromGUI() {
                     viewCamera.updateProjectionMatrix();
                 };
 
-                function updateTextureCameraFromGUI() {
-                    textureCamera.updateProjectionMatrix();
-                };
-
-                function updatesceneInfoFromGUI(){
-                    sceneMaterial.viewDisto = textureMaterial.viewDisto;
-                    sceneMaterial.viewExtrapol = textureMaterial.viewExtrapol;
-                    sceneMaterial.debugOpacity = textureMaterial.debugOpacity;
-                }
-                function updateRmaxFromGUI(value) {
-                    textureMaterial.uvDistortion.R.w = value*value*textureMaterial.r2max;
-                };
-
-                var textureGUI = gui.addFolder('Texture Camera'); // Texture
-                textureGUI.add(textureMaterial, 'textureDisto').name('apply distortion');
-                textureGUI.add(textureMaterial, 'textureExtrapol').name('apply extrapol');
-                textureGUI.add(param, 'rmax', 0.01, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
-
-                var viewGUI = gui.addFolder('View Camera'); // View
-                //viewGUI.add(cameras, 'visible');
+                // View camera
+                var viewGUI = gui.addFolder('View Camera'); 
                 viewGUI.add(viewCamera, 'zoom', 0, 2).listen().onChange(updateViewCameraFromGUI);
-                viewGUI.add(textureMaterial, 'viewDisto').name('apply distortion')
-                    .listen().onChange(updatesceneInfoFromGUI);
-                viewGUI.add(textureMaterial, 'viewExtrapol').name('apply extrapol')
-                .listen().onChange(updatesceneInfoFromGUI);
 
-                // Debug Options
-                var debugGUI = gui.addFolder('Debug')
-                debugGUI.add(textureMaterial, 'debugOpacity', 0, 1)
-                .listen().onChange(updatesceneInfoFromGUI);
-                debugGUI.add(textureMaterial, 'wireframe');
-                debugGUI.add(environmentSphere, 'visible').name('sphere');
-                debugGUI.add(environmentPlane, 'visible').name('plane');
-                debugGUI.add(pointclouds, 'visible').name('pointcloud');
-                debugGUI.add(meshes, 'visible').name('mesh');
+                //viewGUI.add(colorShader.uniforms.color.value, 'r', 0, 4).name('red');
+                //viewGUI.add(colorPass.uniforms.color.value, 'g', 0, 4).name('green');
+                //viewGUI.add(colorPass.uniforms.color.value, 'b', 0, 4).name('blue');
             }
 
             function render(){
-                if(param.method == 2){
-                    // Render onto our off screen texture
-                    renderer.render(scene, viewCamera, texturedScene);
-                    // Finally, draw to the screen
-                    renderer.render(rtScene, rtCamera);
-                }else{
-                    renderer.render(scene, viewCamera);
-                }
+                renderer.render(scene, viewCamera);
             }
 
             function animate(timestamp){
                 requestAnimationFrame(animate);
+
+                var now = timestamp*0.001;  // convert to seconds
+                const deltaTime = now - then;
+                then = now;
+                
                 if (todos.length && timestamp > todoTimestamp){
                     todos.shift()();
                     todoTimestamp = timestamp + 200;
                 }
-
                 if (prevCamera.timestamp !== undefined) {
                     if (prevCamera.timestamp == 0) {
                         prevCamera.timestamp = timestamp;
@@ -600,15 +448,8 @@
                     viewCamera.far = 15000;
                     viewCamera.updateProjectionMatrix();
                 }
-                if (viewMaterials[nextCamera.name])
-                    viewMaterials[nextCamera.name].setValues(viewMaterialUniforms);
-
-                // Material update
-                textureMaterial.setCamera(textureCamera, viewCamera);
-                sceneMaterial.setCamera(textureCamera, viewCamera);
-                render();
+                composer.render(deltaTime);
             }
-
             scenes.Sample();
         </script>
     </body>

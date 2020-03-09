@@ -2,10 +2,10 @@ import { default as Distortion } from '../cameras/distortions/Distortion';
 
 export default /* glsl */`
 ${Distortion.chunks.shaders}
+
 #ifdef USE_MAP4
     #undef USE_MAP
     varying highp vec3 vPosition;
-    varying float vValid;
 #endif
 #ifdef USE_COLOR
     varying vec3 vColor;
@@ -20,13 +20,28 @@ uniform float opacity;
     uniform mat4 uvwTexturePostTrans;
     uniform Distos uvDistortion;
     uniform int distortionType;
-    uniform bool textureDisto;
-    uniform bool viewDisto;
-    uniform bool textureExtrapol;
     uniform sampler2D map;
     uniform float borderSharpness;
-    uniform float debugOpacity;
 #endif
+
+#ifdef USE_LUTCOLOR
+    uniform sampler2D lutMap;
+    uniform float lutMapSize;
+#endif
+
+vec4 sampleAs3DTexture(sampler2D tex, vec3 texCoord, float size) {
+    float sliceSize = 1.0 / size;                  // space of 1 slice
+    float slicePixelSize = sliceSize / size;       // space of 1 pixel
+    float width = size - 1.0;
+    float sliceInnerSize = slicePixelSize * width; // space of size pixels
+    float zSlice0 = floor( texCoord.z * width);
+    float zSlice1 = min( zSlice0 + 1.0, width);
+    float xOffset = slicePixelSize * 0.5 + texCoord.x * sliceInnerSize;
+    float yRange = (texCoord.y * width + 0.5) / size;
+    float s0 = xOffset + (zSlice0 * sliceSize);
+
+    return texture2D(tex, vec2( s0, yRange));
+  }
     
 void main() {
     vec4 diffuseColor = vec4(diffuse, opacity);
@@ -44,15 +59,8 @@ void main() {
         mat4 m = modelMatrix;
         m[3].xyz -= uvwTexturePosition;
         vec4 uvw = uvwTexturePreTrans * m * vec4(vPosition, 1.);
-        bool paintDebug = true;
-
-        vec2 v = uvw.xy/uvw.w - uvDistortion.C;
-        float r = dot(v, v)/uvDistortion.R.w;
-        vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
 
         if( uvw.w > 0.){
-            if (textureDisto) paintDebug = distort(uvw, uvDistortion, distortionType, textureExtrapol);
-            
             uvw = uvwTexturePostTrans*uvw;
             uvw.xyz /= 2. * uvw.w;
             uvw.xyz += vec3(0.5);
@@ -60,15 +68,14 @@ void main() {
 
             if (all(greaterThan(border,vec3(0.)))){
                 vec4 color = texture2D(map, uvw.xy);
+                #ifdef USE_LUTCOLOR
+                    color = sampleAs3DTexture(lutMap, color.xyz, lutMapSize);
+                #endif
                 color.a *= min(1., borderSharpness*min(border.x, border.y));
                 diffuseColor.rgb = mix(diffuseColor.rgb, color.rgb, color.a);
-            }else if(paintDebug) {
-                diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), 0.4*debugOpacity);
             }
-
-            if(vValid < 0.99) discard;
-      	    diffuseColor.rgb = mix(diffuseColor.rgb, debugColor.rgb, debugColor.a);
         }
+
     #endif
     vec3 outgoingLight = diffuseColor.rgb;
     gl_FragColor = vec4(outgoingLight, diffuseColor.a);
