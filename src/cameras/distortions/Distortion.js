@@ -14,8 +14,7 @@ const chunks = {
         return dot(R, vec3(x, x2, x*x2));
     }
 
-    void radial(inout vec2 p, Distos disto){
-        vec2 r = p.xy - disto.C;
+    void radial(inout vec2 p, Distos disto, vec2 r){
         float r2 = dot(r, r);
         // the same as: p.xy = disto.C + r * (1.+polynom(disto.R.xyz, r2));
         p.xy += r*polynom(disto.R.xyz, r2);
@@ -30,18 +29,17 @@ const chunks = {
         p.y += disto.P.y*(2.*y2 + r2) + disto.P.x*2.*xy;
     }
 
-    void fraser(inout vec2 p, Distos disto){
-        vec2 r = p.xy - disto.C;
+    void fraser(inout vec2 p, Distos disto, vec2 r){
         // Radial
-        radial(p.xy, disto);
+        radial(p.xy, disto, r);
         // Tangentional
         tangentional(p, disto, r);
         // Affine
         p.x += disto.b.x*r.x + disto.b.y*r.y;
     }
 
-    void fisheye(inout vec2 p, Distos disto){
-        vec2 AB = (p - disto.C)/disto.F;
+    void fisheye(inout vec2 p, Distos disto, vec2 r){
+        vec2 AB = r/disto.F;
         float R = sqrt(dot(AB, AB));
         float theta = atan(R);
         float lambda = theta/R;
@@ -49,9 +47,11 @@ const chunks = {
         float r2 = dot(P, P);
 
         // Radial distortion and degree 1 polynomial
-        float rad = 1. + polynom(disto.R.xyz, r2);
-        p.x = P.y * disto.l.y + P.x * (rad + disto.l.x);
-        p.y = P.x * disto.l.y + P.y * rad;
+        vec2 rad = P;
+        radial(rad, disto, rad);
+
+        p.x = P.y*disto.l.y + P.x*disto.l.x + rad.x;
+        p.y = P.x*disto.l.y + rad.y;
 
         // Tangential distortion
         tangentional(p, disto, P);
@@ -60,11 +60,81 @@ const chunks = {
         p = disto.C + disto.F*p;
     }
 
-    void selectDistortion(inout vec2 p, Distos disto, int type){
-        if (type == 1) radial(p, disto);
-        else if (type == 3) fraser(p, disto);
-        else if (type == 4) fisheye(p, disto);
+    void distortPoint(inout vec2 p, Distos disto, int type){
+        vec2 r = p.xy - disto.C;
+        if (type == 1) radial(p, disto, r);
+        else if (type == 3) fraser(p, disto, r);
+        else if (type == 4) fisheye(p, disto, r);
     }
+
+    void homography(inout vec2 p, mat3 H){
+        vec3 point = vec3(p.x, p.y, 1.);
+        point = H * point;
+        p = point.xy/point.z;
+    }
+
+    bool distortH(inout vec4 p, Distos disto, int distoType, bool extrapol, mat3 H){
+        p /= p.w;
+        vec2 r = p.xy - disto.C;
+        float r2 = dot(r, r);
+
+        if(r2 < disto.R.w){
+            if (distoType > 0 && distoType < 5) distortPoint(p.xy, disto, distoType);
+            else return false;
+        }else if(extrapol){
+            homography(p.xy, H);
+        }else return false;
+        return true;
+    }
+
+    const int N = 500;
+    const float m_err2_max = 0.5;
+    bool distort_inverseH(inout vec4 p, Distos disto, int distoType, bool extrapol, mat3 H) {
+        p /= p.w;
+        vec2 v = p.xy - disto.C;
+        float v2 = dot(v, v);
+
+        float r2_max = disto.R.w;
+        float r_max = sqrt(r2_max);
+        vec2 point_rmax = normalize(v)*r_max + disto.C;
+        distortPoint(point_rmax, disto, distoType);
+        vec2 rd_max = point_rmax - disto.C;
+        float rd2_max = dot(rd_max, rd_max);
+        float ratio = r_max/sqrt(rd2_max);
+
+        if(v2 < rd2_max){
+            float rd = sqrt(v2), r = rd*ratio, r2 = r*r; // initialization of the iteration
+            vec2 point = normalize(v)*r + disto.C;
+            vec2 dPoint = point;
+            distortPoint(dPoint, disto, distoType);
+            vec2 rd_point = dPoint - disto.C;
+            float rd2_point = dot(rd_point, rd_point);
+            float err = rd - sqrt(rd2_point), err2 = err*err;
+            for (int i = 0; i < N; i++) { // iterate max N times
+                if (err2 < m_err2_max) break;
+                // New estimation
+                r = clamp(r + err, 0., r_max);
+                vec2 point = normalize(dPoint)*r + disto.C;
+                dPoint = point;
+                distortPoint(dPoint, disto, distoType);
+                rd_point = dPoint - disto.C;
+                rd2_point = dot(rd_point, rd_point);
+                err = rd - sqrt(rd2_point);
+                err2 = err*err;
+            }
+
+            if (err2 > m_err2_max) return false;
+            p.xy = disto.C + (r/rd)*v;
+
+        }else if(extrapol){
+            homography(p.xy, H);
+        }else return false;
+
+
+        return true;
+    }
+
+    // ----------------------------------------------------
 
     bool distort(inout vec4 p, Distos disto, int distoType, bool extrapol){
         p /= p.w;
@@ -77,7 +147,7 @@ const chunks = {
             else return false;
 
         // Distort the point depending on the type of distortion
-        if (distoType > 0 && distoType < 5) selectDistortion(point, disto, distoType);
+        if (distoType > 0 && distoType < 5) distortPoint(point, disto, distoType);
         else return false;
 
         if (v2 > disto.R.w){
@@ -88,8 +158,6 @@ const chunks = {
         return true;
     }
 
-    const int N = 500;
-    const float m_err2_max = 0.5;
     bool distort_inverse(inout vec4 p, Distos disto, int distoType, bool extrapol) {
         p /= p.w;
         vec2 v = p.xy - disto.C;
@@ -98,7 +166,7 @@ const chunks = {
         float r2_max = disto.R.w;
         float r_max = sqrt(r2_max);
         vec2 point_rmax = normalize(v)*r_max + disto.C;
-        selectDistortion(point_rmax, disto, distoType);
+        distortPoint(point_rmax, disto, distoType);
         vec2 rd_max = point_rmax - disto.C;
         float rd2_max = dot(rd_max, rd_max);
         float ratio = r_max/sqrt(rd2_max);
@@ -110,7 +178,7 @@ const chunks = {
         if(v2 < rd2_max){ 
             float rd = sqrt(v2), r0 = r_max, r1 = rd*ratio, r = r1;
             vec2 point = normalize(v)*r + disto.C;
-            selectDistortion(point, disto, distoType);
+            distortPoint(point, disto, distoType);
             vec2 r_point = point - disto.C;
             float r2_point = dot(r_point, r_point);
             float d_r0 = sqrt(rd2_max), d_r1 = sqrt(r2_point);
@@ -120,7 +188,7 @@ const chunks = {
                 r = clamp(r + (err*(r1-r0)/(d_r1-d_r0)), 0., r_max);
                 r0 = r1; r1 = r;
                 point = normalize(v)*r + disto.C;
-                selectDistortion(point, disto, distoType);
+                distortPoint(point, disto, distoType);
                 r_point = point - disto.C;
                 r2_point = dot(r_point, r_point);
                 d_r0 = d_r1; d_r1 = sqrt(r2_point);

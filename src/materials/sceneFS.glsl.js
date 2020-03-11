@@ -22,6 +22,8 @@ uniform float opacity;
     uniform int distortionType;
     uniform bool viewDisto;
     uniform bool viewExtrapol;
+    uniform mat3 invH;
+    uniform mat3 H;
 
     uniform sampler2D map;
     uniform float borderSharpness;
@@ -43,7 +45,7 @@ void main() {
         bool paintDebug = true;
         if(viewDisto){
             uvw = uvwViewInvPostTrans*uvw;
-            paintDebug = distort_inverse(uvw, uvDistortion, distortionType, viewExtrapol);
+            paintDebug = distort_inverseH(uvw, uvDistortion, distortionType, viewExtrapol, invH);
             uvw = uvwViewPostTrans*uvw;
         }
 

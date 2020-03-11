@@ -22,6 +22,7 @@ uniform float size;
     uniform int distortionType;
     uniform bool viewDisto;
     uniform bool viewExtrapol;
+    uniform mat3 H;
 #endif
 
 void main() {
@@ -40,7 +41,8 @@ void main() {
         m[3].xyz -= uvwViewPosition;
         vec4 uvw = uvwViewPreTrans * m * vec4(vPosition, 1.);
 
-        if (viewDisto) paintDebug = distort(uvw, uvDistortion, distortionType, viewExtrapol);
+        //if (viewDisto) paintDebug = distort(uvw, uvDistortion, distortionType, viewExtrapol);
+        if (viewDisto) paintDebug = distortH(uvw, uvDistortion, distortionType, viewExtrapol, H);
 
         gl_Position = uvwViewPostTrans * uvw;
         

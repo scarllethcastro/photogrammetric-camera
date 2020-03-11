@@ -26,6 +26,7 @@ uniform float opacity;
     uniform sampler2D map;
     uniform float borderSharpness;
     uniform float debugOpacity;
+    uniform mat3 H;
 #endif
     
 void main() {
@@ -51,7 +52,8 @@ void main() {
         vec4 debugColor = vec4(vec3(1.), fract(clamp(r*r*r*r*r,0.,1.)));
 
         if( uvw.w > 0.){
-            if (textureDisto) paintDebug = distort(uvw, uvDistortion, distortionType, textureExtrapol);
+            if (textureDisto) paintDebug = distortH(uvw, uvDistortion, distortionType, textureExtrapol, H);
+            //if (textureDisto) paintDebug = distort(uvw, uvDistortion, distortionType, textureExtrapol);
             
             uvw = uvwTexturePostTrans*uvw;
             uvw.xyz /= 2. * uvw.w;
@@ -72,5 +74,6 @@ void main() {
     #endif
     vec3 outgoingLight = diffuseColor.rgb;
     gl_FragColor = vec4(outgoingLight, diffuseColor.a);
+    //gl_FragColor = vec4(H[2], 1.);
 }
 `;

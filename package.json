@@ -31,7 +31,9 @@
   "peerDependencies": {
     "three": "^0.89.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "numeric": "^1.2.6"
+  },
   "directories": {
     "example": "examples"
   },

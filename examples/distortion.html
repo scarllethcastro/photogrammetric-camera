@@ -28,6 +28,7 @@
         <script src="js/dat.gui.min.js"></script>
         <script src="js/PLYLoader.js"></script>
         <script src="js/OrbitControls.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
         <script>
             /* ---------------------- Variables ---------------------- */
             var renderer;
@@ -48,7 +49,7 @@
             var todos = [], todoTimestamp = 0, duration = 0.3;
             var param = { method: 1, rmax: 1 };
 
-            viewCamera.zoom = 0.8;
+            viewCamera.zoom = 0.3;
             viewCamera.up.set(0, 0, 1);
 
             /* ------------------------- Main ------------------------ */
@@ -419,10 +420,18 @@
                     console.log('Texture:', camera.name);
                     textureCamera = camera;
                     setMaterial(textureMaterial, camera);
-                    if(textureMaterial.uvDistortion.R.w) textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
-                    else textureMaterial.r2max = textureCamera.view.width*textureCamera.view.width*3.;
-                    //textureMaterial.r2max = camera.r2max*3.;
+                    sceneMaterial.setCamera(camera, camera);
+
+                    const r2 = textureCamera.view.width*textureCamera.view.width*3.;
+                    if(textureMaterial.uvDistortion.R.w) 
+                        textureMaterial.r2max = textureMaterial.uvDistortion.R.w;
+                    else textureMaterial.r2max = r2;
                     textureMaterial.uvDistortion.R.w = param.rmax*param.rmax*textureMaterial.r2max;
+                    sceneMaterial.uvDistortion.R.w = textureMaterial.uvDistortion.R.w;
+
+                    textureMaterial.setHomography();
+                    sceneMaterial.H = textureMaterial.H;
+                    sceneMaterial.invH = textureMaterial.invH;
                 }
 
                 function setCamera(camera){
@@ -491,7 +500,7 @@
                     viewCamera.set(camera);
                     nextCamera.set(camera);
                     textureCamera = viewCamera;
-                    viewCamera.zoom = 0.8;
+                    viewCamera.zoom = 0.3;
                     nextCamera.timestamp = undefined;
                     textureMaterial.map = null;
                     Object.keys(textures).forEach(key => textures[key].dispose());
@@ -537,12 +546,17 @@
                 }
                 function updateRmaxFromGUI(value) {
                     textureMaterial.uvDistortion.R.w = value*value*textureMaterial.r2max;
+                    textureMaterial.setHomography(textureMaterial);
+                    sceneMaterial.uvDistortion.R.w = textureMaterial.uvDistortion.R.w;
+                    sceneMaterial.H = textureMaterial.H;
+                    sceneMaterial.invH = textureMaterial.invH;
                 };
 
                 var textureGUI = gui.addFolder('Texture Camera'); // Texture
                 textureGUI.add(textureMaterial, 'textureDisto').name('apply distortion');
                 textureGUI.add(textureMaterial, 'textureExtrapol').name('apply extrapol');
                 textureGUI.add(param, 'rmax', 0.01, 1).name('rmax ratio').onChange(updateRmaxFromGUI);
+                textureGUI.closed = false;
 
                 var viewGUI = gui.addFolder('View Camera'); // View
                 //viewGUI.add(cameras, 'visible');
@@ -551,6 +565,7 @@
                     .listen().onChange(updatesceneInfoFromGUI);
                 viewGUI.add(textureMaterial, 'viewExtrapol').name('apply extrapol')
                 .listen().onChange(updatesceneInfoFromGUI);
+                viewGUI.closed = false;
 
                 // Debug Options
                 var debugGUI = gui.addFolder('Debug')
@@ -606,6 +621,7 @@
                 // Material update
                 textureMaterial.setCamera(textureCamera, viewCamera);
                 sceneMaterial.setCamera(textureCamera, viewCamera);
+
                 render();
             }
 
