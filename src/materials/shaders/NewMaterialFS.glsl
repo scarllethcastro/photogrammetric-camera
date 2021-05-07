@@ -57,6 +57,8 @@ void main() {
       {
         vec4 color = texture2D(map, uvw.xy);
         finalColor.rgb = mix(finalColor.rgb, color.rgb, color.a);
+      } else {
+        finalColor.rgb = vec3(0.2);
       }
     }
   } else {
@@ -65,6 +67,5 @@ void main() {
 
 #endif
 
-  finalColor = vec4(vec2(uvwNotDistorted.x), 0., 1.0);
   gl_FragColor =  finalColor;
 }

@@ -14,7 +14,6 @@ class ShadowMapMaterial extends ShaderMaterial {
       ${ShaderChunk.packing}
       ${ShadowMapMaterialFS}
     `;
-
   }
 }
 
