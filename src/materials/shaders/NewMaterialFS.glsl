@@ -35,8 +35,8 @@ void main() {
   vec4 uvwNotDistorted = textureCameraPostTransform * uvw;
   uvwNotDistorted.xyz /= uvwNotDistorted.w;
 
-  float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
-  float distanceCamera = uvwNotDistorted.z;
+	float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
+	float distanceCamera = uvwNotDistorted.z;
 
   vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
 
@@ -65,5 +65,6 @@ void main() {
 
 #endif
 
+  finalColor = vec4(vec2(uvwNotDistorted.x), 0., 1.0);
   gl_FragColor =  finalColor;
 }
