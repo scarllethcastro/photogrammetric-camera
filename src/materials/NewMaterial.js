@@ -1,4 +1,4 @@
-import { ShaderMaterial, Matrix4, Vector3, Vector4 } from 'three';
+import { ShaderMaterial, ShaderChunk, Matrix4, Vector3, Vector4 } from 'three';
 import { pop, definePropertyUniform, textureMatrix } from './Material.js';
 import NewMaterialVS from './shaders/NewMaterialVS.glsl';
 import NewMaterialFS from './shaders/NewMaterialFS.glsl';
@@ -33,7 +33,12 @@ class NewMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
 
     this.vertexShader = NewMaterialVS;
-    this.fragmentShader = NewMaterialFS;
+
+    this.fragmentShader = `
+    ${ShaderChunk.packing}
+    ${NewMaterialFS}
+    `;
+
   }
 
   setCamera(camera) {
