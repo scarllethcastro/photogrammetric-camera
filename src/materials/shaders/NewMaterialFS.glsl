@@ -70,6 +70,5 @@ void main() {
 
 #endif
 
-  finalColor = vec4(vec2(uvwNotDistorted.x), 0., 1.0);
   gl_FragColor =  finalColor;
 }
