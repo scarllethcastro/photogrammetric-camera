@@ -35,7 +35,10 @@ void main() {
   vec4 uvwNotDistorted = textureCameraPostTransform * uvw;
   uvwNotDistorted.xyz /= uvwNotDistorted.w;
 
-	float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
+  // If using ShadowMapMaterial:
+  // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
+
+	float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
 	float distanceCamera = uvwNotDistorted.z;
 
   vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
@@ -62,7 +65,11 @@ void main() {
       }
     }
   } else {
+<<<<<<< HEAD
     finalColor.rgb = vec3(0.2); // shadow color
+=======
+	 finalColor.rgb = vec3(0.2); // shadow color
+>>>>>>> Correction of the reading format of the depth texture
   }
 
 #endif
