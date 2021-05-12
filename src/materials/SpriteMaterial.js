@@ -1,4 +1,4 @@
-import { Uniform, ShaderMaterial, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
+import { Uniform, ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
 import SpriteMaterialVS from './shaders/SpriteMaterialVS.glsl';
 import SpriteMaterialFS from './shaders/SpriteMaterialFS.glsl';
 
@@ -26,6 +26,7 @@ class SpriteMaterial extends ShaderMaterial {
   constructor() {
     super();
 
+    this.uniforms.screenSize = new Uniform(new Vector2());
     definePropertyUniform(this, 'size', 3);
     definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
@@ -73,6 +74,11 @@ class SpriteMaterial extends ShaderMaterial {
 
     this.viewProjectionInverse.copy(viewProjectionTransform).invert();
   }
+
+
+   setScreenSize(width, height) {
+     this.uniforms.screenSize.value.set(width, height);
+   }
 }
 
 export default SpriteMaterial;

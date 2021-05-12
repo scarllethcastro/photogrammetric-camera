@@ -478,8 +478,8 @@
 
                 function keyDown(event) {
                     switch(event.key) {
-                        case '+': textureMaterial.size++; break;
-                        case '-': textureMaterial.size--; break;
+                        case '+': pointsMaterial.size++; break;
+                        case '-': pointsMaterial.size--; break;
                         case 'ArrowDown': setView(getCamera(nextCamera, -1));  break;
                         case 'ArrowUp': setView(getCamera(nextCamera, +1));  break;
                         case 'ArrowLeft': setTexture(getCamera(textureCamera, -1));  break;
@@ -509,6 +509,7 @@
                     nextCamera.updateProjectionMatrix();
                     //if a value is set in pixels, the canvas size needs to be set on the element
                     screenQuads.children.forEach(quad => quad.setScreenSize( width , height ));
+                    pointsMaterial.setScreenSize(width, height);
                 }
 
                 /* preset scenes */
