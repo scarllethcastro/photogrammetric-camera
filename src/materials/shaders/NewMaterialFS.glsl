@@ -66,10 +66,14 @@ void main() {
     }
   } else {
 <<<<<<< HEAD
+<<<<<<< HEAD
     finalColor.rgb = vec3(0.2); // shadow color
 =======
 	 finalColor.rgb = vec3(0.2); // shadow color
 >>>>>>> Correction of the reading format of the depth texture
+=======
+	   finalColor.rgb = vec3(0.2); // shadow color
+>>>>>>> Start of implementation of point sprites (lot of problems)
   }
 
 #endif
