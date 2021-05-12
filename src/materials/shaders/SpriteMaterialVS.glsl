@@ -13,6 +13,7 @@ uniform mat4 textureCameraPostTransform;
 uniform mat3 viewProjectionInverse;
 varying mat3 vH;
 
+
 void main() {
     gl_PointSize = size;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );

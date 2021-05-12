@@ -1,6 +1,7 @@
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform sampler2D depthMap;
+uniform vec2 screenSize;
 varying mat3 vH;
 varying vec4 vColor;
 
@@ -12,7 +13,7 @@ void main() {
   }
 
   // p_texture = H * p_screen
-  vec3 texCoord = vH * gl_FragCoord.xyw;
+  vec3 texCoord = vH * vec3((gl_FragCoord.x/screenSize.x)*2.0 - 1.0, (1.0 - gl_FragCoord.y/screenSize.y)*2.0 - 1.0, 1.0);
   texCoord /= texCoord.z;
   texCoord = ( texCoord + 1.0 ) / 2.0;
 
