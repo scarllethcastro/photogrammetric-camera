@@ -26,6 +26,7 @@ class SpriteMaterial extends ShaderMaterial {
   constructor() {
     super();
 
+    this.uniforms.screenSize = new Uniform(new Vector2());
     definePropertyUniform(this, 'size', 3);
     definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
@@ -74,6 +75,11 @@ class SpriteMaterial extends ShaderMaterial {
 
     this.viewProjectionInverse.copy(viewProjectionTransform).invert();
   }
+
+
+   setScreenSize(width, height) {
+     this.uniforms.screenSize.value.set(width, height);
+   }
 }
 
 export default SpriteMaterial;

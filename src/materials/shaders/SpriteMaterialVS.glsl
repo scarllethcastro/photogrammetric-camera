@@ -21,9 +21,9 @@ void main() {
     // Homography
 
     mat4 M_prime_mat4 = textureCameraPostTransform * textureCameraPreTransform;
-    mat3 M_prime = mat3(M_prime_mat4[0][0], M_prime_mat4[0][1], M_prime_mat4[0][2],
-                        M_prime_mat4[1][0], M_prime_mat4[1][1], M_prime_mat4[1][2],
-                        M_prime_mat4[3][0], M_prime_mat4[3][1], M_prime_mat4[3][2]);
+    mat3 M_prime = mat3(M_prime_mat4[0][0], M_prime_mat4[0][1], M_prime_mat4[0][3],
+                        M_prime_mat4[1][0], M_prime_mat4[1][1], M_prime_mat4[1][3],
+                        M_prime_mat4[2][0], M_prime_mat4[2][1], M_prime_mat4[2][3]);
 
     vec3 E_prime = M_prime * (cameraPosition - textureCameraPosition);
 
@@ -31,22 +31,12 @@ void main() {
     P.xyz /= P.w;
     vec3 N = P.xyz - cameraPosition;
 
-    mat3 E_prime_mat = mat3(E_prime.x, 0.0, 0.0,
-                            0.0, E_prime.y, 0.0,
-                            0.0, 0.0, E_prime.z);
-
-    mat3 N_transpose_mat = mat3(N.x, N.y, N.z,
-                                N.x, N.y, N.z,
-                                N.x, N.y, N.z);
-
-    mat3 numerator = E_prime_mat * N_transpose_mat;
+    mat3 numerator = mat3(N.x*E_prime, N.y*E_prime, N.z*E_prime);
     float denominator = dot(N, P.xyz - cameraPosition);
 
     mat3 fraction = ( 1.0 / denominator ) * numerator;
 
-    M_prime += fraction;
-
-    vH = M_prime * viewProjectionInverse;
+    vH = (M_prime + fraction) * viewProjectionInverse;
 
 
     vColor = vec4(color, 1.);
