@@ -802,6 +802,7 @@
                 }
                 Object.keys(viewMaterials).forEach(name => viewMaterials[name].setValues(viewMaterialOptions));
 
+                pointsMaterial.setViewCamera(viewCamera);
                 render();
             }
 
