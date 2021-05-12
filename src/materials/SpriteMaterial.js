@@ -1,4 +1,4 @@
-import { Uniform, ShaderMaterial, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
+import { Uniform, ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
 import SpriteMaterialVS from './shaders/SpriteMaterialVS.glsl';
 import SpriteMaterialFS from './shaders/SpriteMaterialFS.glsl';
 
@@ -34,6 +34,7 @@ class SpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'depthMap', null);
+    definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', null);
 
     this.defines.USE_COLOR = '';

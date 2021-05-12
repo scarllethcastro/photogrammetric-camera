@@ -141,6 +141,8 @@
 //              shadowMapMaterial = new THREE.MeshDepthMaterial();
 
                 pointsMaterial = new SpriteMaterial();
+                pointsMaterial.screenSize.x = window.innerWidth;
+                pointsMaterial.screenSize.y = window.innerHeight;
 
 
                 sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(-1, 32, 32), textureMaterial);
