@@ -19,6 +19,22 @@ void main() {
   texCoord /= texCoord.z;
   texCoord = ( texCoord + 1.0 ) / 2.0;
 
+  vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+
+  if (all(greaterThan(testBorder,vec2(0.))))
+  {
+    finalColor = texture2D(map, texCoord.xy);
+  }
+
+  // if (testBorder.z >= 0.)
+  // {
+  //   finalColor = texture2D(map, texCoord.xy);
+  // } else {
+  //   finalColor = vec4(1.,0.,0.,1.);
+  // }
+
+
+
   // TODO: add the shadowMapping
   // vec4 uvw = textureCameraPreTransform * vec4( vPositionWorld.xyz/vPositionWorld.w - textureCameraPosition, 1.0);
   //
@@ -63,16 +79,8 @@ void main() {
 	//    finalColor.rgb = vec3(0.2); // shadow color
   // }
 
-  finalColor = texture2D(map, texCoord.xy);
+  //finalColor = texture2D(map, texCoord.xy);
 
-  // vec3 testBorder = min(texCoord.xyz, 1. - texCoord.xyz);
-  // if (all(greaterThan(testBorder,vec3(0.)))) {
-  //   finalColor = vec4(0.,1.,0.,1.);
-  // } else {
-  //   finalColor = vec4(1.,0.,0.,1.);
-  // }
-  //
-  // finalColor = vec4(texCoord.x - 1.,texCoord.y - 1.,texCoord.z - 1.,1.);
 
 
   gl_FragColor =  finalColor;
