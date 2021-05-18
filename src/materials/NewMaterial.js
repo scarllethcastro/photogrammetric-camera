@@ -53,10 +53,7 @@ class NewMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
 
     this.vertexShader = NewMaterialVS;
-    this.fragmentShader = `
-    ${RadialDistortion.chunks.radial_pars_fragment}
-    ${NewMaterialFS}
-    `;
+    this.fragmentShader = NewMaterialFS;
   }
 
   setCamera(camera) {

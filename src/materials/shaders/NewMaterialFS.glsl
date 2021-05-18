@@ -1,3 +1,4 @@
+#include <distortions/radial_pars_fragment>
 uniform bool diffuseColorGrey;
 
 #ifdef USE_PROJECTIVE_TEXTURING
@@ -5,8 +6,8 @@ uniform vec3 textureCameraPosition;
 uniform mat4 textureCameraPreTransform; // Contains the rotation and the intrinsics of the camera, but not the translation
 uniform mat4 textureCameraPostTransform;
 uniform RadialDistortion uvDistortion;
-varying vec4 vPositionWorld;
-varying vec4 vPositionImage;
+uniform mat4 modelMatrix;
+varying vec4 vPosition;
 uniform sampler2D map;
 uniform sampler2D depthMap;
 #endif
@@ -28,7 +29,7 @@ void main() {
   // P : vPositionWorld
   // C': textureCameraPosition
 
-  vec4 uvw = textureCameraPreTransform * vec4( vPositionWorld.xyz/vPositionWorld.w - textureCameraPosition, 1.0);
+  vec4 uvw = vPosition;
 
   // For the shadowMapping, which is not distorted
   vec4 uvwNotDistorted = textureCameraPostTransform * uvw;

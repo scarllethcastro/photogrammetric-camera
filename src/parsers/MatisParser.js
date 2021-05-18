@@ -1,5 +1,5 @@
-import {Matrix4, Quaternion, Camera} from 'three';
-import PhotogrammetricDistortion from '../cameras/PhotogrammetricDistortion';
+import {Matrix4, Vector3, Quaternion, Camera} from 'three';
+import RadialDistortion from '../cameras/distortions/RadialDistortion';
 import PhotogrammetricCamera from '../cameras/PhotogrammetricCamera';
 
 function getText(xml, tagName) {
@@ -32,7 +32,7 @@ function parseSpheric(xml, size) {
 }
 
 function parseConic(xml, size) {
-    var focal = getNumbers(xml, 'focale');
+    var focal = getNumber(xml, 'focale');
     var point = getNumbers(xml, 'ppa', ['c', 'l']);
     var skew = 0;
     var disto = new RadialDistortion(
