@@ -22,23 +22,22 @@ varying highp vec4 vPosition;
 #include <clipping_planes_pars_fragment>
 
 void main() {
-	#include <clipping_planes_fragment>
-	vec3 outgoingLight = vec3( 0.0 );
-	vec4 diffuseColor = vec4( diffuse, opacity );
-	#include <logdepthbuf_fragment>
-	#include <map_particle_fragment>
-	#include <color_fragment>
+  #include <clipping_planes_fragment>
+  vec3 outgoingLight = vec3( 0.0 );
+  vec4 diffuseColor = vec4( diffuse, opacity );
+  #include <logdepthbuf_fragment>
+  #include <map_particle_fragment>
+  #include <color_fragment>
 
-	if (diffuseColorGrey) {
-	  diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
-	}
-	#ifdef USE_MAP4
+  if (diffuseColorGrey) {
+    diffuseColor.rgb = vec3(dot(diffuseColor.rgb, vec3(0.333333)));
+  }
+  #ifdef USE_MAP4
   vec4 uvw = vPosition;
   if( uvw.w > 0. && distort_radial(uvw, uvDistortion))
   {
     uvw = uvwPostTransform * uvw;
-    uvw.xyz /= 2. * uvw.w;
-    uvw.xyz += vec3(0.5);
+    uvw.xyz /= uvw.w;
     vec3 border = min(uvw.xyz, 1. - uvw.xyz);
     if (all(greaterThan(border,vec3(0.))))
     {
@@ -49,13 +48,13 @@ void main() {
       diffuseColor.rgb = mix(diffuseColor.rgb, fract(uvw.xyz), debugOpacity);
     }
   }
-	#endif
+  #endif
 
-	#include <alphatest_fragment>
-	outgoingLight = diffuseColor.rgb;
-	gl_FragColor = vec4( outgoingLight, diffuseColor.a );
-	#include <tonemapping_fragment>
-	#include <encodings_fragment>
-	#include <fog_fragment>
-	#include <premultiplied_alpha_fragment>
+  #include <alphatest_fragment>
+  outgoingLight = diffuseColor.rgb;
+  gl_FragColor = vec4( outgoingLight, diffuseColor.a );
+  #include <tonemapping_fragment>
+  #include <encodings_fragment>
+  #include <fog_fragment>
+  #include <premultiplied_alpha_fragment>
 }

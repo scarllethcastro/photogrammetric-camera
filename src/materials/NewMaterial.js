@@ -23,6 +23,14 @@ function definePropertyUniform(object, property, defaultValue) {
     });
 }
 
+// maps [-1,1]^3 to [0,1]^3
+const textureMatrix = new Matrix4().set(
+    1, 0, 0, 1,
+    0, 1, 0, 1,
+    0, 0, 1, 1,
+    0, 0, 0, 2);
+
+
 class NewMaterial extends ShaderMaterial {
   constructor(options = {}) {
     const size = pop(options, 'size', 1);
@@ -62,8 +70,9 @@ class NewMaterial extends ShaderMaterial {
       this.textureCameraPreTransform.setPosition(0, 0, 0);
       this.textureCameraPreTransform.premultiply(camera.preProjectionMatrix);
       this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
+      this.textureCameraPostTransform.premultiply(textureMatrix);
 
-			if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
+      if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
           this.uvDistortion = camera.distos[0];
       } else {
           this.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };

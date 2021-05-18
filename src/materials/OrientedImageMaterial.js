@@ -29,6 +29,13 @@ function definePropertyUniform(object, property, defaultValue) {
     });
 }
 
+// maps [-1,1]^3 to [0,1]^3
+const textureMatrix = new Matrix4().set(
+    1, 0, 0, 1,
+    0, 1, 0, 1,
+    0, 0, 1, 1,
+    0, 0, 0, 2);
+
 class OrientedImageMaterial extends ShaderMaterial {
     constructor(options = {}) {
         const size = pop(options, 'size', 1);
@@ -76,6 +83,7 @@ class OrientedImageMaterial extends ShaderMaterial {
         this.uvwPreTransform.setPosition(0, 0, 0);
         this.uvwPreTransform.premultiply(camera.preProjectionMatrix);
         this.uvwPostTransform.copy(camera.postProjectionMatrix);
+        this.uvwPostTransform.premultiply(textureMatrix);
 
         // TODO: handle other distorsion types and arrays of distortions
         if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
