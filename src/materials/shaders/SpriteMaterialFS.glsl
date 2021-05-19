@@ -1,7 +1,6 @@
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform sampler2D depthMap;
-uniform vec2 screenSize;
 varying mat3 vH;
 varying vec4 vColor;
 
@@ -12,10 +11,8 @@ void main() {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
-  vec2 p = gl_FragCoord.xy * (2. / screenSize) -1.;
-
   // p_texture = H * p_screen
-  vec3 texCoord = vH * vec3(p, 1.);
+  vec3 texCoord = vH * vec3(gl_FragCoord.xy, 1.);
   texCoord /= texCoord.z;
 
   vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
@@ -45,15 +42,15 @@ void main() {
   // // If using ShadowMapMaterial:
   // // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
   //
-	// float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
-	// float distanceCamera = uvwNotDistorted.z;
+  // float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
+  // float distanceCamera = uvwNotDistorted.z;
   //
   // vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
   //
-	// // ShadowMapping
+  // // ShadowMapping
   // if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
   //
-	// // Don't texture if uvw.w < 0
+  // // Don't texture if uvw.w < 0
   //   if (uvw.w > 0. && distort_radial(uvw, uvDistortion)) {
   //
   //     uvw = textureCameraPostTransform * uvw;
@@ -75,7 +72,7 @@ void main() {
   //     }
   //   }
   // } else {
-	//    finalColor.rgb = vec3(0.2); // shadow color
+  //    finalColor.rgb = vec3(0.2); // shadow color
   // }
 
   //finalColor = texture2D(map, texCoord.xy);

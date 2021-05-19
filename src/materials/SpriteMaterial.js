@@ -19,7 +19,9 @@ class SpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
     definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
-    definePropertyUniform(this, 'viewProjectionInverse', new Matrix3());
+    definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix3());
+    definePropertyUniform(this, 'M_prime', new Matrix3());
+    definePropertyUniform(this, 'E_prime', new Vector3());
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'depthMap', null);
@@ -41,6 +43,13 @@ class SpriteMaterial extends ShaderMaterial {
       this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
       this.textureCameraPostTransform.premultiply(textureMatrix);
 
+      var tmp = new Matrix4().multiplyMatrices(this.textureCameraPostTransform, this.textureCameraPreTransform);
+      var els = tmp.elements;
+      this.M_prime.set(
+        els[0], els[4], els[8],
+        els[1], els[5], els[9],
+        els[3], els[7], els[11]);
+
       if (camera.distos && camera.distos.length == 1 && camera.distos[0].type === 'ModRad') {
           this.uvDistortion = camera.distos[0];
       } else {
@@ -50,19 +59,29 @@ class SpriteMaterial extends ShaderMaterial {
   }
 
   setViewCamera(camera) {
+    camera.updateMatrixWorld(); // the matrixWorldInverse should be up to date
+    this.E_prime.subVectors(camera.position, this.textureCameraPosition).applyMatrix3(this.M_prime);
+
     var viewProjectionTransformMat4 = new Matrix4();
     viewProjectionTransformMat4.copy(camera.matrixWorldInverse);
     viewProjectionTransformMat4.setPosition(0, 0, 0);
     viewProjectionTransformMat4.premultiply(camera.preProjectionMatrix);
     viewProjectionTransformMat4.premultiply(camera.postProjectionMatrix);
 
-    var viewProjectionTransform = new Matrix3();
     var els = viewProjectionTransformMat4.elements;
-    viewProjectionTransform.set(els[0], els[4], els[8],
-                                els[1], els[5], els[9],
-                                els[3], els[7], els[11]);
+    this.viewProjectionScreenInverse.set(
+      els[0], els[4], els[8],
+      els[1], els[5], els[9],
+      els[3], els[7], els[11]).invert();
 
-    this.viewProjectionInverse.copy(viewProjectionTransform).invert();
+    const screenInverse = new Matrix3().set(
+      2/this.uniforms.screenSize.value.x, 0, -1,
+      0, 2/this.uniforms.screenSize.value.y, -1,
+      0, 0, 1
+    );
+
+    this.viewProjectionScreenInverse.multiply(screenInverse);
+
   }
 
 
