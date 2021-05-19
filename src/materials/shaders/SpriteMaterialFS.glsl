@@ -17,7 +17,6 @@ void main() {
   // p_texture = H * p_screen
   vec3 texCoord = vH * vec3(p, 1.);
   texCoord /= texCoord.z;
-  texCoord = ( texCoord + 1.0 ) / 2.0;
 
   vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
 

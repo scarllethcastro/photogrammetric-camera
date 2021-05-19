@@ -1,20 +1,8 @@
 import { Uniform, ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
+import { definePropertyUniform, textureMatrix } from './Material.js';
 import SpriteMaterialVS from './shaders/SpriteMaterialVS.glsl';
 import SpriteMaterialFS from './shaders/SpriteMaterialFS.glsl';
 
-
-function definePropertyUniform(object, property, defaultValue) {
-    object.uniforms[property] = new Uniform(object[property] || defaultValue);
-    Object.defineProperty(object, property, {
-        get: () => object.uniforms[property].value,
-        set: (value) => {
-            if (object.uniforms[property].value != value) {
-                object.uniformsNeedUpdate = true;
-                object.uniforms[property].value = value;
-            }
-        }
-    });
-}
 
 // M^(-1) -> this.viewProjectionInverse
 // C -> uniform vec3 cameraPosition
@@ -51,6 +39,7 @@ class SpriteMaterial extends ShaderMaterial {
       this.textureCameraPreTransform.setPosition(0, 0, 0);
       this.textureCameraPreTransform.premultiply(camera.preProjectionMatrix);
       this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
+      this.textureCameraPostTransform.premultiply(textureMatrix);
 
       if (camera.distos && camera.distos.length == 1 && camera.distos[0].type === 'ModRad') {
           this.uvDistortion = camera.distos[0];
