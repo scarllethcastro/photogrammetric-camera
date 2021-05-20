@@ -15,11 +15,7 @@ void main() {
   vec2 p = gl_FragCoord.xy * (2. / screenSize) -1.;
 
   // p_texture = H * p_screen
-<<<<<<< HEAD
-  vec3 texCoord = vH * vec3((gl_FragCoord.x/screenSize.x)*2.0 - 1.0, (1.0 - gl_FragCoord.y/screenSize.y)*2.0 - 1.0, 1.0);
-=======
   vec3 texCoord = vH * vec3(p, 1.);
->>>>>>> sprite, first fixes
   texCoord /= texCoord.z;
   texCoord = ( texCoord + 1.0 ) / 2.0;
 

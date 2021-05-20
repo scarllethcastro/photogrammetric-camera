@@ -38,6 +38,9 @@ void main() {
   // If using ShadowMapMaterial:
   // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
 
+  // If using ShadowMapMaterial:
+  // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
+
 	float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
 	float distanceCamera = uvwNotDistorted.z;
 
