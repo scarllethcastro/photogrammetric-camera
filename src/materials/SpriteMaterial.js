@@ -20,7 +20,8 @@ class SpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
     definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
     definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix3());
-    definePropertyUniform(this, 'M_prime', new Matrix3());
+    definePropertyUniform(this, 'M_prime_Pre', new Matrix3());
+    definePropertyUniform(this, 'M_prime_Post', new Matrix3());
     definePropertyUniform(this, 'E_prime', new Vector3());
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
@@ -43,12 +44,17 @@ class SpriteMaterial extends ShaderMaterial {
       this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
       this.textureCameraPostTransform.premultiply(textureMatrix);
 
-      var tmp = new Matrix4().multiplyMatrices(this.textureCameraPostTransform, this.textureCameraPreTransform);
-      var els = tmp.elements;
-      this.M_prime.set(
-        els[0], els[4], els[8],
-        els[1], els[5], els[9],
-        els[3], els[7], els[11]);
+      var elsPre = this.textureCameraPreTransform.elements;
+      this.M_prime_Pre.set(
+        elsPre[0], elsPre[4], elsPre[8],
+        elsPre[1], elsPre[5], elsPre[9],
+        elsPre[3], elsPre[7], elsPre[11]);
+
+      var elsPost = this.textureCameraPostTransform.elements;
+      this.M_prime_Post.set(
+        elsPost[0], elsPost[4], elsPost[8],
+        elsPost[1], elsPost[5], elsPost[9],
+        elsPost[3], elsPost[7], elsPost[11]);
 
       if (camera.distos && camera.distos.length == 1 && camera.distos[0].type === 'ModRad') {
           this.uvDistortion = camera.distos[0];
@@ -60,7 +66,7 @@ class SpriteMaterial extends ShaderMaterial {
 
   setViewCamera(camera) {
     camera.updateMatrixWorld(); // the matrixWorldInverse should be up to date
-    this.E_prime.subVectors(camera.position, this.textureCameraPosition).applyMatrix3(this.M_prime);
+    this.E_prime.subVectors(camera.position, this.textureCameraPosition).applyMatrix3(this.M_prime_Pre);
 
     var viewProjectionTransformMat4 = new Matrix4();
     viewProjectionTransformMat4.copy(camera.matrixWorldInverse);
