@@ -1,7 +1,6 @@
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform sampler2D depthMap;
-uniform vec2 screenSize;
 varying mat3 vH;
 varying vec4 vColor;
 
@@ -12,12 +11,16 @@ void main() {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
-  vec2 p = gl_FragCoord.xy * (2. / screenSize) -1.;
-
   // p_texture = H * p_screen
-  vec3 texCoord = vH * vec3(p, 1.);
+  vec3 texCoord = vH * vec3(gl_FragCoord.xy, 1.);
   texCoord /= texCoord.z;
-  texCoord = ( texCoord + 1.0 ) / 2.0;
+
+  vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+
+  if (all(greaterThan(testBorder,vec2(0.))))
+  {
+    finalColor = texture2D(map, texCoord.xy);
+  }
 
   // TODO: add the shadowMapping
   // vec4 uvw = textureCameraPreTransform * vec4( vPositionWorld.xyz/vPositionWorld.w - textureCameraPosition, 1.0);
@@ -63,17 +66,7 @@ void main() {
 	//    finalColor.rgb = vec3(0.2); // shadow color
   // }
 
-  finalColor = texture2D(map, texCoord.xy);
-
-  // vec3 testBorder = min(texCoord.xyz, 1. - texCoord.xyz);
-  // if (all(greaterThan(testBorder,vec3(0.)))) {
-  //   finalColor = vec4(0.,1.,0.,1.);
-  // } else {
-  //   finalColor = vec4(1.,0.,0.,1.);
-  // }
-  //
-  // finalColor = vec4(texCoord.x - 1.,texCoord.y - 1.,texCoord.z - 1.,1.);
-
+  // finalColor = texture2D(map, texCoord.xy);
 
   gl_FragColor =  finalColor;
 }
