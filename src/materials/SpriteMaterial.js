@@ -26,7 +26,7 @@ class SpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'screenSize', new Vector2());
-    definePropertyUniform(this, 'diffuseColorGrey', null);
+    definePropertyUniform(this, 'diffuseColorGrey', true);
 
     this.defines.USE_COLOR = '';
 
