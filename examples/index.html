@@ -59,8 +59,6 @@
             var OrientedImageMaterial = ThreePhotogrammetricCamera.OrientedImageMaterial;
             var NewMaterial = ThreePhotogrammetricCamera.NewMaterial;
             var ShadowMapMaterial = ThreePhotogrammetricCamera.ShadowMapMaterial;
-            var DepthMapViewer = ThreePhotogrammetricCamera.DepthMapViewer;
-            var SpriteMaterial = ThreePhotogrammetricCamera.SpriteMaterial;
         </script>
         <script src="js/dat.gui.min.js"></script>
         <script src="js/PLYLoader.js"></script>
@@ -428,10 +426,6 @@
 //              shadowMapMaterial = new ShadowMapMaterial();
 //              shadowMapMaterial = new THREE.MeshDepthMaterial();
 
-                pointsMaterial = new SpriteMaterial();
-                pointsMaterial.screenSize.x = window.innerWidth;
-                pointsMaterial.screenSize.y = window.innerHeight;
-
 
                 sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(-1, 32, 32), textureMaterial);
                 plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 100, 100), textureMaterial);
@@ -770,7 +764,9 @@
             }
 
             function render() {
+
                 renderer.render(scene, viewCamera);
+
             }
 
             var todoTimestamp = 0;
@@ -802,7 +798,6 @@
                 }
                 Object.keys(viewMaterials).forEach(name => viewMaterials[name].setValues(viewMaterialOptions));
 
-                pointsMaterial.setViewCamera(viewCamera);
                 render();
             }
 
