@@ -113,7 +113,8 @@ bool distort_radial(inout vec4 p, RadialDistortion disto) {
   return true;
 }
 
-bool distort_radial_vec3(inout vec3 p, RadialDistortion disto) {
+// Receives a vec4 but with last coordinate equals 0
+bool distort_radial_vec3(inout vec4 p, RadialDistortion disto) {
   p /= p.z;
   vec2 r = p.xy - disto.C;
   float r2 = dot(r, r);

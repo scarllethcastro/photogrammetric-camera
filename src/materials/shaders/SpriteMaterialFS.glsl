@@ -1,6 +1,9 @@
+#include <distortions/radial_pars_fragment>
+
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform sampler2D depthMap;
+uniform RadialDistortion uvDistortion;
 varying mat4 vM_prime_Post;
 varying mat4 vH;
 varying vec4 vColor;
@@ -13,17 +16,43 @@ void main() {
   }
 
   // p_texture = H * p_screen
-  vec4 texCoord = vM_prime_Post * vH * vec4(vec3(gl_FragCoord.xy, 1.), 0.);
-  texCoord /= texCoord.z;
+  //vec4 texCoord = vM_prime_Post * vH * vec4(vec3(gl_FragCoord.xy, 1.), 0.);
+  // texCoord /= texCoord.z;
+  //
+  // vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+  //
+  // if (all(greaterThan(testBorder,vec2(0.))))
+  // {
+  //   finalColor = texture2D(map, texCoord.xy);
+  // } else {
+  //   finalColor.rgb = vec3(0.2); // shadow color
+  // }
 
-  vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+  //////////////////////////////////////////////////////////////////////////////
 
-  if (all(greaterThan(testBorder,vec2(0.))))
-  {
-    finalColor = texture2D(map, texCoord.xy);
-  } else {
-    finalColor.rgb = vec3(0.2); // shadow color
-  }
+  vec4 texCoord = vH * vec4(vec3(gl_FragCoord.xy, 1.), 0.);
+
+  // Don't texture if texCoord.z < 0 (z = w in this case)
+    if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
+
+      texCoord = vM_prime_Post * texCoord;
+      texCoord /= texCoord.z;
+
+      // Test if coordinates are valid, so we can texture
+      vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+
+      if (all(greaterThan(testBorder,vec2(0.))))
+      {
+        finalColor = texture2D(map, texCoord.xy);
+      } else {
+        finalColor.rgb = vec3(0.2); // shadow color
+      }
+    } else {
+      finalColor.rgb = vec3(0.2); // shadow color
+    }
+
+
+  //////////////////////////////////////////////////////////////////////////////
 
 
   // TODO: add the shadowMapping
