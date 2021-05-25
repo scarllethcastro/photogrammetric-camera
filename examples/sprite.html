@@ -52,10 +52,8 @@
         <script>
             var THREE = ThreePhotogrammetricCamera.THREE;
             var PhotogrammetricCamera = ThreePhotogrammetricCamera.PhotogrammetricCamera;
-            var MatisOrientationParser = ThreePhotogrammetricCamera.MatisOrientationParser;
-            var MicmacOrientationParser = ThreePhotogrammetricCamera.MicmacOrientationParser;
-            var OPKOrientationParser = ThreePhotogrammetricCamera.OPKOrientationParser;
-            var BundlerOrientationParser = ThreePhotogrammetricCamera.BundlerOrientationParser;
+            var Parsers = ThreePhotogrammetricCamera.Parsers;
+            var Serializers = ThreePhotogrammetricCamera.Serializers;
             var FetchSource = ThreePhotogrammetricCamera.FetchSource;
             var FilesSource = ThreePhotogrammetricCamera.FilesSource;
             var OrientedImageMaterial = ThreePhotogrammetricCamera.OrientedImageMaterial;
@@ -309,10 +307,9 @@
                 }
 
                 function parseOrientation(source, name) {
-                    var parsers = [MicmacOrientationParser, MatisOrientationParser, OPKOrientationParser, BundlerOrientationParser];
                     return (data) => {
-                        for(const parser of parsers) {
-                            var parsed = parser.parse(data, source, name);
+                        for(const parser in Parsers) {
+                            var parsed = Parsers[parser].parse(data, source, name);
                             if (parsed) return parsed;
                         }
                         return undefined;
@@ -576,7 +573,7 @@
                         var source = new FetchSource('data/NotreDame/');
                         const list = source.open('list2.txt', 'text');
                         const out  = source.open('notredame_cameras.out', 'text');
-                        const orientations = Promise.all([list, out]).then(BundlerOrientationParser.parse).then(handleOrientation);
+                        const orientations = Promise.all([list, out]).then(Parsers.BundlerParser.parse).then(handleOrientation);
                         //orientations.then(cameras => cameras.map(cam => loadImage('images/rd/'+cam.name + '.rd.jpg', source, cam.name)));
                         orientations.then(cameras => cameras.map(cam => loadImage('images/'+cam.name + '.jpg', source, cam.name)));
                         orientations.then(cameras => {
@@ -612,8 +609,8 @@
                         const scale = 30000;
                         plane.scale.set(scale,scale,scale);
 
-                        const mes = source.open('sample.MES', 'text').then(text => OPKOrientationParser.parseMES(text, 'sample.MES'));
-                        const xyz = source.open('sample.XYZ', 'text').then(text => OPKOrientationParser.parseXYZ(text, 'sample.XYZ'));
+                        const mes = source.open('sample.MES', 'text').then(text => Parsers.OPKParser.parseMES(text, 'sample.MES'));
+                        const xyz = source.open('sample.XYZ', 'text').then(text => Parsers.OPKParser.parseXYZ(text, 'sample.XYZ'));
 
                         xyz.then(data => {
                             const geometry = new THREE.BufferGeometry();
