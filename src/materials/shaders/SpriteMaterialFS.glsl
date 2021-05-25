@@ -1,8 +1,8 @@
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform sampler2D depthMap;
-varying mat3 vM_prime_Post;
-varying mat3 vH;
+varying mat4 vM_prime_Post;
+varying mat4 vH;
 varying vec4 vColor;
 
 void main() {
@@ -13,7 +13,7 @@ void main() {
   }
 
   // p_texture = H * p_screen
-  vec3 texCoord = vM_prime_Post * vH * vec3(gl_FragCoord.xy, 1.);
+  vec4 texCoord = vM_prime_Post * vH * vec4(vec3(gl_FragCoord.xy, 1.), 0.);
   texCoord /= texCoord.z;
 
   vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
