@@ -19,10 +19,10 @@ class SpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
     definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
-    definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix4());
-    definePropertyUniform(this, 'M_prime_Pre', new Matrix4());
-    definePropertyUniform(this, 'M_prime_Post', new Matrix4());
-    definePropertyUniform(this, 'E_prime', new Vector4());
+    definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix3());
+    definePropertyUniform(this, 'M_prime_Pre', new Matrix3());
+    definePropertyUniform(this, 'M_prime_Post', new Matrix3());
+    definePropertyUniform(this, 'E_prime', new Vector3());
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'depthMap', null);
@@ -46,17 +46,15 @@ class SpriteMaterial extends ShaderMaterial {
 
       var elsPre = this.textureCameraPreTransform.elements;
       this.M_prime_Pre.set(
-        elsPre[0], elsPre[4], elsPre[8],  0,
-        elsPre[1], elsPre[5], elsPre[9],  0,
-        elsPre[2], elsPre[6], elsPre[10], 0,
-        elsPre[3], elsPre[7], elsPre[11], 0);
+        elsPre[0], elsPre[4], elsPre[8],
+        elsPre[1], elsPre[5], elsPre[9],
+        elsPre[3], elsPre[7], elsPre[11]);
 
       var elsPost = this.textureCameraPostTransform.elements;
       this.M_prime_Post.set(
-        elsPost[0], elsPost[4], elsPost[8],  elsPost[12],
-        elsPost[1], elsPost[5], elsPost[9],  elsPost[13],
-        elsPost[3], elsPost[7], elsPost[11], elsPost[15],
-                 0,          0,          0,            0);
+        elsPost[0], elsPost[4], elsPost[12],
+        elsPost[1], elsPost[5], elsPost[13],
+        elsPost[3], elsPost[7], elsPost[15]);
 
       if (camera.distos && camera.distos.length == 1 && camera.distos[0].type === 'ModRad') {
           this.uvDistortion = camera.distos[0];
@@ -68,7 +66,7 @@ class SpriteMaterial extends ShaderMaterial {
 
   setViewCamera(camera) {
     camera.updateMatrixWorld(); // the matrixWorldInverse should be up to date
-    this.E_prime.subVectors(camera.position, this.textureCameraPosition).setW(0.).applyMatrix4(this.M_prime_Pre);
+    this.E_prime.subVectors(camera.position, this.textureCameraPosition).applyMatrix3(this.M_prime_Pre);
 
     var viewProjectionTransformMat4 = new Matrix4();
     viewProjectionTransformMat4.copy(camera.matrixWorldInverse);
@@ -78,7 +76,7 @@ class SpriteMaterial extends ShaderMaterial {
 
     var els = viewProjectionTransformMat4.elements;
 
-    var viewProjectionScreenInverseMat3 = new Matrix3().set(
+    this.viewProjectionScreenInverse.set(
       els[0], els[4], els[8],
       els[1], els[5], els[9],
       els[3], els[7], els[11]).invert();
@@ -89,10 +87,7 @@ class SpriteMaterial extends ShaderMaterial {
       0, 0, 1
     );
 
-    viewProjectionScreenInverseMat3.multiply(screenInverse);
-
-    this.viewProjectionScreenInverse.setFromMatrix3(viewProjectionScreenInverseMat3);
-    this.viewProjectionScreenInverse.elements[15] = 0;
+    this.viewProjectionScreenInverse.multiply(screenInverse);
   }
 
    setScreenSize(width, height) {

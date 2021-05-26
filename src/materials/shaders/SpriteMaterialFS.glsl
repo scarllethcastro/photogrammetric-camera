@@ -4,8 +4,8 @@ uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform sampler2D depthMap;
 uniform RadialDistortion uvDistortion;
-varying mat4 vM_prime_Post;
-varying mat4 vH;
+varying mat3 vM_prime_Post;
+varying mat3 vH;
 varying vec4 vColor;
 
 void main() {
@@ -15,42 +15,56 @@ void main() {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
-  // p_texture = H * p_screen
-  //vec4 texCoord = vM_prime_Post * vH * vec4(vec3(gl_FragCoord.xy, 1.), 0.);
-  // texCoord /= texCoord.z;
+  //////////////////////////////////////////////////////////////////////////////
+  // Not considering distortion
+  //////////////////////////////////////////////////////////////////////////////
+
+
+  // //p_texture = H * p_screen
+  vec3 texCoord = vM_prime_Post * vH * vec3(gl_FragCoord.xy, 1.);
+  texCoord /= texCoord.z;
   //
   // vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
   //
   // if (all(greaterThan(testBorder,vec2(0.))))
   // {
   //   finalColor = texture2D(map, texCoord.xy);
-  // } else {
-  //   finalColor.rgb = vec3(0.2); // shadow color
   // }
 
   //////////////////////////////////////////////////////////////////////////////
+  // Considering distortion
+  //////////////////////////////////////////////////////////////////////////////
 
-  vec4 texCoord = vH * vec4(vec3(gl_FragCoord.xy, 1.), 0.);
+  // vec3 texCoord = vH * vec3(gl_FragCoord.xy, 1.);
+  //
+  // vec2 testBefore = texCoord.xy;
+  // if (distort_radial_vec3(texCoord, uvDistortion)) {
+  //   vec2 testAfter = texCoord.xy;
+  //   if (testBefore.x >= testAfter.x - 0.01 && testBefore.x <= testAfter.x + 0.01 && testBefore.y >= testAfter.y - 0.01 && testBefore.y <= testAfter.y + 0.01) {
+  //     finalColor = vec4(1.,0.,0.,1.);
+  //   }
+  //   //finalColor = vec4(testBefore.x - testAfter.x, testBefore.y - testAfter.y, 0., 1.);
+  // }
 
-  // Don't texture if texCoord.z < 0 (z = w in this case)
-    if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
 
-      texCoord = vM_prime_Post * texCoord;
-      texCoord /= texCoord.z;
-
-      // Test if coordinates are valid, so we can texture
-      vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
-
-      if (all(greaterThan(testBorder,vec2(0.))))
-      {
-        finalColor = texture2D(map, texCoord.xy);
-      } else {
-        finalColor.rgb = vec3(0.2); // shadow color
-      }
-    } else {
-      finalColor.rgb = vec3(0.2); // shadow color
-    }
-
+  // // Don't texture if texCoord.z < 0 (z = w in this case)
+  // if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
+  //
+  //   texCoord = vM_prime_Post * texCoord;
+  //   texCoord /= texCoord.z;
+  //
+  //   // if (texCoord1.x >= texCoord.x - 0.001 && texCoord1.x <= texCoord.x + 0.001 && texCoord1.y >= texCoord.y - 0.001 && texCoord1.y <= texCoord.y + 0.001) {
+  //   //   finalColor = vec4(1.,0.,0.,1.);
+  //   // }
+  //
+  //   // Test if coordinates are valid, so we can texture
+  //   vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+  //
+  //   if (all(greaterThan(testBorder,vec2(0.))))
+  //   {
+  //     finalColor = texture2D(map, texCoord.xy);
+  //   }
+  //  }
 
   //////////////////////////////////////////////////////////////////////////////
 

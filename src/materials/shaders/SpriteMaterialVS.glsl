@@ -7,12 +7,12 @@
 uniform float size;
 varying vec4 vColor;
 
-uniform vec4 E_prime;
-uniform mat4 M_prime_Pre;
-uniform mat4 M_prime_Post;
-uniform mat4 viewProjectionScreenInverse;
-varying mat4 vH;
-varying mat4 vM_prime_Post;
+uniform vec3 E_prime;
+uniform mat3 M_prime_Pre;
+uniform mat3 M_prime_Post;
+uniform mat3 viewProjectionScreenInverse;
+varying mat3 vH;
+varying mat3 vM_prime_Post;
 
 
 void main() {
@@ -26,6 +26,6 @@ void main() {
     vec4 P = modelMatrix * vec4( position, 1.0 );
     P.xyz = P.xyz/P.w-cameraPosition;
     vec3 N = P.xyz;
-    mat4 fraction = mat4(N.x*E_prime, N.y*E_prime, N.z*E_prime, vec4(0.)) / dot(N, P.xyz);
+    mat3 fraction = mat3(N.x*E_prime, N.y*E_prime, N.z*E_prime) / dot(N, P.xyz);
     vH = (M_prime_Pre + fraction) * viewProjectionScreenInverse;
 }
