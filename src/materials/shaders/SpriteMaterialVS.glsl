@@ -13,10 +13,8 @@ uniform mat4 textureCameraPostTransform;
 uniform sampler2D depthMap;
 uniform vec3 E_prime;
 uniform mat3 M_prime_Pre;
-uniform mat3 M_prime_Post;
 uniform mat3 viewProjectionScreenInverse;
 varying mat3 vH;
-varying mat3 vM_prime_Post;
 varying float passShadowMapTest;
 
 
@@ -24,7 +22,6 @@ void main() {
     gl_PointSize = size;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
     vColor = vec4(color, 1.);
-    vM_prime_Post = M_prime_Post;
 
 
     // Homography

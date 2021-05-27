@@ -3,7 +3,7 @@
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
 uniform RadialDistortion uvDistortion;
-varying mat3 vM_prime_Post;
+uniform mat3 M_prime_Post;
 varying mat3 vH;
 varying vec4 vColor;
 varying float passShadowMapTest;
@@ -22,7 +22,7 @@ void main() {
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
 
-      texCoord = vM_prime_Post * texCoord;
+      texCoord = M_prime_Post * texCoord;
       texCoord /= texCoord.z;
 
       // Test if coordinates are valid, so we can texture
