@@ -30,6 +30,7 @@ class SpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'diffuseColorGrey', true);
 
     this.defines.USE_COLOR = '';
+    this.defines.EPSILON = 1e-3;
 
     this.vertexShader = SpriteMaterialVS;
 
@@ -56,7 +57,7 @@ class SpriteMaterial extends ShaderMaterial {
         elsPost[1], elsPost[5], elsPost[13],
         elsPost[3], elsPost[7], elsPost[15]);
 
-      if (camera.distos && camera.distos.length == 1 && camera.distos[0].type === 'ModRad') {
+      if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
           this.uvDistortion = camera.distos[0];
       } else {
           this.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
