@@ -46,7 +46,7 @@ void main() {
   // ShadowMapping
   if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
 
-  // Don't texture if uvw.w < 0
+    // Don't texture if uvw.w < 0
     if (uvw.w > 0. && distort_radial(uvw, uvDistortion)) {
 
       uvw = textureCameraPostTransform * uvw;
