@@ -12,15 +12,13 @@ varying vec4 vColor;
 
 uniform TextureCamera textureCameras[NUM_TEXTURES];
 
-uniform vec3 textureCameraPosition;
-uniform mat4 textureCameraPreTransform;
-uniform mat4 textureCameraPostTransform;
-uniform sampler2D depthMap;
-uniform vec3 E_prime;
-uniform mat3 M_prime_Pre;
+// uniform vec3 textureCameraPosition;
+// uniform mat4 textureCameraPreTransform;
+// uniform mat4 textureCameraPostTransform;
+// uniform sampler2D depthMap;
 uniform mat3 viewProjectionScreenInverse;
-varying mat3 vH;
-varying float passShadowMapTest;
+varying mat3 vH[NUM_TEXTURES];
+// varying float passShadowMapTest;
 
 
 void main() {
@@ -34,10 +32,12 @@ void main() {
     vec4 P = modelMatrix * vec4( position, 1.0 );
     P.xyz = P.xyz/P.w-cameraPosition;
     vec3 N = P.xyz;
-    // mat3 fraction = mat3(N.x*E_prime, N.y*E_prime, N.z*E_prime) / dot(N, P.xyz);
-    // vH = (M_prime_Pre + fraction) * viewProjectionScreenInverse;
-    mat3 fraction = mat3(N.x*textureCameras[0].E_prime, N.y*textureCameras[0].E_prime, N.z*textureCameras[0].E_prime) / dot(N, P.xyz);
-    vH = (textureCameras[0].M_prime_Pre + fraction) * viewProjectionScreenInverse;
+    mat3 fraction;
+    #pragma unroll_loop
+    for ( int i = 0; i < NUM_TEXTURES; i++ ) {
+      fraction = mat3(N.x*textureCameras[ i ].E_prime, N.y*textureCameras[ i ].E_prime, N.z*textureCameras[ i ].E_prime) / dot(N, P.xyz);
+      vH[ i ] = (textureCameras[ i ].M_prime_Pre + fraction) * viewProjectionScreenInverse;
+    }
 
 
     // // ShadowMapping

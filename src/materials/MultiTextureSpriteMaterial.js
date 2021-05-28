@@ -47,18 +47,12 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     var textures;
     var textureCameras;
 
-    this.textures = [];
-
-    for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
-        this.textures[i] = new Texture();
-    }
-
     this.textureAndCamerasSetDefault = () => {
-      //this.textures = [];
+      this.textures = [];
       this.textureCameras = [];
 
       for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
-          //this.textures[i] = new Texture();
+          this.textures[i] = new Texture();
           this.textureCameras[i] = {
             position: new Vector3(),
             preTransform: new Matrix4(),
@@ -75,41 +69,11 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
     definePropertyUniform(this, 'textures', textures);
     definePropertyUniform(this, 'textureCameras', textureCameras);
-    definePropertyUniform(this, 'numTextures', this.defines.NUM_TEXTURES);
 
-    this.vertexShader = MultiTextureSpriteMaterialVS;
+    this.vertexShader = unrollLoops(MultiTextureSpriteMaterialVS, this.defines);
 
     this.fragmentShader = unrollLoops(MultiTextureSpriteMaterialFS, this.defines);
   }
-
-  // setCamera(camera) {
-  //     camera.getWorldPosition(this.textureCameraPosition);
-  //     this.textureCameraPreTransform.copy(camera.matrixWorldInverse);
-  //     this.textureCameraPreTransform.setPosition(0, 0, 0);
-  //     this.textureCameraPreTransform.premultiply(camera.preProjectionMatrix);
-  //     this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
-  //     this.textureCameraPostTransform.premultiply(textureMatrix);
-  //
-  //     var elsPre = this.textureCameraPreTransform.elements;
-  //     this.M_prime_Pre.set(
-  //       elsPre[0], elsPre[4], elsPre[8],
-  //       elsPre[1], elsPre[5], elsPre[9],
-  //       elsPre[3], elsPre[7], elsPre[11]);
-  //
-  //     var elsPost = this.textureCameraPostTransform.elements;
-  //     this.M_prime_Post.set(
-  //       elsPost[0], elsPost[4], elsPost[12],
-  //       elsPost[1], elsPost[5], elsPost[13],
-  //       elsPost[3], elsPost[7], elsPost[15]);
-  //
-  //     if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
-  //         this.uvDistortion = camera.distos[0];
-  //     } else {
-  //         this.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
-  //         this.uvDistortion.R.w = Infinity;
-  //     }
-  // }
-
 
   setCamera(camera, index) {
       camera.getWorldPosition(this.textureCameras[index].position);
@@ -139,11 +103,12 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       }
   }
 
-  setTextureCameras(cameras) {
+  setTextureCameras(cameras, maps) {
     let numCameras = cameras.length;
-    //this.defines.NUM_TEXTURES = numCameras;
+    this.defines.NUM_TEXTURES = numCameras;
     this.textureAndCamerasSetDefault();
     for (let i = 0; i < numCameras; i++) {
+      this.textures[i] = maps[i];
       this.setCamera(cameras[i], i);
     }
   }
@@ -156,11 +121,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
   setViewCamera(camera) {
     camera.updateMatrixWorld(); // the matrixWorldInverse should be up to date
-    //setE_Primes(camera.position);
-    //this.E_prime.subVectors(camera.position, this.textureCameraPosition).applyMatrix3(this.M_prime_Pre);
-    for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
-      this.textureCameras[i].E_prime.subVectors(camera.position, this.textureCameras[i].position).applyMatrix3(this.textureCameras[i].M_prime_Pre);
-    }
+    this.setE_Primes(camera.position);
 
     var viewProjectionTransformMat4 = new Matrix4();
     viewProjectionTransformMat4.copy(camera.matrixWorldInverse);
@@ -182,9 +143,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     );
 
     this.viewProjectionScreenInverse.multiply(screenInverse);
-
   }
-
 
    setScreenSize(width, height) {
      this.uniforms.screenSize.value.set(width, height);

@@ -3,15 +3,12 @@
 
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
-uniform sampler2D map;
 uniform RadialDistortion uvDistortion;
 //uniform sampler2DArray mapArray;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
 uniform sampler2D textures[NUM_TEXTURES];
-uniform float numTextures;
-uniform mat3 M_prime_Post;
-varying mat3 vH;
-varying float passShadowMapTest;
+varying mat3 vH[NUM_TEXTURES];
+//varying float passShadowMapTest;
 varying vec4 vColor;
 
 
@@ -22,28 +19,35 @@ void main() {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
-  // p_texture = H * p_screen
-  vec3 texCoord = textureCameras[0].M_prime_Post * vH * vec3(gl_FragCoord.xy, 1.);
-  texCoord /= texCoord.z;
+  vec3 texCoord;
+  vec2 testBorder;
+  float countTexturesApplied = 0.;
+  vec4 color = vec4(0.);
 
-  vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+  // For each textureCamera
+  #pragma unroll_loop
+  for ( int i = 0; i < NUM_TEXTURES; i++ ) {
 
-  if (all(greaterThan(testBorder,vec2(0.))))
-  {
-    float normalization = 1.0 / numTextures;
+    // p_texture = H * p_screen
+    texCoord = textureCameras[ i ].M_prime_Post * vH[ i ] * vec3(gl_FragCoord.xy, 1.);
+    texCoord /= texCoord.z;
 
-    // Doesn't work
-    vec4 color = vec4(0.);
-    #pragma unroll_loop
-    for ( int i = 0; i < NUM_TEXTURES; i++ ) {
+    testBorder = min(texCoord.xy, 1. - texCoord.xy);
+
+    // Not able to use brackets because it messes up the unroll loop pattern
+    // TODO: find another way to do this because we need nested ifs to be able
+    // include the distortion and the shadowMapping
+    if (all(greaterThan(testBorder,vec2(0.))))
       color += texture2D( textures[ i ], texCoord.xy );
-    }
-    color *= normalization;
-    //color += texture2D( textures[ 2 ], texCoord.xy );
-    finalColor = color;
+    if (all(greaterThan(testBorder,vec2(0.))))
+      countTexturesApplied++;
 
-  } else {
-    finalColor.rgb = vec3(0.2);
+  }
+
+  // Normalize color
+  if (countTexturesApplied != 0.) {
+    float normalization = 1.0 / countTexturesApplied;
+    finalColor = color * normalization;
   }
 
   gl_FragColor =  finalColor;

@@ -137,21 +137,9 @@
                   size: 3,
                 });
 
-//              shadowMapMaterial = new ShadowMapMaterial();
-//              shadowMapMaterial = new THREE.MeshDepthMaterial();
 
                 pointsMaterial = new MultiTextureSpriteMaterial({numTextures: 3});
-                pointsMaterial.screenSize.x = window.innerWidth;
-                pointsMaterial.screenSize.y = window.innerHeight;
-                pointsMaterial.textures[0] = uvTexture;
-                pointsMaterial.textures[1] = whiteTexture;
-                // test
-                let redTexture;
-                const redData = new Uint8Array(3);
-                redData.set([0, 0, 255]);
-                redTexture = new THREE.DataTexture( redData, 1, 1, THREE.RGBFormat );
-                redTexture.name = 'red';
-                pointsMaterial.textures[2] = redTexture;
+                pointsMaterial.setScreenSize(window.innerWidth, window.innerHeight);
 
 
                 sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(-1, 32, 32), textureMaterial);
@@ -507,10 +495,19 @@
                 }
 
                 function setTextureCameras(camera) {
-                    //let cameraLeft = getCamera(camera, -1);
-                    //let cameraRight = getCamera(camera, 1);
-                    let cameras = [camera];
-                    pointsMaterial.setTextureCameras(cameras);
+                    let cameraLeft = getCamera(camera, -1);
+                    let cameraRight = getCamera(camera, 1);
+                    let cameras = [
+                      cameraLeft,
+                      camera,
+                      cameraRight
+                    ];
+                    let maps = [
+                      textures[cameraLeft.name] || uvTexture,
+                      textures[camera.name] || uvTexture,
+                      textures[cameraRight.name] || uvTexture
+                    ];
+                    pointsMaterial.setTextureCameras(cameras, maps);
                 }
 
                 /* Keyboard events */
