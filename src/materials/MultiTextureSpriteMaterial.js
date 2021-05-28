@@ -9,7 +9,7 @@ import {
   Matrix3,
   Matrix4
 } from 'three';
-import { definePropertyUniform, textureMatrix } from './Material.js';
+import { definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureSpriteMaterialVS from './shaders/MultiTextureSpriteMaterialVS.glsl';
 import MultiTextureSpriteMaterialFS from './shaders/MultiTextureSpriteMaterialFS.glsl';
 
@@ -59,7 +59,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
     this.vertexShader = MultiTextureSpriteMaterialVS;
 
-    this.fragmentShader = MultiTextureSpriteMaterialFS;
+    this.fragmentShader = unrollLoops(MultiTextureSpriteMaterialFS, this.defines);
   }
 
   setCamera(camera) {
