@@ -506,6 +506,13 @@
                     material.setCamera(camera);
                 }
 
+                function setTextureCameras(camera) {
+                    //let cameraLeft = getCamera(camera, -1);
+                    //let cameraRight = getCamera(camera, 1);
+                    let cameras = [camera];
+                    pointsMaterial.setTextureCameras(cameras);
+                }
+
                 /* Keyboard events */
                 function setView(camera) {
                     if (!camera) return;
@@ -542,7 +549,7 @@
                     renderer.setRenderTarget(renderTarget);
                     setMaterial(textureMaterial, textureCamera);
                     textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                    setMaterial(pointsMaterial, textureCamera);
+                    setTextureCameras(textureCamera);
                     pointsMaterial.depthMap = whiteTexture;
                     renderer.render(world, textureCamera);
 
