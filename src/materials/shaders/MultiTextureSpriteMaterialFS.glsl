@@ -1,12 +1,16 @@
+#include <distortions/radial_pars_fragment>
+
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform sampler2D map;
+uniform RadialDistortion uvDistortion;
 //uniform sampler2DArray mapArray;
 uniform sampler2D textures[NUM_TEXTURES];
 uniform float numTextures;
-uniform sampler2D depthMap;
+uniform mat3 M_prime_Post;
 varying mat3 vH;
 varying vec4 vColor;
+varying float passShadowMapTest;
 
 void main() {
   vec4 finalColor = vColor;
@@ -16,7 +20,7 @@ void main() {
   }
 
   // p_texture = H * p_screen
-  vec3 texCoord = vH * vec3(gl_FragCoord.xy, 1.);
+  vec3 texCoord = M_prime_Post * vH * vec3(gl_FragCoord.xy, 1.);
   texCoord /= texCoord.z;
 
   vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
