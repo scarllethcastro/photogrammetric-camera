@@ -1,5 +1,6 @@
 #include <distortions/radial_pars_fragment>
 #include <camera_structure>
+#include <tests_for_texturing>
 
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
@@ -32,14 +33,7 @@ void main() {
     texCoord = textureCameras[ i ].M_prime_Post * vH[ i ] * vec3(gl_FragCoord.xy, 1.);
     texCoord /= texCoord.z;
 
-    testBorder = min(texCoord.xy, 1. - texCoord.xy);
-
-    // Not able to use brackets because it messes up the unroll loop pattern
-    // TODO: find another way to do this because we need nested ifs to be able
-    // include the distortion and the shadowMapping
-    if (all(greaterThan(testBorder,vec2(0.))))
-      color += texture2D( textures[ i ], texCoord.xy );
-    if (all(greaterThan(testBorder,vec2(0.))))
+    if (testsForTexturing(color, texCoord, textures[ i ]))
       countTexturesApplied++;
 
   }

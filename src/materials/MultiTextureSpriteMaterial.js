@@ -12,6 +12,7 @@ import {
 import { definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureSpriteMaterialVS from './shaders/MultiTextureSpriteMaterialVS.glsl';
 import MultiTextureSpriteMaterialFS from './shaders/MultiTextureSpriteMaterialFS.glsl';
+import TestsForTexturing from './chunks/TestsForTexturing.glsl';
 
 
 // M^(-1) * screen -> this.viewProjectionScreenInverse
@@ -163,5 +164,7 @@ struct TextureCamera {
 
 };
 `;
+
+ShaderChunk["tests_for_texturing"] = TestsForTexturing;
 
 export default MultiTextureSpriteMaterial;
