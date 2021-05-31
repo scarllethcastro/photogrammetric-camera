@@ -41,16 +41,23 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
 
+    const whiteData = new Uint8Array(3);
+    whiteData.set([255, 255, 255]);
+    definePropertyUniform(this, 'defaultDepthMap', new THREE.DataTexture( whiteData, 1, 1, THREE.RGBFormat ));
+
     this.defines.USE_COLOR = '';
     this.defines.EPSILON = 1e-3;
     this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
 
     var textures;
     var textureCameras;
+    var depthMaps;
+
 
     this.textureAndCamerasSetDefault = () => {
       this.textures = [];
       this.textureCameras = [];
+      this.depthMaps = [];
 
       for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
           this.textures[i] = new Texture();
@@ -64,12 +71,14 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
             uvDistortion: { C: new THREE.Vector2(), R: new THREE.Vector4() }
           };
           this.textureCameras[i].uvDistortion.R.w = Infinity;
+          this.depthMaps[i] = this.defaultDepthMap;
       }
     }
     this.textureAndCamerasSetDefault();
 
     definePropertyUniform(this, 'textures', textures);
     definePropertyUniform(this, 'textureCameras', textureCameras);
+    definePropertyUniform(this, 'depthMaps', depthMaps);
 
     this.vertexShader = unrollLoops(MultiTextureSpriteMaterialVS, this.defines);
 
@@ -111,6 +120,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     for (let i = 0; i < numCameras; i++) {
       this.textures[i] = maps[i];
       this.setCamera(cameras[i], i);
+      this.depthMaps[i] = cameras[i].renderTarget.depthTexture;
     }
   }
 
@@ -144,6 +154,11 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     );
 
     this.viewProjectionScreenInverse.multiply(screenInverse);
+  }
+
+  setDepthMaps(texture) {
+    for (let i = 0; i < this.defines.NUM_TEXTURES; i++)
+      this.depthMaps[i] = texture;
   }
 
    setScreenSize(width, height) {

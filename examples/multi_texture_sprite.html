@@ -68,7 +68,7 @@
             import ScreenQuad from './js/ScreenQuad.es6.js';
             //import ImageUtils from '../extras/ImageUtils.js';
             var orbitTarget, orbitControls;
-            var scene, renderer, world, plyGroup, cameras, screenQuads, cameraGUI, textureScene, textureRenderTarget;
+            var scene, renderer, world, plyGroup, cameras, screenQuads, cameraGUI;
             var textureMaterial, wireMaterial, pointsMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
             var textures = {}, uvTexture, whiteTexture;
             var numTextures = 1;
@@ -97,7 +97,6 @@
                 document.body.appendChild( container );
                 scene = new THREE.Scene();
                 world = new THREE.Group();
-                textureScene = new THREE.Scene();
                 cameras = new THREE.Group();
                 screenQuads = new THREE.Group();
                 cameras.visible = false;
@@ -174,87 +173,6 @@
                 addScreenQuad("texture");
                 addScreenQuad("textureColor");
                 addScreenQuad("textureDepth");
-
-
-                // Texture array
-                addScreenQuad("renderTargetTest");
-
-                const textureQuad = new ScreenQuad();
-                // TODO: worry about the aspect of the texture? Does it have influence on the precision?
-                textureQuad.name = 'textureQuad';
-                textureQuad.material.uniforms.uTexture.value = whiteTexture;
-
-                //scene.add(textureQuad);
-                textureScene.add(textureQuad);
-                textureRenderTarget = new THREE.WebGLRenderTarget( 1024, 1024, {format: THREE.RGBFormat} );
-
-
-                // Code example of DataTexture2DArray use
-                // TODO: adapt the code to use our textures
-                // create a buffer with color data
-
-                function readRenderTarget() {
-
-                  renderer.setRenderTarget(textureRenderTarget);
-                  renderer.render(textureScene, viewCamera);
-                  renderer.setRenderTarget(null);
-                  screenQuads.children[3].material.uniforms.uTexture.value = textureRenderTarget.texture;
-
-                  const width = textureRenderTarget.width;
-                  const height = textureRenderTarget.height;
-                  const depth = numTextures;
-
-                  const size = width * height;
-                  const textureData = new Uint8Array( 3 * size * depth );
-
-
-                  // for ( var i = 0; i < depth; i ++ ) {
-                  //
-                  // 	const color = new THREE.Color( Math.random(), Math.random(), Math.random() );
-                  // 	const r = Math.floor( color.r * 255 );
-                  // 	const g = Math.floor( color.g * 255 );
-                  // 	const b = Math.floor( color.b * 255 );
-                  //
-                  // 	for ( let j = 0; j < size; j ++ ) {
-                  //
-                  // 		const stride = ( i * size + j ) * 3;
-                  //
-                  // 		data[ stride ] = r;
-                  // 		data[ stride + 1 ] = g;
-                  // 		data[ stride + 2 ] = b;
-                  //
-                  // 	}
-                  // }
-
-                  // TODO: instead of creating the data array by hand, use the method renderer.readRenderTargetPixels as in the
-                  // example webgl_interactive_cubes_gpu:
-
-                  // ************************************** //
-
-                  //// Render the scene
-
-          				// renderer.setRenderTarget( pickingTexture );
-          				// renderer.render( pickingScene, camera );
-
-          				//// Create buffer for reading single pixel
-
-          				//const pixelBuffer = new Uint8Array( 4 );
-
-          				//// Read the rendered texture
-
-          				renderer.readRenderTargetPixels( textureRenderTarget, 0, 0, width, height, textureData );
-
-                  // ************************************** //
-
-                  //// Use the buffer to create a DataTexture2DArray
-
-                  const texture = new THREE.DataTexture2DArray( textureData, width, height, numTextures );
-                  texture.format = THREE.RGBFormat;
-                  texture.type = THREE.UnsignedByteType;
-
-                  //// When texture really has the texture array we do:
-                  // pointsMaterial.mapArray = texture;
-                }
 
 
                 // resize
@@ -547,7 +465,7 @@
                     setMaterial(textureMaterial, textureCamera);
                     textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
                     setTextureCameras(textureCamera);
-                    pointsMaterial.depthMap = whiteTexture;
+                    pointsMaterial.setDepthMaps(whiteTexture);
                     renderer.render(world, textureCamera);
 
                     screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
@@ -556,7 +474,7 @@
 
                     renderer.setRenderTarget(null);
                     textureMaterial.depthMap = renderTarget.depthTexture;
-                    pointsMaterial.depthMap = renderTarget.depthTexture;
+                    setTextureCameras(textureCamera);
 
                 }
 
