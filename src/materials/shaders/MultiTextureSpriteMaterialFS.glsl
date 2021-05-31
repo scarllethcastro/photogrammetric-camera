@@ -29,11 +29,9 @@ void main() {
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
 
-    // p_texture = H * p_screen
-    texCoord = textureCameras[ i ].M_prime_Post * vH[ i ] * vec3(gl_FragCoord.xy, 1.);
-    texCoord /= texCoord.z;
+    texCoord = vH[ i ] * vec3(gl_FragCoord.xy, 1.);
 
-    if (testsForTexturing(color, texCoord, textures[ i ]))
+    if (testsForTexturing(color, texCoord, textures[ i ], textureCameras[ i ]))
       countTexturesApplied++;
 
   }
