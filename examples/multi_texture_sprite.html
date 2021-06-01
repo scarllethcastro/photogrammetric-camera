@@ -68,10 +68,9 @@
             import ScreenQuad from './js/ScreenQuad.es6.js';
             //import ImageUtils from '../extras/ImageUtils.js';
             var orbitTarget, orbitControls;
-            var scene, renderer, world, plyGroup, cameras, screenQuads, cameraGUI;
+            var scene, renderer, world, plyGroup, cameras, screenQuads, cameraGUI, textureScene, textureRenderTarget;
             var textureMaterial, wireMaterial, pointsMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
             var textures = {}, uvTexture, whiteTexture;
-            var numTextures = 1;
             var prevCamera = new PhotogrammetricCamera();
             var viewCamera = new PhotogrammetricCamera();
             var nextCamera = new PhotogrammetricCamera();
@@ -97,6 +96,7 @@
                 document.body.appendChild( container );
                 scene = new THREE.Scene();
                 world = new THREE.Group();
+                textureScene = new THREE.Scene();
                 cameras = new THREE.Group();
                 screenQuads = new THREE.Group();
                 cameras.visible = false;
@@ -173,6 +173,35 @@
                 addScreenQuad("texture");
                 addScreenQuad("textureColor");
                 addScreenQuad("textureDepth");
+
+
+                // Texture array
+                addScreenQuad("renderTargetTest");
+                function createDataTexture(texture) {
+
+                  const textureQuad = new ScreenQuad();
+                  textureQuad.name = 'textureQuad';
+                  textureQuad.material.uniforms.uTexture.value = texture;
+
+                  textureScene.add(textureQuad);
+                  textureRenderTarget = new THREE.WebGLRenderTarget( 1024, 1024 );
+
+                  renderer.setRenderTarget(textureRenderTarget);
+                  renderer.render(textureScene, viewCamera);
+                  renderer.setRenderTarget(null);
+                  screenQuads.children[3].material.uniforms.uTexture.value = textureRenderTarget.texture;
+
+                  const width = textureRenderTarget.width;
+                  const height = textureRenderTarget.height;
+
+                  const size = width * height;
+                  const textureData = new Uint8Array( 4 * size );
+
+                  renderer.readRenderTargetPixels( textureRenderTarget, 0, 0, width, height, textureData );
+
+                  return new THREE.DataTexture( textureData, width, height, THREE.RGBAFormat );
+
+                }
 
 
                 // resize
@@ -413,6 +442,7 @@
                 }
 
                 function setTextureCameras(camera) {
+
                     let cameraLeft = getCamera(camera, -1);
                     let cameraRight = getCamera(camera, 1);
                     let cameras = [
@@ -420,11 +450,33 @@
                       camera,
                       cameraRight
                     ];
+
+                    // let maps = [
+                    //   textures[cameraLeft.name] || uvTexture,
+                    //   textures[camera.name] || uvTexture,
+                    //   textures[cameraRight.name] || uvTexture
+                    // ];
                     let maps = [
-                      textures[cameraLeft.name] || uvTexture,
-                      textures[camera.name] || uvTexture,
-                      textures[cameraRight.name] || uvTexture
+                      textures[cameraLeft.name] ? createDataTexture(textures[cameraLeft.name]) : createDataTexture(uvTexture),
+                      textures[camera.name] ? createDataTexture(textures[camera.name]) : createDataTexture(uvTexture),
+                      textures[cameraRight.name] ? createDataTexture(textures[cameraRight.name]) : createDataTexture(uvTexture)
                     ];
+
+                    console.log('new uvTexture:\n', maps[0]);
+
+                    const imageWidth = maps[0].image.width;
+                    const imageHeight = maps[0].image.height;
+
+                    pointsMaterial.initializeMapArray(imageWidth, imageHeight);
+                    const position = new THREE.Vector3( 0, 0, 0 );
+                    for ( let i = 0; i < 1; i++ ) {
+
+                      const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( imageWidth-1, imageHeight-1, i ) );
+                      if (maps[i] == null) console.log('maps['+i+'] is null');
+                      renderer.copyTextureToTexture3D(box, position, maps[i], pointsMaterial.mapArray);
+
+                    }
+
                     pointsMaterial.setTextureCameras(cameras, maps);
                 }
 

@@ -36,7 +36,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'E_prime', new Vector3());
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
-    definePropertyUniform(this, 'mapArray', new DataTexture2DArray());
+    definePropertyUniform(this, 'mapArray', null);
     definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
@@ -154,6 +154,22 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     );
 
     this.viewProjectionScreenInverse.multiply(screenInverse);
+  }
+
+  initializeMapArray(width, height) {
+
+    const depth = this.defines.NUM_TEXTURES;
+    const size = width * height;
+    const totalDataSize = 4 * size * depth;
+    const data = new Uint8Array( totalDataSize );
+
+    for ( let i = 0; i < totalDataSize; i++ ) {
+      data[i] = 0;
+    }
+
+    this.mapArray = new THREE.DataTexture2DArray( data, width, height, depth );
+    this.mapArray.format = THREE.RGBAFormat;
+    this.mapArray.type = THREE.UnsignedByteType;
   }
 
   setDepthMaps(texture) {
