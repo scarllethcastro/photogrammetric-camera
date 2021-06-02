@@ -115,7 +115,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
   setTextureCameras(cameras, maps) {
     let numCameras = cameras.length;
-    this.defines.NUM_TEXTURES = numCameras;
+    this.defines.NUM_TEXTURES = numCameras;  // Doesn't work very well to update this in running time
     this.textureAndCamerasSetDefault();
     for (let i = 0; i < numCameras; i++) {
       this.textures[i] = maps[i];

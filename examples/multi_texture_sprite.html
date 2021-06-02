@@ -468,10 +468,10 @@
                     const imageHeight = maps[0].image.height;
 
                     pointsMaterial.initializeMapArray(imageWidth, imageHeight);
-                    const position = new THREE.Vector3( 0, 0, 0 );
-                    for ( let i = 0; i < 1; i++ ) {
+                    const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( imageWidth-1, imageHeight-1, 0 ) );
+                    for ( let i = 0; i < pointsMaterial.defines.NUM_TEXTURES; i++ ) {
 
-                      const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( imageWidth-1, imageHeight-1, i ) );
+                      const position = new THREE.Vector3( 0, 0, i );
                       if (maps[i] == null) console.log('maps['+i+'] is null');
                       renderer.copyTextureToTexture3D(box, position, maps[i], pointsMaterial.mapArray);
 

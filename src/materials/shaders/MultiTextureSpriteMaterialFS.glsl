@@ -5,7 +5,7 @@
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform RadialDistortion uvDistortion;
-//uniform sampler2DArray mapArray;
+uniform sampler2DArray mapArray;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
 uniform sampler2D textures[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
@@ -26,7 +26,7 @@ void main() {
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTests(color, gl_FragCoord, vH[ i ], textures[ i ], textureCameras[ i ], passShadowMapTest[ i ], countTexturesApplied);
+    allTests(color, gl_FragCoord, vH[ i ], textures[ i ], textureCameras[ i ], passShadowMapTest[ i ], countTexturesApplied, mapArray, i );
   }
 
   // Normalize color
