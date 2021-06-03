@@ -14,8 +14,8 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, sampler2D texture_i, 
       vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
 
       if (all(greaterThan(testBorder,vec2(0.)))) {
-        color += texture2D( texture_i, texCoord.xy );
-        //color += texture( mapArray, vec3( texCoord.xy, depth ) );
+        //color += texture2D( texture_i, texCoord.xy );
+        color += texture( mapArray, vec3( texCoord.xy, depth ) );
         countTexturesApplied++;
       }
     }

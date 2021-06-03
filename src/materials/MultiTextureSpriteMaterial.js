@@ -37,6 +37,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'mapArray', null);
+    definePropertyUniform(this, 'mapArrayInitilized', false);
     definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
@@ -115,8 +116,9 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
   setTextureCameras(cameras, maps) {
     let numCameras = cameras.length;
-    this.defines.NUM_TEXTURES = numCameras;  // Doesn't work very well to update this in running time
-    this.textureAndCamerasSetDefault();
+    if (numCameras != this.defines.NUM_TEXTURES) {
+      console.error('Number of cameras passed to MultiTextureSpriteMaterial.setTextureCameras() is different from NUM_TEXTURES defined in initialization.');
+    }
     for (let i = 0; i < numCameras; i++) {
       this.textures[i] = maps[i];
       this.setCamera(cameras[i], i);

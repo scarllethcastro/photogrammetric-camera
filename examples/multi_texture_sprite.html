@@ -70,7 +70,7 @@
             var orbitTarget, orbitControls;
             var scene, renderer, world, plyGroup, cameras, screenQuads, cameraGUI, textureScene, textureRenderTarget;
             var textureMaterial, wireMaterial, pointsMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
-            var textures = {}, uvTexture, whiteTexture;
+            var textures = {}, uvTexture, whiteTexture, dataTextures = {};
             var prevCamera = new PhotogrammetricCamera();
             var viewCamera = new PhotogrammetricCamera();
             var nextCamera = new PhotogrammetricCamera();
@@ -246,6 +246,8 @@
                         var mesh = new THREE.Mesh( geometry, [wireMaterial, viewMaterials[camera.name]] );
                         mesh.scale.set(1.01, 1.01, 1.01); // push frustum base 1% away from the near plane
                         group.add(mesh);
+
+                        dataTextures[camera.name] = textures[camera.name] ? createDataTexture(textures[camera.name]) : createDataTexture(uvTexture);
 
                     }
 
@@ -457,17 +459,21 @@
                     //   textures[cameraRight.name] || uvTexture
                     // ];
                     let maps = [
-                      textures[cameraLeft.name] ? createDataTexture(textures[cameraLeft.name]) : createDataTexture(uvTexture),
-                      textures[camera.name] ? createDataTexture(textures[camera.name]) : createDataTexture(uvTexture),
-                      textures[cameraRight.name] ? createDataTexture(textures[cameraRight.name]) : createDataTexture(uvTexture)
+                      dataTextures[cameraLeft.name],
+                      dataTextures[camera.name],
+                      dataTextures[cameraRight.name]
                     ];
 
-                    console.log('new uvTexture:\n', maps[0]);
+                    //console.log('new uvTexture:\n', maps[0]);
 
                     const imageWidth = maps[0].image.width;
                     const imageHeight = maps[0].image.height;
 
-                    pointsMaterial.initializeMapArray(imageWidth, imageHeight);
+                    if (!pointsMaterial.mapArrayInitialized) {
+                        pointsMaterial.initializeMapArray(imageWidth, imageHeight);
+                        pointsMaterial.mapArrayInitialized = true;
+                    }
+                    
                     const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( imageWidth-1, imageHeight-1, 0 ) );
                     for ( let i = 0; i < pointsMaterial.defines.NUM_TEXTURES; i++ ) {
 
