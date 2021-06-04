@@ -520,7 +520,7 @@
                     setMaterial(textureMaterial, textureCamera);
                     textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
                     setTextureCameras(textureCamera);
-                    pointsMaterial.setDepthMaps(whiteTexture);
+                    pointsMaterial.setDepthMaps([whiteTexture]);
                     renderer.render(world, textureCamera);
 
                     screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
@@ -529,8 +529,11 @@
 
                     renderer.setRenderTarget(null);
                     textureMaterial.depthMap = renderTarget.depthTexture;
-                    setTextureCameras(textureCamera);
-
+                    pointsMaterial.setDepthMaps([
+                        getCamera(textureCamera, -1).renderTarget.depthTexture,
+                        renderTarget.depthTexture,
+                        getCamera(textureCamera, 1).renderTarget.depthTexture
+                    ]);
                 }
 
                 function setCamera(camera) {
