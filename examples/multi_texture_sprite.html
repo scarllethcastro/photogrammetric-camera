@@ -464,14 +464,11 @@
                       dataTextures[cameraRight.name]
                     ];
 
-                    //console.log('new uvTexture:\n', maps[0]);
-
                     const imageWidth = maps[0].image.width;
                     const imageHeight = maps[0].image.height;
 
-                    if (!pointsMaterial.mapArrayInitialized) {
+                    if (!pointsMaterial.mapArray) {
                         pointsMaterial.initializeMapArray(imageWidth, imageHeight);
-                        pointsMaterial.mapArrayInitialized = true;
                     }
                     
                     const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( imageWidth-1, imageHeight-1, 0 ) );

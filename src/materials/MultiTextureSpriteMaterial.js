@@ -37,7 +37,6 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'mapArray', null);
-    definePropertyUniform(this, 'mapArrayInitilized', false);
     definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
