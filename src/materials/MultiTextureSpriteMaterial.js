@@ -179,12 +179,12 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
         for (let i = 0; i < this.defines.NUM_TEXTURES; i++)
           this.depthMaps[i] = depthMapArray;
         break;
-    
+
       case this.defines.NUM_TEXTURES:
         for (let i = 0; i < this.defines.NUM_TEXTURES; i++)
           this.depthMaps[i] = depthMapArray[i];
         break;
-      
+
       default:
         console.error('Number of depthMaps passed to MultiTextureSpriteMaterial.setDepthMaps() should be equal to NUM_TEXTURES defined in initialization or 1.');
         break;
