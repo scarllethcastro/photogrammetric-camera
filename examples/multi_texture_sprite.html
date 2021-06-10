@@ -567,6 +567,7 @@
                     //if a value is set in pixels, the canvas size needs to be set on the element
                     screenQuads.children.forEach(quad => quad.setScreenSize( width , height ));
                     pointsMaterial.setScreenSize(width, height);
+                    pointsMaterial.pixelRatio = window.devicePixelRatio;
                 }
 
                 /* preset scenes */

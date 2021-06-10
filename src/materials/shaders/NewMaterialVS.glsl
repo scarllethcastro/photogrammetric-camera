@@ -3,7 +3,6 @@ uniform float size;
 uniform vec3 textureCameraPosition;
 uniform mat4 textureCameraPreTransform; // Contains the rotation and the intrinsics of the camera, but not the translation
 varying vec4 vPosition;
-varying float vDistanceCamera;
 #endif
 varying vec4 vColor;
 

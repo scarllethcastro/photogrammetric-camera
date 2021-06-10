@@ -11,6 +11,7 @@ uniform sampler2D textures[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
 varying vec4 vColor;
+uniform float pixelRatio;
 
 
 void main() {
@@ -26,7 +27,7 @@ void main() {
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTests(color, gl_FragCoord, vH[ i ], textures[ i ], textureCameras[ i ], passShadowMapTest[ i ], countTexturesApplied, mapArray, i );
+    allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textures[ i ], textureCameras[ i ], passShadowMapTest[ i ], countTexturesApplied, mapArray, i );
   }
 
   // Normalize color

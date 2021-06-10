@@ -40,6 +40,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
+    definePropertyUniform(this, 'pixelRatio', 1.);
 
     const whiteData = new Uint8Array(3);
     whiteData.set([255, 255, 255]);

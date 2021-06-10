@@ -7,6 +7,7 @@ uniform mat3 M_prime_Post;
 varying mat3 vH;
 varying vec4 vColor;
 varying float passShadowMapTest;
+uniform float pixelRatio;
 
 void main() {
   vec4 finalColor = vColor;
@@ -17,7 +18,7 @@ void main() {
 
   if (passShadowMapTest > 0.5) {
 
-    vec3 texCoord = vH * vec3(gl_FragCoord.xy, 1.);
+    vec3 texCoord = vH * vec3(gl_FragCoord.xy / pixelRatio, 1.);
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
