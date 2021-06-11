@@ -41,27 +41,37 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
     definePropertyUniform(this, 'pixelRatio', 1.);
-
-    const whiteData = new Uint8Array(3);
-    whiteData.set([255, 255, 255]);
-    definePropertyUniform(this, 'defaultDepthMap', new THREE.DataTexture( whiteData, 1, 1, THREE.RGBFormat ));
+    
 
     this.defines.USE_COLOR = '';
     this.defines.EPSILON = 1e-3;
     this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
 
-    var textures;
+    let textureIndexes = [];
+    let textureScores = [];
+    for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
+      textureIndexes[i] = 0;
+      textureScores[i] = 1.;
+    }
+    definePropertyUniform(this, 'textureIndexes', textureIndexes);
+    definePropertyUniform(this, 'textureScores', textureScores);
+
+    this.MAX_TEXTURES = options.MAX_TEXTURES || 40;
+    this.nbTexturesUsed = 0;
+    this.textureNameToIndex = {};
+
+    const whiteData = new Uint8Array(3);
+    whiteData.set([255, 255, 255]);
+    definePropertyUniform(this, 'defaultDepthMap', new THREE.DataTexture( whiteData, 1, 1, THREE.RGBFormat ));
+
     var textureCameras;
     var depthMaps;
 
-
-    this.textureAndCamerasSetDefault = () => {
-      this.textures = [];
+    this.textureCamerasSetDefault = () => {
       this.textureCameras = [];
       this.depthMaps = [];
 
       for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
-          this.textures[i] = new Texture();
           this.textureCameras[i] = {
             position: new Vector3(),
             preTransform: new Matrix4(),
@@ -75,9 +85,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
           this.depthMaps[i] = this.defaultDepthMap;
       }
     }
-    this.textureAndCamerasSetDefault();
+    this.textureCamerasSetDefault();
 
-    definePropertyUniform(this, 'textures', textures);
     definePropertyUniform(this, 'textureCameras', textureCameras);
     definePropertyUniform(this, 'depthMaps', depthMaps);
 
@@ -114,16 +123,20 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       }
   }
 
-  setTextureCameras(cameras, maps) {
+  setTextureCameras(cameras, mapsIndexes, cameraScores) {
     let numCameras = cameras.length;
     if (numCameras != this.defines.NUM_TEXTURES) {
       console.error('Number of cameras passed to MultiTextureSpriteMaterial.setTextureCameras() is different from NUM_TEXTURES defined in initialization.');
     }
+    if (numCameras != mapsIndexes.length || numCameras != cameraScores.length || mapsIndexes.length != cameraScores.length) {
+      console.error('cameras.length, mapsIndexes.length and cameraWeights.length must coincide in function MultiTextureSpriteMaterial.setTextureCameras().');
+    }
     for (let i = 0; i < numCameras; i++) {
-      this.textures[i] = maps[i];
       this.setCamera(cameras[i], i);
       this.depthMaps[i] = cameras[i].renderTarget.depthTexture;
     }
+    this.textureIndexes = mapsIndexes;
+    this.textureScores = cameraScores;
   }
 
   setE_Primes(cameraPosition) {
@@ -160,7 +173,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
   initializeMapArray(width, height) {
 
-    const depth = this.defines.NUM_TEXTURES;
+    const depth = this.MAX_TEXTURES;
     const size = width * height;
     const totalDataSize = 4 * size * depth;
     const data = new Uint8Array( totalDataSize );

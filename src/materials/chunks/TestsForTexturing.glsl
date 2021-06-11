@@ -1,4 +1,4 @@
-void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, sampler2D texture_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float countTexturesApplied, sampler2DArray mapArray, int depth) {
+void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int depth, float score) {
 
   if (passShadowMapTest_i > 0.5) {
 
@@ -14,9 +14,8 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, sampler2D texture_i, 
       vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
 
       if (all(greaterThan(testBorder,vec2(0.)))) {
-        //color += texture2D( texture_i, texCoord.xy );
-        color += texture( mapArray, vec3( texCoord.xy, depth ) );
-        countTexturesApplied++;
+        color += texture( mapArray, vec3( texCoord.xy, depth ) ) * score;
+        scoresSum += score;
       }
     }
   }

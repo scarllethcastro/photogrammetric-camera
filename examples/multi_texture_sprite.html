@@ -424,12 +424,12 @@
 
 
                     let maps = [
-                     textures[cameraLeft.name] || uvTexture,
+                       textures[cameraLeft.name] || uvTexture,
                        textures[camera.name] || uvTexture,
                        textures[cameraRight.name] || uvTexture
                      ];
-                     var canvas2d = document.getElementById('canvas2d'),
-                         ctx = canvas2d.getContext('2d');
+                    var canvas2d = document.getElementById('canvas2d'),
+                    ctx = canvas2d.getContext('2d');
                     for ( let i = 0; i < maps.length; i++ ) {
                       if (!maps[i].image.data) {
                         const w = maps[i].image.width;
@@ -454,15 +454,30 @@
                     }
 
                     const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( imageWidth-1, imageHeight-1, 0 ) );
+                    // for ( let i = 0; i < pointsMaterial.defines.NUM_TEXTURES; i++ ) {
+
+                    //   const position = new THREE.Vector3( 0, 0, i );
+                    //   renderer.copyTextureToTexture3D(box, position, maps[i], pointsMaterial.mapArray);
+
+                    // }
+
+                    let textureIndexes = [0,0,0];
                     for ( let i = 0; i < pointsMaterial.defines.NUM_TEXTURES; i++ ) {
-
-                      const position = new THREE.Vector3( 0, 0, i );
-                      if (maps[i] == null) console.log('maps['+i+'] is null');
-                      renderer.copyTextureToTexture3D(box, position, maps[i], pointsMaterial.mapArray);
-
+                        let cameraName = cameras[i].name;
+                        if (pointsMaterial.textureNameToIndex[cameraName]) {
+                            textureIndexes[i] = pointsMaterial.textureNameToIndex[cameraName];
+                        } else {
+                            let nextIndex = pointsMaterial.nbTexturesUsed;
+                            const position = new THREE.Vector3( 0, 0, nextIndex );
+                            renderer.copyTextureToTexture3D(box, position, maps[i], pointsMaterial.mapArray);
+                            pointsMaterial.textureNameToIndex[cameraName] = nextIndex;
+                            textureIndexes[i] = nextIndex;
+                            pointsMaterial.nbTexturesUsed++;
+                        }
                     }
 
-                    pointsMaterial.setTextureCameras(cameras, maps);
+                    pointsMaterial.setTextureCameras(cameras, textureIndexes, [1., 1., 1.]);
+                    console.log('nbTexturesUsed: ', pointsMaterial.nbTexturesUsed);
                 }
 
                 /* Keyboard events */
