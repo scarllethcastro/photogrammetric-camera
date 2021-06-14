@@ -218,7 +218,7 @@
                         group.add(mesh);
 
                     }
-
+                    
                     // place a sphere at the camera center
                     {
                         var geometry = new THREE.SphereBufferGeometry(0.03, 8, 8 );
@@ -228,6 +228,51 @@
 
                     return group;
                 };
+
+                function decreasingFunction(d) {
+                    const sigma = 0.01;
+                    return 1./(sigma*sigma + d*d);
+                }
+
+                function getBestCameras(camera, k) {
+
+                    let viewPosition = new THREE.Vector3();
+                    viewCamera.getWorldPosition(viewPosition);
+                    const camerasArray = cameras.children;
+                    let cameraToDistance = {};
+
+                    for (let i = 0; i < camerasArray.length; i++) {
+                        let textureCameraPosition = new THREE.Vector3();
+                        camerasArray[i].getWorldPosition(textureCameraPosition);
+                        cameraToDistance[camerasArray[i].name] = viewPosition.distanceTo(textureCameraPosition);
+                    }
+
+                    let distancesArray = Object.values(cameraToDistance);
+                   // console.log('distancesArray:\n', distancesArray);
+                    distancesArray.sort(function(a, b){return a - b});
+                   // console.log('distancesArray sorted:\n', distancesArray);
+
+                   // console.log('cameraToDistance:\n', cameraToDistance);
+
+                    let sortedCameras = [];
+                    for (let i = 0; i < camerasArray.length; i++) {
+                        const textureCameraName = Object.keys(cameraToDistance)[Object.values(cameraToDistance).indexOf(distancesArray[i])];
+                        sortedCameras.push(textureCameraName);
+                    }
+                   // console.log('sortedCameras:\n', sortedCameras);
+
+                    let kCameras = [];
+                    for (let i = 0; i < k; i++) {
+                        kCameras.push(sortedCameras[i]);
+                    }
+
+                    let kWeights = [];
+                    for (let i = 0; i < k; i++) {
+                        kWeights.push(decreasingFunction(distancesArray[i]) - decreasingFunction(distancesArray[k]));
+                    }
+
+                    return [kCameras, kWeights];
+                }
 
                 // handle functions
 

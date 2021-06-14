@@ -48,13 +48,13 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
 
     let textureIndexes = [];
-    let textureScores = [];
+    let textureWeights = [];
     for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
       textureIndexes[i] = 0;
-      textureScores[i] = 1.;
+      textureWeights[i] = 1.;
     }
     definePropertyUniform(this, 'textureIndexes', textureIndexes);
-    definePropertyUniform(this, 'textureScores', textureScores);
+    definePropertyUniform(this, 'textureWeights', textureWeights);
 
     this.MAX_TEXTURES = options.MAX_TEXTURES || 40;
     this.nbTexturesUsed = 0;
@@ -123,7 +123,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       }
   }
 
-  setTextureCameras(cameras, mapsIndexes, cameraScores) {
+  setTextureCameras(cameras, mapsIndexes, cameraWeights) {
     let numCameras = cameras.length;
     if (numCameras != this.defines.NUM_TEXTURES) {
       console.error('Number of cameras passed to MultiTextureSpriteMaterial.setTextureCameras() is different from NUM_TEXTURES defined in initialization.');
@@ -136,7 +136,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       this.depthMaps[i] = cameras[i].renderTarget.depthTexture;
     }
     this.textureIndexes = mapsIndexes;
-    this.textureScores = cameraScores;
+    this.textureWeights = cameraWeights;
   }
 
   setE_Primes(cameraPosition) {

@@ -8,7 +8,7 @@ uniform RadialDistortion uvDistortion;
 uniform sampler2DArray mapArray;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
 uniform int textureIndexes[NUM_TEXTURES];
-uniform float textureScores[NUM_TEXTURES];
+uniform float textureWeights[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
 varying vec4 vColor;
@@ -28,11 +28,11 @@ void main() {
   // For each textureCamera
   // #pragma unroll_loop
   // for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-  //   allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i , textureScores[ i ]);
+  //   allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i , textureWeights[ i ]);
   // }
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, textureIndexes[ i ], textureScores[ i ]);
+    allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, textureIndexes[ i ], textureWeights[ i ]);
   }
 
   // Normalize color
