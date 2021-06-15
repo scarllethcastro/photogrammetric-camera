@@ -14,7 +14,7 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
       vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
 
       if (all(greaterThan(testBorder,vec2(0.)))) {
-        color += texture( mapArray, vec3( texCoord.xy, depth ) ) * score;
+        color += texture( mapArray, vec3( texCoord.xy, depth ) ) * weight;
         scoresSum += weight;
       }
     }

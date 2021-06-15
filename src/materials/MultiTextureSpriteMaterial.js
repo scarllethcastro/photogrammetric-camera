@@ -128,7 +128,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     if (numCameras != this.defines.NUM_TEXTURES) {
       console.error('Number of cameras passed to MultiTextureSpriteMaterial.setTextureCameras() is different from NUM_TEXTURES defined in initialization.');
     }
-    if (numCameras != mapsIndexes.length || numCameras != cameraScores.length || mapsIndexes.length != cameraScores.length) {
+    if (numCameras != mapsIndexes.length || numCameras != cameraWeights.length || mapsIndexes.length != cameraWeights.length) {
       console.error('cameras.length, mapsIndexes.length and cameraWeights.length must coincide in function MultiTextureSpriteMaterial.setTextureCameras().');
     }
     for (let i = 0; i < numCameras; i++) {
