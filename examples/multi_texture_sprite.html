@@ -473,7 +473,7 @@
 
                     // let cameraLeft = getCamera(camera, -1);
                     // let cameraRight = getCamera(camera, 1);
-                    // let cameras = [
+                    // let kCameras = [
                     //   cameraLeft,
                     //   camera,
                     //   cameraRight
@@ -531,6 +531,7 @@
                     }
                     //console.log('textureNameToIndex:\n', pointsMaterial.textureNameToIndex);
 
+                    //pointsMaterial.setTextureCameras(kCameras, textureIndexes, [1., 1., 1.]);
                     pointsMaterial.setTextureCameras(kCameras, textureIndexes, kWeights);
                     //console.log('nbTexturesUsed: ', pointsMaterial.nbTexturesUsed);
                 }
@@ -581,11 +582,12 @@
 
                     renderer.setRenderTarget(null);
                     textureMaterial.depthMap = renderTarget.depthTexture;
-                    pointsMaterial.setDepthMaps([
-                        getCamera(textureCamera, -1).renderTarget.depthTexture,
-                        renderTarget.depthTexture,
-                        getCamera(textureCamera, 1).renderTarget.depthTexture
-                    ]);
+                    // pointsMaterial.setDepthMaps([
+                    //     getCamera(textureCamera, -1).renderTarget.depthTexture,
+                    //     renderTarget.depthTexture,
+                    //     getCamera(textureCamera, 1).renderTarget.depthTexture
+                    // ]);
+                    setTextureCameras(textureCamera);
                 }
 
                 function setCamera(camera) {

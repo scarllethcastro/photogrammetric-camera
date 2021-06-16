@@ -32,7 +32,7 @@ void main() {
   // }
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, textureIndexes[ i ], textureWeights[ i ]);
+    allTests(color, gl_FragCoord / pixelRatio, vH[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, textureIndexes[ i ], textureWeights[ i ], i );
   }
 
   // Normalize color

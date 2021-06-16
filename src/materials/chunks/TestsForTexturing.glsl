@@ -1,4 +1,4 @@
-void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int depth, float weight) {
+void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int depth, float weight, int index) {
 
   if (passShadowMapTest_i > 0.5) {
 
@@ -13,11 +13,28 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
       // Test if coordinates are valid, so we can texture
       vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
 
-      if (all(greaterThan(testBorder,vec2(0.)))) {
-        color += texture( mapArray, vec3( texCoord.xy, depth ) ) * weight;
+      if (all(greaterThan(testBorder,vec2(0.))) && passShadowMapTest_i == 1.) {
+        //color += texture( mapArray, vec3( texCoord.xy, depth ) ) * weight;
+        switch (index) {
+          case 0:
+            color += vec4(1.,0.,0.,1.) * weight;
+            break;
+
+          case 1:
+            color += vec4(0.,1.,0.,1.) * weight;
+            break;
+
+          case 2:
+            color += vec4(0.,0.,1.,1.) * weight;
+            break;
+        }
+
         scoresSum += weight;
       }
     }
+  } else {
+    color += vec4(1., 1., 1., 1.);
+    scoresSum++;
   }
 }
 

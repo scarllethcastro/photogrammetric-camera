@@ -191,7 +191,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     switch (depthMapArray.length) {
       case 1:
         for (let i = 0; i < this.defines.NUM_TEXTURES; i++)
-          this.depthMaps[i] = depthMapArray;
+          this.depthMaps[i] = depthMapArray[0];
         break;
 
       case this.defines.NUM_TEXTURES:
