@@ -588,6 +588,23 @@
                     //     getCamera(textureCamera, 1).renderTarget.depthTexture
                     // ]);
                     setTextureCameras(textureCamera);
+
+                    //////////////////////////////////////////////////
+                    const depthWidth = renderTarget.depthTexture.image.width;
+                    const depthHeight = renderTarget.depthTexture.image.height;
+
+                    if (!pointsMaterial.depthMapArray) {
+                        pointsMaterial.initializeDepthMapArray(depthWidth, depthHeight);
+                    }
+
+                    const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( depthWidth-1, depthHeight-1, 0 ) );
+
+                    if ( pointsMaterial.textureNameToIndex[camera.name] != undefined ) {
+                        textureIndex = pointsMaterial.textureNameToIndex[camera.name];
+                        const position = new THREE.Vector3( 0, 0, textureIndex );
+                        renderer.copyTextureToTexture3D(box, position, renderTarget.depthTexture, pointsMaterial.depthMapArray);
+                    }
+                    //////////////////////////////////////////////////
                 }
 
                 function setCamera(camera) {
