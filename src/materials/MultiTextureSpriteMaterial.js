@@ -188,16 +188,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     console.log('cameraDistanceArray sorted:\n', cameraDistanceArray);
 
     const k = this.defines.NUM_TEXTURES;
-    // Prevention in the case when k > nbCamerasLoaded
+    // Prevention in the case when k + 1 > nbCamerasLoaded
     const d_kplus1 = this.decreasingFunction(cameraDistanceArray[ ((k + 1) > nbCamerasLoaded) ? (nbCamerasLoaded - 1) : k ][1]);
-
-    // for (let i = 0; i < k; i++) {
-    //     //kCameras.push(cameraDistanceArray[i % nbCamerasLoaded][0]);
-
-    //     const d_i = this.decreasingFunction(cameraDistanceArray[i % nbCamerasLoaded][1]);
-        
-    //     kWeights.push(d_i - d_kplus1);
-    // }
 
     for (let i = 0; i < nbCamerasLoaded; i++) {
       let cameraName = this.allCameras[i].cam.name;
@@ -208,11 +200,15 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   newSetTextureCameras(camera, texture, renderer) {
+    console.log('Trying to set camera ', camera.name);
+
     // Add this camera to allCameras if it isn't already there (including texture and depthMap)
     if (this.allCameras.find((c) => c.cam.name == camera.name) == undefined) {
       
       let nextIndex = this.nbTexturesUsed;  // TODO: verify that this is the same of this.allCameras.length and change it
       
+      console.log('Adding camera ' + camera.name + ' at index ' + nextIndex);
+
       // Add the camera
       this.allCameras[nextIndex] = {
         cam: camera,
@@ -231,6 +227,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       }
 
       this.copyTexture(texture, this.mapArray, nextIndex, renderer);
+      this.nbTexturesUsed++;
 
       // Add it's depthMap
       // (later when the depthMapArray works)
@@ -244,11 +241,15 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     this.allCameras.sort( (a,b) => b.weight - a.weight );
     console.log('allCameras inside material:\n', this.allCameras);
 
-    // // pass the best k cameras to the array textureCameras
-    // for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
-    //   this.setCamera(this.allCameras[i], i);
-    //   this.depthMaps[i] = this.allCameras[i].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
-    // }
+    // pass the best k cameras to the array textureCameras
+    const nbCamerasLoaded = this.allCameras.length;
+    const k = this.defines.NUM_TEXTURES;
+    for (let i = 0; i < k; i++) {
+      this.setCamera(this.allCameras[i % nbCamerasLoaded], i);
+      this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
+      this.textureIndexes[i] = this.allCameras[i % nbCamerasLoaded].index;
+      this.textureWeights[i] = this.allCameras[i % nbCamerasLoaded].weight;
+    }
 
   }
 

@@ -580,7 +580,8 @@
                     renderer.setRenderTarget(renderTarget);
                     setMaterial(textureMaterial, textureCamera);
                     textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                    setTextureCameras(textureCamera);
+                    //setTextureCameras(textureCamera);
+                    pointsMaterial.newSetTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
                     pointsMaterial.setDepthMaps([whiteTexture]);
                     renderer.render(world, textureCamera);
 
@@ -595,7 +596,8 @@
                     //     renderTarget.depthTexture,
                     //     getCamera(textureCamera, 1).renderTarget.depthTexture
                     // ]);
-                    setTextureCameras(textureCamera);
+                    //setTextureCameras(textureCamera);
+                    pointsMaterial.newSetTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
 
                     ////// Doesn't work for now, drawImage doesn'accept the depth texture
                     //createImageData(renderTarget.depthTexture);
