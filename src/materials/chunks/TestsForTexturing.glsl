@@ -1,4 +1,4 @@
-void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int depth, float weight, int index) {
+void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
 
   if (passShadowMapTest_i > 0.5) {
 
@@ -17,15 +17,15 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
         color += texture( mapArray, vec3( texCoord.xy, textureCamera_i.index ) ) * textureCamera_i.weight;
         // switch (index) {
         //   case 0:
-        //     color += vec4(1.,0.,0.,1.) * weight;
+        //     color += vec4(1.,0.,0.,1.) * textureCamera_i.weight;
         //     break;
 
         //   case 1:
-        //     color += vec4(0.,1.,0.,1.) * weight;
+        //     color += vec4(0.,1.,0.,1.) * textureCamera_i.weight;
         //     break;
 
         //   case 2:
-        //     color += vec4(0.,0.,1.,1.) * weight;
+        //     color += vec4(0.,0.,1.,1.) * textureCamera_i.weight;
         //     break;
         // }
 
@@ -34,7 +34,7 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
     }
   } //else {
   //   color += vec4(1., 1., 1., 1.);
-  //   scoresSum += weight;
+  //   scoresSum += textureCamera_i.weight;
   // }
 }
 

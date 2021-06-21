@@ -34,28 +34,18 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'pixelRatio', 1.);
     
 
+    // Defines
     this.defines.USE_COLOR = '';
     this.defines.EPSILON = 1e-3;
     this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
 
-    let textureIndexes = [];
-    let textureWeights = [];
-    for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
-      textureIndexes[i] = 0;
-      textureWeights[i] = 1.;
-    }
-    definePropertyUniform(this, 'textureIndexes', textureIndexes);
-    definePropertyUniform(this, 'textureWeights', textureWeights);
-
+    // Maximum number of textures allowed
     this.MAX_TEXTURES = options.MAX_TEXTURES || 40;
-    this.nbTexturesUsed = 0;
-    this.textureNameToIndex = {};
+
+    // Stores all the cameras already loaded, along with their corresponding structures
     this.allCameras = [];
 
-    const whiteData = new Uint8Array(3);
-    whiteData.set([255, 255, 255]);
-    definePropertyUniform(this, 'defaultDepthMap', new THREE.DataTexture( whiteData, 1, 1, THREE.RGBFormat ));
-
+    // Array of cameras and depth maps
     var textureCameras;
     var depthMaps;
 
@@ -76,7 +66,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
             weight: 0
           };
           this.textureCameras[i].uvDistortion.R.w = Infinity;
-          this.depthMaps[i] = this.defaultDepthMap;
+          this.depthMaps[i] = null;
       }
     }
     this.textureCamerasSetDefault();
@@ -84,57 +74,51 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'textureCameras', textureCameras);
     definePropertyUniform(this, 'depthMaps', depthMaps);
 
+    // Shaders
     this.vertexShader = unrollLoops(MultiTextureSpriteMaterialVS, this.defines);
-
     this.fragmentShader = unrollLoops(MultiTextureSpriteMaterialFS, this.defines);
   }
 
-  setCamera(cameraObj, index) {
-      let camera = cameraObj.cam;
-      camera.getWorldPosition(this.textureCameras[index].position);
-      this.textureCameras[index].preTransform.copy(camera.matrixWorldInverse);
-      this.textureCameras[index].preTransform.setPosition(0, 0, 0);
-      this.textureCameras[index].preTransform.premultiply(camera.preProjectionMatrix);
-      this.textureCameras[index].postTransform.copy(camera.postProjectionMatrix);
-      this.textureCameras[index].postTransform.premultiply(textureMatrix);
+  setCameraStructure(camera, index, weight) {
 
-      var elsPre = this.textureCameras[index].preTransform.elements;
-      this.textureCameras[index].M_prime_Pre.set(
-        elsPre[0], elsPre[4], elsPre[8],
-        elsPre[1], elsPre[5], elsPre[9],
-        elsPre[3], elsPre[7], elsPre[11]);
+    let structure = {};
+    structure.position = new Vector3();
+    structure.preTransform = new Matrix4();
+    structure.postTransform = new Matrix4();
+    structure.M_prime_Pre = new Matrix3();
+    structure.M_prime_Post = new Matrix3();
+    structure.E_prime = new Vector3();
 
-      var elsPost = this.textureCameras[index].postTransform.elements;
-      this.textureCameras[index].M_prime_Post.set(
-        elsPost[0], elsPost[4], elsPost[12],
-        elsPost[1], elsPost[5], elsPost[13],
-        elsPost[3], elsPost[7], elsPost[15]);
+    camera.getWorldPosition(structure.position);
+    structure.preTransform.copy(camera.matrixWorldInverse);
+    structure.preTransform.setPosition(0, 0, 0);
+    structure.preTransform.premultiply(camera.preProjectionMatrix);
+    structure.postTransform.copy(camera.postProjectionMatrix);
+    structure.postTransform.premultiply(textureMatrix);
 
-      if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
-          this.textureCameras[index].uvDistortion = camera.distos[0];
-      } else {
-          this.textureCameras[index].uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
-          this.textureCameras[index].uvDistortion.R.w = Infinity;
-      }
+    var elsPre = structure.preTransform.elements;
+    structure.M_prime_Pre.set(
+      elsPre[0], elsPre[4], elsPre[8],
+      elsPre[1], elsPre[5], elsPre[9],
+      elsPre[3], elsPre[7], elsPre[11]);
 
-      this.textureCameras[index].index = cameraObj.index;
-      this.textureCameras[index].weight = cameraObj.weight;
-  }
+    var elsPost = structure.postTransform.elements;
+    structure.M_prime_Post.set(
+      elsPost[0], elsPost[4], elsPost[12],
+      elsPost[1], elsPost[5], elsPost[13],
+      elsPost[3], elsPost[7], elsPost[15]);
 
-  setTextureCameras(cameras, mapsIndexes, cameraWeights) {
-    let numCameras = cameras.length;
-    if (numCameras != this.defines.NUM_TEXTURES) {
-      console.error('Number of cameras passed to MultiTextureSpriteMaterial.setTextureCameras() is different from NUM_TEXTURES defined in initialization.');
+    if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
+        structure.uvDistortion = camera.distos[0];
+    } else {
+        structure.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
+        structure.uvDistortion.R.w = Infinity;
     }
-    if (numCameras != mapsIndexes.length || numCameras != cameraWeights.length || mapsIndexes.length != cameraWeights.length) {
-      console.error('cameras.length, mapsIndexes.length and cameraWeights.length must coincide in function MultiTextureSpriteMaterial.setTextureCameras().');
-    }
-    for (let i = 0; i < numCameras; i++) {
-      this.setCamera( { cam: cameras[i], index: this.textureNameToIndex[cameras[i].name], weight: cameraWeights[i] }, i );
-      this.depthMaps[i] = cameras[i].renderTarget.depthTexture;
-    }
-    this.textureIndexes = mapsIndexes;
-    this.textureWeights = cameraWeights;
+
+    structure.index = index;
+    structure.weight = weight;
+    
+    return structure;
   }
 
   createImageData(texture) {
@@ -195,26 +179,26 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       let cameraName = this.allCameras[i].cam.name;
       let cameraDistance = (cameraDistanceArray.find((pair) => pair[0] == cameraName))[1];
       let d_i = this.decreasingFunction(cameraDistance);
-      this.allCameras[i].weight = d_i - d_kplus1;
+      this.allCameras[i].structure.weight = d_i - d_kplus1;
     }
   }
 
-  newSetTextureCameras(camera, texture, renderer) {
+  setTextureCameras(camera, texture, renderer) {
     console.log('Trying to set camera ', camera.name);
 
-    // Add this camera to allCameras if it isn't already there (including texture and depthMap)
+    // Add this camera to allCameras if it isn't already there (including its texture and depthMap)
     if (this.allCameras.find((c) => c.cam.name == camera.name) == undefined) {
       
-      let nextIndex = this.nbTexturesUsed;  // TODO: verify that this is the same of this.allCameras.length and change it
+      let nextIndex = this.allCameras.length;
       
       console.log('Adding camera ' + camera.name + ' at index ' + nextIndex);
 
       // Add the camera
       this.allCameras[nextIndex] = {
         cam: camera,
-        index: nextIndex,
-        weight: 0           // Will be recalculated just after
+        structure: this.setCameraStructure(camera, nextIndex, 0)
       };
+      console.log('structure:\n', this.allCameras[nextIndex].structure);
 
       // Add it's texture
       if (!texture.image.data)
@@ -227,30 +211,26 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       }
 
       this.copyTexture(texture, this.mapArray, nextIndex, renderer);
-      this.nbTexturesUsed++;
 
       // Add it's depthMap
       // (later when the depthMapArray works)
 
     }
 
-    // update the weight of all cameras
+    // Update the weight of all cameras
     this.updateWeights(camera);
 
-    // order them with relation to their weights
-    this.allCameras.sort( (a,b) => b.weight - a.weight );
+    // Order them with respect to their weights
+    this.allCameras.sort( (a,b) => b.structure.weight - a.structure.weight );
     console.log('allCameras inside material:\n', this.allCameras);
 
-    // pass the best k cameras to the array textureCameras
+    // Pass the best k cameras to the array textureCameras
     const nbCamerasLoaded = this.allCameras.length;
     const k = this.defines.NUM_TEXTURES;
     for (let i = 0; i < k; i++) {
-      this.setCamera(this.allCameras[i % nbCamerasLoaded], i);
+      this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
       this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
-      this.textureIndexes[i] = this.allCameras[i % nbCamerasLoaded].index;
-      this.textureWeights[i] = this.allCameras[i % nbCamerasLoaded].weight;
     }
-
   }
 
   setE_Primes(cameraPosition) {
@@ -285,35 +265,28 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     this.viewProjectionScreenInverse.multiply(screenInverse);
   }
 
-  initializeMapArray(width, height) {
+  initializeTexture2DArray(width, height, array, nbFormat, format, fillingValue) {
 
     const depth = this.MAX_TEXTURES;
     const size = width * height;
-    const totalDataSize = 4 * size * depth;
+    const totalDataSize = nbFormat * size * depth;
     const data = new Uint8Array( totalDataSize );
 
     for ( let i = 0; i < totalDataSize; i++ ) {
-      data[i] = 0;
+      data[i] = fillingValue;
     }
 
-    this.mapArray = new THREE.DataTexture2DArray( data, width, height, depth );
-    this.mapArray.format = THREE.RGBAFormat;
-    this.mapArray.type = THREE.UnsignedByteType;
+    this[array] = new THREE.DataTexture2DArray( data, width, height, depth );
+    this[array].format = format;
+    this[array].type = THREE.UnsignedByteType;
+  }
+
+  initializeMapArray(width, height) {
+    this.initializeTexture2DArray(width, height, 'mapArray', 4, THREE.RGBAFormat, 0);
   }
 
   initializeDepthMapArray(width, height) {
-    const depth = this.MAX_TEXTURES;
-    const size = width * height;
-    const totalDataSize = 3 * size * depth;
-    const whiteData = new Uint8Array( totalDataSize );
-
-    for ( let i = 0; i < totalDataSize; i++ ) {
-      whiteData[i] = 1;
-    }
-
-    this.depthMapArray = new THREE.DataTexture2DArray( whiteData, width, height, depth );
-    this.depthMapArray.format = THREE.RGBFormat;
-    this.depthMapArray.type = THREE.UnsignedByteType;
+    this.initializeTexture2DArray(width, height, 'depthMapArray', 3, THREE.RGBFormat, 1);
   }
 
   setDepthMaps(depthMapArray) {
