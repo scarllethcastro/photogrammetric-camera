@@ -15,6 +15,7 @@ uniform sampler2D depthMaps[NUM_TEXTURES];
 uniform mat3 viewProjectionScreenInverse;
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
+uniform bool shadowMappingActivated;
 
 
 void main() {
@@ -39,6 +40,9 @@ void main() {
     mat4 m = modelMatrix;
     #pragma unroll_loop
     for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-      shadowMapTest(m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
+      if ( shadowMappingActivated )
+        shadowMapTest(m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
+      else
+        passShadowMapTest[ i ] = 1.0;
     }
 }

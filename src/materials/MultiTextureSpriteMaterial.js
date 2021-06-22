@@ -32,6 +32,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
     definePropertyUniform(this, 'pixelRatio', 1.);
+    definePropertyUniform(this, 'shadowMappingActivated', true);
     
 
     // Defines
@@ -229,7 +230,12 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     const k = this.defines.NUM_TEXTURES;
     for (let i = 0; i < k; i++) {
       this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
-      this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
+      console.log('tex1:\n', this.depthMaps[i]);
+      console.log('tex2:\n', this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture);
+      if ((this.depthMaps[i] != this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture)) {
+        console.log('DIFFERENT');
+        this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
+      }
     }
   }
 
