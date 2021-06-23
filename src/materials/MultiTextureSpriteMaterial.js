@@ -230,12 +230,12 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     const k = this.defines.NUM_TEXTURES;
     for (let i = 0; i < k; i++) {
       this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
-      console.log('tex1:\n', this.depthMaps[i]);
-      console.log('tex2:\n', this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture);
-      if ((this.depthMaps[i] != this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture)) {
-        console.log('DIFFERENT');
+      //console.log('tex1:\n', this.depthMaps[i]);
+      //console.log('tex2:\n', this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture);
+      //if ((this.depthMaps[i] != this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture)) {
+       // console.log('DIFFERENT');
         this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
-      }
+      //}
     }
   }
 
@@ -292,7 +292,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   initializeDepthMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'depthMapArray', 3, THREE.RGBFormat, 1);
+    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, THREE.RGBAFormat, 1);
   }
 
   setDepthMaps(depthMapArray) {

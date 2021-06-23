@@ -136,6 +136,7 @@
                   size: 3,
                 });
 
+                shadowMapMaterial = new ShadowMapMaterial();
 
                 pointsMaterial = new MultiTextureSpriteMaterial({numTextures: 3});
                 pointsMaterial.setScreenSize(window.innerWidth, window.innerHeight);
@@ -430,55 +431,89 @@
                     textureCamera = camera;
                     textureCamera.updateProjectionMatrix();
 
+                    
                     let renderTarget = textureCamera.renderTarget;
+                    const renderTargetWidth = 1024;
+                    const renderTargetHeight = 1024;
+
+                    if (!pointsMaterial.depthMapArray) {
+                        //const depthWidth = renderTarget.texture.image.width;
+                        //const depthHeight = renderTarget.texture.image.height;
+                        pointsMaterial.initializeDepthMapArray(renderTargetWidth, renderTargetHeight);
+                    }
+                    console.log('depthMapArray:\n', pointsMaterial.depthMapArray);
+
                     if (!renderTarget) {
                         renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
                         textureCamera.renderTarget = renderTarget;
-                        renderTarget.texture.format = THREE.RGBFormat;
-                        renderTarget.texture.minFilter = THREE.NearestFilter;
-                        renderTarget.texture.magFilter = THREE.NearestFilter;
-                        renderTarget.texture.generateMipmaps = false;
-                        renderTarget.stencilBuffer = false;
+                        //renderTarget.texture.format = THREE.RGBAFormat;
+                        //renderTarget.texture.type = THREE.UnsignedByteType;
+                        // renderTarget.texture.minFilter = THREE.NearestFilter;
+                        // renderTarget.texture.magFilter = THREE.NearestFilter;
+                        // renderTarget.texture.generateMipmaps = false;
+                        // renderTarget.stencilBuffer = false;
                         renderTarget.depthBuffer = true;
                         renderTarget.depthTexture = new THREE.DepthTexture();
                         renderTarget.depthTexture.format = THREE.DepthFormat;
                         renderTarget.depthTexture.type = THREE.UnsignedIntType;
+                        renderTarget.setTexture(pointsMaterial.depthMapArray);
+                    }
+                    console.log('renderTarget.texture:\n', renderTarget.texture);
+
+                    pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
+                    let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
+                    let depthMapIndex;
+
+                    if ( cameraIndex != undefined ) {
+                        depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
+                        //pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
                     }
 
-                    renderer.setRenderTarget(renderTarget);
+
+                    //renderer.setRenderTarget(renderTarget);
+                    renderer.setRenderTarget(renderTarget, depthMapIndex);
                     setMaterial(textureMaterial, textureCamera);
                     textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                    pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                    //pointsMaterial.setDepthMaps([whiteTexture]);
-                    pointsMaterial.shadowMappingActivated = false;
+                    
+                    pointsMaterial.setDepthMaps([whiteTexture]);
+                    //pointsMaterial.shadowMappingActivated = false;
+
+                    //////////////////////////////
+                    sphere.material = shadowMapMaterial;
+                    plane.material = shadowMapMaterial;
+                    plyGroup.children.forEach( p => p.material = shadowMapMaterial);
+                    //////////////////////////////
+
                     renderer.render(world, textureCamera);
 
+                    //////////////////////////////
+                    sphere.material = textureMaterial;
+                    plane.material = textureMaterial;
+                    plyGroup.children.forEach( p => p.material = pointsMaterial);
+                    //////////////////////////////
+
                     screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                    screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
-                    screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+                    //screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
+                    //screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
 
                     renderer.setRenderTarget(null);
-                    textureMaterial.depthMap = renderTarget.depthTexture;
+                    //textureMaterial.depthMap = renderTarget.texture;
                     pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                    pointsMaterial.shadowMappingActivated = true;
+                    //pointsMaterial.shadowMappingActivated = true;
 
                     ////// Doesn't work for now, drawImage doesn'accept the depth texture
-                    //pointsMaterial.createImageData(textures[textureCamera.name]);
-                    // console.log('texture:\n', renderTarget.texture);
+                    //pointsMaterial.createImageData(renderTarget.texture);
+                    //console.log('texture:\n', renderTarget.texture);
+                    //console.log('dataTexture:\n', renderTargetTexture);
                     //console.log('depth texture:\n', renderTarget.depthTexture);
 
                     //////////////////////////////////////////////////
-                    
-                    // if (!pointsMaterial.depthMapArray) {
-                    //     const depthWidth = renderTarget.depthTexture.image.width;
-                    //     const depthHeight = renderTarget.depthTexture.image.height;
-                    //     pointsMaterial.initializeDepthMapArray(depthWidth, depthHeight);
-                    // }
 
                     // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
                     // if ( cameraIndex != undefined ) {
                     //     let depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
-                    //     pointsMaterial.copyTexture(renderTarget.depthTexture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
+                    //     renderer.setRenderTarget(renderTarget, );
+                    //     pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
                     // }
                     //////////////////////////////////////////////////
                 }
