@@ -16,7 +16,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     super();
 
     this.uniforms.screenSize = new Uniform(new Vector2());
-    definePropertyUniform(this, 'size', 3);
+    definePropertyUniform(this, 'size', 5);
     definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
     definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());

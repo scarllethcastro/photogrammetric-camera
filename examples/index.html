@@ -357,9 +357,14 @@
                 textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
                 renderer.render(world, textureCamera);
 
+                // screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
+                // screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
+                // screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+
+                ////// For the demo
                 screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
-                screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+                screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+                ///////////////////
 
                 renderer.setRenderTarget(null);
                 textureMaterial.depthMap = renderTarget.depthTexture;
@@ -457,9 +462,14 @@
                     screenQuads.add(screenQuad);
                     return screenQuad;
                 }
+                // addScreenQuad("texture");
+                // addScreenQuad("textureColor");
+                // addScreenQuad("textureDepth");
+
+                ////// For the demo
                 addScreenQuad("texture");
-                addScreenQuad("textureColor");
                 addScreenQuad("textureDepth");
+                ///////////////////
 
 
                 // resize
