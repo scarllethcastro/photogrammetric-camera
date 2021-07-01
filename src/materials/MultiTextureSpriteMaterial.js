@@ -221,7 +221,13 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     const k = this.defines.NUM_TEXTURES;
     for (let i = 0; i < k; i++) {
       this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
-      this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
+
+      // TODO: try to use depthMapArray later
+      let renderTarget = this.allCameras[i % nbCamerasLoaded].cam.renderTarget;
+      if (renderTarget != undefined)
+        this.depthMaps[i] = renderTarget.depthTexture;
+      else
+        this.depthMaps[i] = null;
     } 
   }
 
