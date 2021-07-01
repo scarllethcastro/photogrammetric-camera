@@ -64,13 +64,15 @@
         <script src="js/dat.gui.min.js"></script>
         <script src="js/PLYLoader.js"></script>
         <script src="js/OrbitControls.js"></script>
+        <script src="js/download.js"></script>
         <script type="module">
             import ScreenQuad from './js/ScreenQuad.es6.js';
             //import ImageUtils from '../extras/ImageUtils.js';
             var orbitTarget, orbitControls;
-            var scene, renderer, world, plyGroup, cameras, screenQuads, cameraGUI, textureScene, textureRenderTarget;
+            var scene, renderer, world, plyGroup, cameras, screenQuads, viewCameraGUI, textureCameraGUI;
             var textureMaterial, wireMaterial, pointsMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
             var textures = {}, uvTexture, whiteTexture, dataTextures = {};
+            var textureLoader = new THREE.TextureLoader();
             var prevCamera = new PhotogrammetricCamera();
             var viewCamera = new PhotogrammetricCamera();
             var nextCamera = new PhotogrammetricCamera();
@@ -91,12 +93,426 @@
                 return false;
             }
 
+            /* callbacks */
+            function onWindowResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                const aspect = width / height;
+                renderer.setSize(width, height);
+                viewCamera.aspect = aspect;
+                viewCamera.updateProjectionMatrix();
+                prevCamera.aspect = aspect;
+                prevCamera.updateProjectionMatrix();
+                nextCamera.aspect = aspect;
+                nextCamera.updateProjectionMatrix();
+                //if a value is set in pixels, the canvas size needs to be set on the element
+                screenQuads.children.forEach(quad => quad.setScreenSize( width , height ));
+                pointsMaterial.setScreenSize(width, height);
+                pointsMaterial.pixelRatio = window.devicePixelRatio;
+            }
+
+            /* Orientation loading */
+            function cameraHelper(camera) {
+                // create the group (looking at intrinsics only) that should be added to the camera frame.
+                var group = new THREE.Group();
+
+                // place a frustum
+                {
+                    const m = new THREE.Matrix4().copy( camera.projectionMatrix ).invert();
+                    var geometry = new THREE.BufferGeometry();
+                    var vertices = new Float32Array(15);
+                    // get the 4 corners on the near plane (neglecting distortion)
+                    new THREE.Vector3( -1, -1, -1 ).applyMatrix4(m).toArray(vertices,  3);
+                    new THREE.Vector3( -1,  1, -1 ).applyMatrix4(m).toArray(vertices,  6);
+                    new THREE.Vector3(  1,  1, -1 ).applyMatrix4(m).toArray(vertices,  9);
+                    new THREE.Vector3(  1, -1, -1 ).applyMatrix4(m).toArray(vertices, 12);
+                    var indices = [ 0, 1, 2,  0, 2, 3,  0, 3, 4,  0, 4, 1,  1, 3, 2,  1, 4, 3 ];
+                    geometry.setIndex( indices );
+                    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+                    geometry.addGroup(0, 12, 0);
+                    geometry.addGroup(12, 6, 1);
+
+                    viewMaterials[camera.name] = new OrientedImageMaterial(viewMaterialOptions);
+                    viewMaterials[camera.name].setCamera(camera);
+                    viewMaterials[camera.name].map = textures[camera.name] || uvTexture;
+                    var mesh = new THREE.Mesh( geometry, [wireMaterial, viewMaterials[camera.name]] );
+                    mesh.scale.set(1.01, 1.01, 1.01); // push frustum base 1% away from the near plane
+                    group.add(mesh);
+
+                }
+                
+                // place a sphere at the camera center
+                {
+                    var geometry = new THREE.SphereBufferGeometry(0.03, 8, 8 );
+                    var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+                    group.add(new THREE.Mesh( geometry, material ));
+                }
+
+                return group;
+            };
+
+            // handle functions
+
+            function handlePly(name) {
+                showHelp(false);
+                return function(geometry) {
+                    console.log(name);
+                    var points = new THREE.Points( geometry, pointsMaterial );
+                    plyGroup.add( points );
+                    geometry.computeBoundingBox();
+                    var center = new THREE.Vector3();
+                    geometry.boundingBox.getCenter(center);
+                    points.updateMatrixWorld(true);
+                };
+            }
+
+            function handleImage(name) {
+                showHelp(false);
+                return function(texture) {
+                    if (!texture) return;
+                    texture.name = name;
+                    textures[texture.name] = texture;
+                    if (viewMaterials[texture.name]) viewMaterials[texture.name].map = texture;
+                    const camera = cameras.getObjectByName(texture.name);
+                    setCamera(camera);
+                    return texture;
+                };
+            }
+
+            function handleOrientation(camera) {
+                showHelp(false);
+                if (!camera) return;
+                if (camera instanceof Array) {
+                    const res = camera.map(handleOrientation);
+                    res.points = camera.points;
+                    res.colors = camera.colors;
+                    return res;
+                }
+                if (cameras.children.find(cam => cam.name == camera.name)) {
+                    console.warn(`Camera "${camera.name}" was already loaded, skipping`);
+                    return;
+                }
+                var check = '[?]';
+                if (camera.check) check = camera.check() ? '[Y]' : '[N]';
+                console.log(check, name);
+
+                camera.near = 1;
+                camera.far = 100;
+                camera.far = sphereRadius+epsilonRadius;
+                camera.updateProjectionMatrix();
+                if (useCustomCameraHelper) {
+                    // use our Camera Helper
+                    camera.add(cameraHelper(camera));
+                } else {
+                    // use THREE.CameraHelper
+                    scene.add(new THREE.CameraHelper(camera));
+                }
+                cameras.add(camera);
+                cameras.children.sort((a, b) => a.name.localeCompare(b.name));
+                setCamera(camera);
+
+                return camera;
+            };
+
+            // parse functions
+
+            var plyLoader = new THREE.PLYLoader();
+            var parsePly = (source) => (data => plyLoader.parse(data));
+
+            function parseImage(source) {
+                return (data) => {
+                    return new Promise((resolve, reject) => {
+                        textureLoader.load(data, resolve, undefined, reject)
+                    }).finally(() => source.close(data, 'dataURL'));
+                }
+            }
+
+            function parseOrientation(source, name) {
+                return (data) => {
+                    for(const parser in Parsers) {
+                        var parsed = Parsers[parser].parse(data, source, name);
+                        if (parsed) return parsed;
+                    }
+                    return undefined;
+                }
+            }
+
+            // load functions
+
+            function loadPly(url, source) {
+                return source.open(url, 'arrayBuffer')
+                .then(parsePly(source))
+                .then(handlePly(url));
+            }
+
+            function loadImage(url, source, name) {
+                if (!name)
+                {
+                    const match = url.match(/([^\/]*)\.[\w\d]/i);
+                    name = match ? match[1] : url;
+                }
+                return source.open(url, 'dataURL')
+                .then(parseImage(source))
+                .then(handleImage(name));
+            }
+
+            function loadOrientation(url, source, name) {
+                if (!name)
+                {
+                    const match = url.match(/Orientation-(.*)\.[\w\d]*\.xml/i);
+                    name = match ? match[1] : url;
+                }
+                return source.open(url, 'text')
+                .then(parseOrientation(source, name))
+                .then(handleOrientation);
+            }
+
+            function loadFileImSel(dir, source) {
+                var url = dir+'FileImSel.xml';
+                source.open(url, 'text').then((xml) => {
+                    xml = new window.DOMParser().parseFromString(xml, 'text/xml');
+                    var names = Array.from(xml.getElementsByTagName('Name'));
+                    names.forEach(name => loadOrientation(dir+'Orientation-'+name.childNodes[0].nodeValue.trim()+'.xml', source));
+                });
+            }
+
+            function loadJSON(path, file) {
+                file = file || 'index.json';
+                var source = new FetchSource(path);
+                source.open(file, 'text').then((json) => {
+                    json = JSON.parse(json);
+                    if (json.plane && json.plane.position) {
+                        const position = json.plane.position;
+                        if (position.x !== undefined) plane.position.x = position.x;
+                        if (position.y !== undefined) plane.position.y = position.y;
+                        if (position.z !== undefined) plane.position.z = position.z;
+                        orbitControls.target.copy(plane.position);
+                        const scale = json.plane.scale || 1000;
+                        plane.scale.set(scale,scale,scale);
+                    }
+                    if (json.target) {
+                        orbitControls.target.copy(json.target);
+                    }
+                    if (json.sphere) {
+                        sphereRadius = json.sphere.radius;
+                        if (sphereRadius !== undefined) {
+                            sphere.scale.set(sphereRadius, sphereRadius, sphereRadius);
+                        }
+                    }
+                    json.ply.forEach(url => todos.push(() => loadPly(url, source)));
+                    json.ori.forEach((orientationUrl, i) => todos.push(() => loadOrientedImage(orientationUrl, json.img[i], source, json.img[i])));
+                });
+            }
+
+            /* Keyboard events */
+            function setView(camera) {
+                if (!camera) return;
+
+                // update view camera name
+                var name = camera.name;
+                console.log('View:', name);
+                if (name.length > 30)
+                  name = name.substr(0,13)+'[..]'+name.substr(-13,13)
+                viewCameraGUI.name = 'View: ' + name;
+
+                prevCamera.set(viewCamera);
+                nextCamera.set(camera);
+                prevCamera.timestamp = 0; // timestamp will be set in the update callback
+                nextCamera.zoom = viewCamera.zoom; // keep the current zoom
+                onWindowResize();
+                orbitControls.enabled = false;
+            }
+
+            function setMaterial(material, camera) {
+                material.map = textures[camera.name] || uvTexture;
+                material.depthMap = camera.renderTarget.depthTexture;
+                material.setCamera(camera);
+            }
+
+            function setTexture(camera) {
+
+                // TODO: Work later on this ongoing version to put the depthMaps in a texture2DArray too.
+                // For now, it doesn't work and one thing that may be related is the fact that when we do
+                // renderTarget.setTexture(pointsMaterial.depthMapArray), this strangely changes the depth
+                // property of the depthMapArray from 40 to 1.
+
+                // //////////////////////////////////////////////////
+                // // Ongoing version
+                // //////////////////////////////////////////////////
+
+                // if (!camera) return;
+                // console.log('Texture:', camera.name);
+                // textureCamera = camera;
+                // textureCamera.updateProjectionMatrix();
+
+                
+                // let renderTarget = textureCamera.renderTarget;
+                // const renderTargetWidth = 1024;
+                // const renderTargetHeight = 1024;
+
+                // if (!pointsMaterial.depthMapArray) {
+                //     //const depthWidth = renderTarget.texture.image.width;
+                //     //const depthHeight = renderTarget.texture.image.height;
+                //     pointsMaterial.initializeDepthMapArray(renderTargetWidth, renderTargetHeight);
+                // }
+                // console.log('depthMapArray:\n', pointsMaterial.depthMapArray);
+
+                // if (!renderTarget) {
+                //     renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
+                //     textureCamera.renderTarget = renderTarget;
+                //     //renderTarget.texture.format = THREE.RGBAFormat;
+                //     //renderTarget.texture.type = THREE.UnsignedByteType;
+                //     // renderTarget.texture.minFilter = THREE.NearestFilter;
+                //     // renderTarget.texture.magFilter = THREE.NearestFilter;
+                //     // renderTarget.texture.generateMipmaps = false;
+                //     // renderTarget.stencilBuffer = false;
+                //     renderTarget.depthBuffer = true;
+                //     renderTarget.depthTexture = new THREE.DepthTexture();
+                //     renderTarget.depthTexture.format = THREE.DepthFormat;
+                //     renderTarget.depthTexture.type = THREE.UnsignedIntType;
+                //     renderTarget.setTexture(pointsMaterial.depthMapArray);
+                // }
+                // console.log('renderTarget.texture:\n', renderTarget.texture);
+
+                // pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
+                // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
+                // let depthMapIndex;
+
+                // if ( cameraIndex != undefined ) {
+                //     depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
+                //     //pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
+                // }
+
+
+                // //renderer.setRenderTarget(renderTarget);
+                // renderer.setRenderTarget(renderTarget, depthMapIndex);
+                // setMaterial(textureMaterial, textureCamera);
+                // textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
+                
+                // pointsMaterial.setDepthMaps([whiteTexture]);
+                // //pointsMaterial.shadowMappingActivated = false;
+
+                // //////////////////////////////
+                // sphere.material = shadowMapMaterial;
+                // plane.material = shadowMapMaterial;
+                // plyGroup.children.forEach( p => p.material = shadowMapMaterial);
+                // //////////////////////////////
+
+                // renderer.render(world, textureCamera);
+
+                // //////////////////////////////
+                // sphere.material = textureMaterial;
+                // plane.material = textureMaterial;
+                // plyGroup.children.forEach( p => p.material = pointsMaterial);
+                // //////////////////////////////
+
+                // screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
+                // //screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
+                // //screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+
+                // renderer.setRenderTarget(null);
+                // //textureMaterial.depthMap = renderTarget.texture;
+                // pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
+                // //pointsMaterial.shadowMappingActivated = true;
+
+                // ////// Doesn't work for now, drawImage doesn'accept the depth texture
+                // //pointsMaterial.createImageData(renderTarget.texture);
+                // //console.log('texture:\n', renderTarget.texture);
+                // //console.log('dataTexture:\n', renderTargetTexture);
+                // //console.log('depth texture:\n', renderTarget.depthTexture);
+
+                // //////////////////////////////////////////////////
+
+                // // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
+                // // if ( cameraIndex != undefined ) {
+                // //     let depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
+                // //     renderer.setRenderTarget(renderTarget, );
+                // //     pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
+                // // }
+                // //////////////////////////////////////////////////
+
+
+
+
+                //////////////////////////////////////////////////
+                // Working version
+                //////////////////////////////////////////////////
+                if (!camera) return;
+
+                // update texture camera name
+                var name = camera.name;
+                console.log('Texture:', name);
+                if (name.length > 30)
+                  name = name.substr(0,13)+'[..]'+name.substr(-13,13)
+                textureCameraGUI.name = 'Tex: ' + name;
+
+                textureCamera = camera;
+                textureCamera.updateProjectionMatrix();
+
+                let renderTarget = textureCamera.renderTarget;
+                const renderTargetWidth = 1024;
+                const renderTargetHeight = 1024;
+
+                if (!renderTarget) {
+                    renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
+                    textureCamera.renderTarget = renderTarget;
+                    renderTarget.texture.format = THREE.RGBFormat;
+                    renderTarget.texture.type = THREE.UnsignedByteType;
+                    renderTarget.texture.minFilter = THREE.NearestFilter;
+                    renderTarget.texture.magFilter = THREE.NearestFilter;
+                    renderTarget.texture.generateMipmaps = false;
+                    renderTarget.stencilBuffer = false;
+                    renderTarget.depthBuffer = true;
+                    renderTarget.depthTexture = new THREE.DepthTexture();
+                    renderTarget.depthTexture.format = THREE.DepthFormat;
+                    renderTarget.depthTexture.type = THREE.UnsignedIntType;
+                }
+                
+                renderer.setRenderTarget(renderTarget);
+                setMaterial(textureMaterial, textureCamera);
+                textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
+                pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
+                pointsMaterial.setDepthMaps([whiteTexture]);
+
+                renderer.render(world, textureCamera);
+
+                // screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
+                // screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
+                // screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+
+                ////// For the demo
+                screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
+                screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+                ///////////////////
+
+                renderer.setRenderTarget(null);
+                textureMaterial.depthMap = renderTarget.depthTexture;
+                pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
+
+                //////////////////////////////////////////////////
+            }
+
+            function setCamera(camera) {
+                setView(camera);
+                setTexture(camera);
+            }
+
+            function getCamera(camera, delta = 0) {
+                const array = cameras.children;
+                const index = array.findIndex(cam => cam.name == camera.name);
+                return array[(index + delta + array.length) %  array.length];
+            }
+
+            function loadOrientedImage(orientationUrl, imageUrl, source, name) {
+                loadImage(imageUrl, source, name).then(() => loadOrientation(orientationUrl, source, name));
+            }
+
+
             function init() {
                 var container = document.createElement( 'div' );
                 document.body.appendChild( container );
                 scene = new THREE.Scene();
                 world = new THREE.Group();
-                textureScene = new THREE.Scene();
                 cameras = new THREE.Group();
                 screenQuads = new THREE.Group();
                 cameras.visible = false;
@@ -104,7 +520,6 @@
                 scene.add(cameras);
                 scene.add(screenQuads);
                 world.add(viewCamera);
-                var textureLoader = new THREE.TextureLoader();
                 uvTexture = textureLoader.load('data/uv.jpg');
                 uvTexture.name = 'uv';
                 const whiteData = new Uint8Array(3);
@@ -194,191 +609,7 @@
                 /* Ply loading */
                 plyGroup = new THREE.Group();
                 world.add(plyGroup);
-
-                /* Orientation loading */
-                function cameraHelper(camera) {
-                    // create the group (looking at intrinsics only) that should be added to the camera frame.
-                    var group = new THREE.Group();
-
-                    // place a frustum
-                    {
-                        const m = new THREE.Matrix4().copy( camera.projectionMatrix ).invert();
-                        var geometry = new THREE.BufferGeometry();
-                        var vertices = new Float32Array(15);
-                        // get the 4 corners on the near plane (neglecting distortion)
-                        new THREE.Vector3( -1, -1, -1 ).applyMatrix4(m).toArray(vertices,  3);
-                        new THREE.Vector3( -1,  1, -1 ).applyMatrix4(m).toArray(vertices,  6);
-                        new THREE.Vector3(  1,  1, -1 ).applyMatrix4(m).toArray(vertices,  9);
-                        new THREE.Vector3(  1, -1, -1 ).applyMatrix4(m).toArray(vertices, 12);
-                        var indices = [ 0, 1, 2,  0, 2, 3,  0, 3, 4,  0, 4, 1,  1, 3, 2,  1, 4, 3 ];
-                        geometry.setIndex( indices );
-                        geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-                        geometry.addGroup(0, 12, 0);
-                        geometry.addGroup(12, 6, 1);
-
-                        viewMaterials[camera.name] = new OrientedImageMaterial(viewMaterialOptions);
-                        viewMaterials[camera.name].setCamera(camera);
-                        viewMaterials[camera.name].map = textures[camera.name] || uvTexture;
-                        var mesh = new THREE.Mesh( geometry, [wireMaterial, viewMaterials[camera.name]] );
-                        mesh.scale.set(1.01, 1.01, 1.01); // push frustum base 1% away from the near plane
-                        group.add(mesh);
-
-                    }
-                    
-                    // place a sphere at the camera center
-                    {
-                        var geometry = new THREE.SphereBufferGeometry(0.03, 8, 8 );
-                        var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
-                        group.add(new THREE.Mesh( geometry, material ));
-                    }
-
-                    return group;
-                };
-
-                // handle functions
-
-                function handlePly(name) {
-                    showHelp(false);
-                    return function(geometry) {
-                        console.log(name);
-                        var points = new THREE.Points( geometry, pointsMaterial );
-                        plyGroup.add( points );
-                        geometry.computeBoundingBox();
-                        var center = new THREE.Vector3();
-                        geometry.boundingBox.getCenter(center);
-                        points.updateMatrixWorld(true);
-                    };
-                }
-
-                function handleImage(name) {
-                    showHelp(false);
-                    return function(texture) {
-                        if (!texture) return;
-                        const match = name.match(/([^\/]*)\.[\w\d]/i);
-                        texture.name = match ? match[1] : name;
-                        console.log(texture);
-                        textures[texture.name] = texture;
-                        if (viewMaterials[texture.name]) viewMaterials[texture.name].map = texture;
-                        const camera = cameras.getObjectByName(texture.name);
-                        setCamera(camera);
-                        return texture;
-                    };
-                }
-
-                function handleOrientation(camera) {
-                    showHelp(false);
-                    if (!camera) return;
-                    if (camera instanceof Array) {
-                        const res = camera.map(handleOrientation);
-                        res.points = camera.points;
-                        res.colors = camera.colors;
-                        return res;
-                    }
-                    if (cameras.children.find(cam => cam.name == camera.name)) {
-                        console.warn(`Camera "${camera.name}" was already loaded, skipping`);
-                        return;
-                    }
-                    var check = '[?]';
-                    if (camera.check) check = camera.check() ? '[Y]' : '[N]';
-                    console.log(check, name);
-
-                    camera.near = 1;
-                    camera.far = 100;
-                    camera.far = sphereRadius+epsilonRadius;
-                    camera.updateProjectionMatrix();
-                    if (useCustomCameraHelper) {
-                        // use our Camera Helper
-                        camera.add(cameraHelper(camera));
-                    } else {
-                        // use THREE.CameraHelper
-                        scene.add(new THREE.CameraHelper(camera));
-                    }
-                    cameras.add(camera);
-                    cameras.children.sort((a, b) => a.name.localeCompare(b.name));
-                    setCamera(camera);
-
-                    return camera;
-                };
-
-                // parse functions
-                var plyLoader = new THREE.PLYLoader();
-                var parsePly = (source) => (data => plyLoader.parse(data));
-
-                function parseImage(source) {
-                    return (data) => {
-                        return new Promise((resolve, reject) => {
-                            textureLoader.load(data, resolve, undefined, reject)
-                        }).finally(() => source.close(data, 'dataURL'));
-                    }
-                }
-
-                function parseOrientation(source, name) {
-                    return (data) => {
-                        for(const parser in Parsers) {
-                            var parsed = Parsers[parser].parse(data, source, name);
-                            if (parsed) return parsed;
-                        }
-                        return undefined;
-                    }
-                }
-
-                // load functions
-
-                function loadPly(url, source) {
-                    return source.open(url, 'arrayBuffer')
-                    .then(parsePly(source))
-                    .then(handlePly(url));
-                }
-
-                function loadImage(url, source, name) {
-                    return source.open(url, 'dataURL')
-                    .then(parseImage(source))
-                    .then(handleImage(name || url));
-                }
-
-                function loadOrientation(name, source) {
-                    return source.open(name, 'text')
-                    .then(parseOrientation(source, name))
-                    .then(handleOrientation);
-                }
-
-                function loadFileImSel(dir, source) {
-                    var url = dir+'FileImSel.xml';
-                    source.open(url, 'text').then((xml) => {
-                        xml = new window.DOMParser().parseFromString(xml, 'text/xml');
-                        var names = Array.from(xml.getElementsByTagName('Name'));
-                        names.forEach(name => loadOrientation(dir+'Orientation-'+name.childNodes[0].nodeValue.trim()+'.xml', source));
-                    });
-                }
-
-                function loadJSON(path, file) {
-                    file = file || 'index.json';
-                    var source = new FetchSource(path);
-                    source.open(file, 'text').then((json) => {
-                        json = JSON.parse(json);
-                        if (json.plane && json.plane.position) {
-                            const position = json.plane.position;
-                            if (position.x !== undefined) plane.position.x = position.x;
-                            if (position.y !== undefined) plane.position.y = position.y;
-                            if (position.z !== undefined) plane.position.z = position.z;
-                            orbitControls.target.copy(plane.position);
-                            const scale = json.plane.scale || 1000;
-                            plane.scale.set(scale,scale,scale);
-                        }
-                        if (json.target) {
-                            orbitControls.target.copy(json.target);
-                        }
-                        if (json.sphere) {
-                            sphereRadius = json.sphere.radius;
-                            if (sphereRadius !== undefined) {
-                                sphere.scale.set(sphereRadius, sphereRadius, sphereRadius);
-                            }
-                        }
-                        json.ply.forEach(url => todos.push(() => loadPly(url, source)));
-                        json.ori.forEach((orientationUrl, i) => todos.push(() => loadOrientedImage(orientationUrl, json.img[i], source)));
-                    });
-                }
-
+                
                 // file source
                 addFiles = function(files) {
                     showHelp(false);
@@ -390,7 +621,7 @@
                         var ext = name.substr(name.lastIndexOf('.') + 1).toLowerCase();
                         switch (ext) {
                             case 'ply': loadPly(name, source); break;
-                            case 'xml': loadOrientation(name, source); break;
+                            case 'out': case 'xml': case 'json': loadOrientation(name, source); break;
                             case 'jpg': loadImage(name, source); break;
                             default:
                         }
@@ -410,191 +641,6 @@
                 document.addEventListener('dragover', prevDefault, false);
                 document.addEventListener('dragleave', prevDefault, false);
                 document.addEventListener('drop',  addFilesDrag, false);
-           
-
-                /* Keyboard events */
-                function setView(camera) {
-                    if (!camera) return;
-                    console.log('View:', camera.name);
-                    prevCamera.set(viewCamera);
-                    nextCamera.set(camera);
-                    prevCamera.timestamp = 0; // timestamp will be set in the update callback
-                    nextCamera.zoom = viewCamera.zoom; // keep the current zoom
-                    onWindowResize();
-                    orbitControls.enabled = false;
-                }
-
-                function setMaterial(material, camera) {
-                    material.map = textures[camera.name] || uvTexture;
-                    material.depthMap = camera.renderTarget.depthTexture;
-                    material.setCamera(camera);
-                }
-
-                function setTexture(camera) {
-
-                    // //////////////////////////////////////////////////
-                    // // Ongoing version
-                    // //////////////////////////////////////////////////
-
-                    // if (!camera) return;
-                    // console.log('Texture:', camera.name);
-                    // textureCamera = camera;
-                    // textureCamera.updateProjectionMatrix();
-
-                    
-                    // let renderTarget = textureCamera.renderTarget;
-                    // const renderTargetWidth = 1024;
-                    // const renderTargetHeight = 1024;
-
-                    // if (!pointsMaterial.depthMapArray) {
-                    //     //const depthWidth = renderTarget.texture.image.width;
-                    //     //const depthHeight = renderTarget.texture.image.height;
-                    //     pointsMaterial.initializeDepthMapArray(renderTargetWidth, renderTargetHeight);
-                    // }
-                    // console.log('depthMapArray:\n', pointsMaterial.depthMapArray);
-
-                    // if (!renderTarget) {
-                    //     renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
-                    //     textureCamera.renderTarget = renderTarget;
-                    //     //renderTarget.texture.format = THREE.RGBAFormat;
-                    //     //renderTarget.texture.type = THREE.UnsignedByteType;
-                    //     // renderTarget.texture.minFilter = THREE.NearestFilter;
-                    //     // renderTarget.texture.magFilter = THREE.NearestFilter;
-                    //     // renderTarget.texture.generateMipmaps = false;
-                    //     // renderTarget.stencilBuffer = false;
-                    //     renderTarget.depthBuffer = true;
-                    //     renderTarget.depthTexture = new THREE.DepthTexture();
-                    //     renderTarget.depthTexture.format = THREE.DepthFormat;
-                    //     renderTarget.depthTexture.type = THREE.UnsignedIntType;
-                    //     renderTarget.setTexture(pointsMaterial.depthMapArray);
-                    // }
-                    // console.log('renderTarget.texture:\n', renderTarget.texture);
-
-                    // pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                    // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
-                    // let depthMapIndex;
-
-                    // if ( cameraIndex != undefined ) {
-                    //     depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
-                    //     //pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
-                    // }
-
-
-                    // //renderer.setRenderTarget(renderTarget);
-                    // renderer.setRenderTarget(renderTarget, depthMapIndex);
-                    // setMaterial(textureMaterial, textureCamera);
-                    // textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                    
-                    // pointsMaterial.setDepthMaps([whiteTexture]);
-                    // //pointsMaterial.shadowMappingActivated = false;
-
-                    // //////////////////////////////
-                    // sphere.material = shadowMapMaterial;
-                    // plane.material = shadowMapMaterial;
-                    // plyGroup.children.forEach( p => p.material = shadowMapMaterial);
-                    // //////////////////////////////
-
-                    // renderer.render(world, textureCamera);
-
-                    // //////////////////////////////
-                    // sphere.material = textureMaterial;
-                    // plane.material = textureMaterial;
-                    // plyGroup.children.forEach( p => p.material = pointsMaterial);
-                    // //////////////////////////////
-
-                    // screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                    // //screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
-                    // //screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
-
-                    // renderer.setRenderTarget(null);
-                    // //textureMaterial.depthMap = renderTarget.texture;
-                    // pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                    // //pointsMaterial.shadowMappingActivated = true;
-
-                    // ////// Doesn't work for now, drawImage doesn'accept the depth texture
-                    // //pointsMaterial.createImageData(renderTarget.texture);
-                    // //console.log('texture:\n', renderTarget.texture);
-                    // //console.log('dataTexture:\n', renderTargetTexture);
-                    // //console.log('depth texture:\n', renderTarget.depthTexture);
-
-                    // //////////////////////////////////////////////////
-
-                    // // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
-                    // // if ( cameraIndex != undefined ) {
-                    // //     let depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
-                    // //     renderer.setRenderTarget(renderTarget, );
-                    // //     pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
-                    // // }
-                    // //////////////////////////////////////////////////
-
-
-
-
-                    //////////////////////////////////////////////////
-                    // Working version
-                    //////////////////////////////////////////////////
-                    if (!camera) return;
-                    console.log('Texture:', camera.name);
-                    textureCamera = camera;
-                    textureCamera.updateProjectionMatrix();
-
-                    let renderTarget = textureCamera.renderTarget;
-                    const renderTargetWidth = 1024;
-                    const renderTargetHeight = 1024;
-
-                    if (!renderTarget) {
-                        renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
-                        textureCamera.renderTarget = renderTarget;
-                        renderTarget.texture.format = THREE.RGBFormat;
-                        renderTarget.texture.type = THREE.UnsignedByteType;
-                        renderTarget.texture.minFilter = THREE.NearestFilter;
-                        renderTarget.texture.magFilter = THREE.NearestFilter;
-                        renderTarget.texture.generateMipmaps = false;
-                        renderTarget.stencilBuffer = false;
-                        renderTarget.depthBuffer = true;
-                        renderTarget.depthTexture = new THREE.DepthTexture();
-                        renderTarget.depthTexture.format = THREE.DepthFormat;
-                        renderTarget.depthTexture.type = THREE.UnsignedIntType;
-                    }
-                    
-                    renderer.setRenderTarget(renderTarget);
-                    setMaterial(textureMaterial, textureCamera);
-                    textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                    pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                    pointsMaterial.setDepthMaps([whiteTexture]);
-
-                    renderer.render(world, textureCamera);
-
-                    // screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                    // screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
-                    // screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
-
-                    ////// For the demo
-                    screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                    screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
-                    ///////////////////
-
-                    renderer.setRenderTarget(null);
-                    textureMaterial.depthMap = renderTarget.depthTexture;
-                    pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-
-                    //////////////////////////////////////////////////
-                }
-
-                function setCamera(camera) {
-                    setView(camera);
-                    setTexture(camera);
-                }
-
-                function getCamera(camera, delta = 0) {
-                    const array = cameras.children;
-                    const index = array.findIndex(cam => cam.name == camera.name);
-                    return array[(index + delta + array.length) %  array.length];
-                }
-
-                function loadOrientedImage(orientationUrl, imageUrl, source) {
-                    loadImage(imageUrl, source).then(() => loadOrientation(orientationUrl, source));
-                }
 
                 function keyDown(event) {
                     switch(event.key) {
@@ -615,23 +661,7 @@
                 }
                 document.addEventListener('keydown', keyDown, false);
 
-                /* callbacks */
-                function onWindowResize() {
-                    const width = window.innerWidth;
-                    const height = window.innerHeight;
-                    const aspect = width / height;
-                    renderer.setSize(width, height);
-                    viewCamera.aspect = aspect;
-                    viewCamera.updateProjectionMatrix();
-                    prevCamera.aspect = aspect;
-                    prevCamera.updateProjectionMatrix();
-                    nextCamera.aspect = aspect;
-                    nextCamera.updateProjectionMatrix();
-                    //if a value is set in pixels, the canvas size needs to be set on the element
-                    screenQuads.children.forEach(quad => quad.setScreenSize( width , height ));
-                    pointsMaterial.setScreenSize(width, height);
-                    pointsMaterial.pixelRatio = window.devicePixelRatio;
-                }
+                
 
                 /* preset scenes */
                 scenes = {
@@ -785,34 +815,64 @@
                 document.getElementById( 'help' ).style.display = show ? 'block' : 'none';
             }
 
+            function createCameraGUI(gui, name, camera, callback) {
+                const cameraGUI = gui.addFolder(name);
+                cameraGUI.clearName = name;
+                cameraGUI.near = cameraGUI.add(camera, 'near', 0, 100, 0.1).listen().onChange(callback);
+                cameraGUI.far = cameraGUI.add(camera, 'far', 1, 3000, 0.1).listen().onChange(callback);
+                cameraGUI.zoom = cameraGUI.add(camera, 'zoom', 0, 2).listen().onChange(callback);
+                cameraGUI.view = {};
+                Object.assign(cameraGUI.view, camera.view);
+                const cameraViewGUI = cameraGUI.addFolder('view');
+                cameraViewGUI.add(cameraGUI.view, 'enabled').listen().onChange(callback);
+                cameraGUI.offsetX = cameraViewGUI.add(cameraGUI.view, 'offsetX', 0, camera.view.fullWidth).listen().onChange(callback);
+                cameraGUI.offsetY = cameraViewGUI.add(cameraGUI.view, 'offsetY', 0, camera.view.fullHeight).listen().onChange(callback);
+                cameraGUI.width = cameraViewGUI.add(cameraGUI.view, 'width', 1, camera.view.fullWidth).listen().onChange(callback);
+                cameraGUI.height = cameraViewGUI.add(cameraGUI.view, 'height', 1, camera.view.fullHeight).listen().onChange(callback);
+                return cameraGUI;
+            }
+
+            function updateFromCamera(cameraGUI, camera) {
+                Object.assign(cameraGUI.view, camera.view);
+                cameraGUI.offsetX.max(camera.view.fullWidth);
+                cameraGUI.offsetY.max(camera.view.fullHeight);
+                cameraGUI.width.max(camera.view.fullWidth);
+                cameraGUI.height.max(camera.view.fullHeight);
+            };
+
             function initGUI() {
                 var gui = new dat.GUI();
-                cameraGUI = gui.addFolder('Camera');
                 function updateViewCameraFromGUI() {
                     viewCamera.updateProjectionMatrix();
                 };
-                gui.updateFromCamera = function updateFromCamera(camera) {
-                    cameraGUI.offsetX.max(camera.view.fullWidth);
-                    cameraGUI.offsetY.max(camera.view.fullHeight);
-                    cameraGUI.width.max(camera.view.fullWidth);
-                    cameraGUI.height.max(camera.view.fullHeight);
+                var textureView = textureCamera.view;
+                function updateTextureCameraFromGUI() {
+                    Object.assign(textureCamera.view, textureCameraGUI.view);
+                    setTexture(textureCamera);
+                    textureCamera.updateProjectionMatrix();
+                    textureMaterial.setCamera(textureCamera);
                 };
-                cameraGUI.visible = cameraGUI.add(cameras, 'visible');
-                cameraGUI.opacity = cameraGUI.add(viewMaterialOptions, 'opacity', 0, 1);
-                cameraGUI.near = cameraGUI.add(viewCamera, 'near', 0, 10).listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.far = cameraGUI.add(viewCamera, 'far', 1, 3000).listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.zoom = cameraGUI.add(viewCamera, 'zoom', 0, 2).listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.view = cameraGUI.add(viewCamera.view, 'enabled').name('crop').listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.offsetX = cameraGUI.add(viewCamera.view, 'offsetX', 0, viewCamera.view.fullWidth).name('crop x0').listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.offsetY = cameraGUI.add(viewCamera.view, 'offsetY', 0, viewCamera.view.fullHeight).name('crop y0').listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.width = cameraGUI.add(viewCamera.view, 'width', 1, viewCamera.view.fullWidth).name('crop width').listen().onChange(updateViewCameraFromGUI);
-                cameraGUI.height = cameraGUI.add(viewCamera.view, 'height', 1, viewCamera.view.fullHeight).name('crop height').listen().onChange(updateViewCameraFromGUI);
 
-                var scenesGUI = gui.addFolder('Scenes');
+                viewCameraGUI = createCameraGUI(gui, 'View Camera', viewCamera, updateViewCameraFromGUI);
+                textureCameraGUI = createCameraGUI(gui,'Texture Camera', textureCamera, updateTextureCameraFromGUI);
+                gui.updateCameras = function() {
+                    updateFromCamera(viewCameraGUI, viewCamera);
+                    updateFromCamera(textureCameraGUI, textureCamera);
+                }
+                gui.clear = function() {
+                  viewCameraGUI.name = viewCameraGUI.clearName;
+                  textureCameraGUI.name = textureCameraGUI.clearName;
+                  gui.updateCameras();
+                }
+
+                const pyramidGUI = gui.addFolder('Camera Pyramids');
+                pyramidGUI.add(cameras, 'visible').name('show pyramids');
+                pyramidGUI.add(viewMaterialOptions, 'opacity', 0, 1);
+
+                const scenesGUI = gui.addFolder('Scenes');
                 for(const key in scenes) scenesGUI.add(scenes, key);
-                scenesGUI.closed = false;
 
-                var backgroundGUI = gui.addFolder('Background');
+                const backgroundGUI = gui.addFolder('Background');
                 backgroundGUI.add(textureMaterial, 'wireframe');
                 backgroundGUI.add(sphere, 'visible').name('sphere visible');
                 backgroundGUI.add(plane, 'visible').name('plane visible');
@@ -820,17 +880,31 @@
 
                 //gui.add(textureMaterial, 'borderSharpness', 2, 200);
                 gui.add(textureMaterial, 'diffuseColorGrey');
-                var debugGUI = gui.addFolder('Debug');
+                const debugGUI = gui.addFolder('Debug');
                 debugGUI.add(screenQuads, 'visible').name('thumbs visible');
                 //debugGUI.add(textureMaterial, 'debugOpacity', 0, 1);
 
+                const debug = {
+                  saveAllAsGeoJSON: function () {
+                    download("cameras.json", Serializers.GeoJSONSerializer.serialize(cameras, "EPSG:2154"));
+                  },
+                  saveViewAsGML: function () {
+                    download("camera.gml", Serializers.GMLSerializer.serialize(viewCamera));
+                  }
+                };
+                debugGUI.add(debug, 'saveAllAsGeoJSON');
+                debugGUI.add(debug, 'saveViewAsGML');
+
+                gui.clear();
                 return gui;
             }
 
+            // Rendering
+
             function render() {
 
-
                 renderer.render(scene, viewCamera);
+
             }
 
             var todoTimestamp = 0;
@@ -858,10 +932,9 @@
                     viewCamera.near = 1;
                     viewCamera.far = 10000;
                     viewCamera.updateProjectionMatrix();
-                    gui.updateFromCamera(viewCamera);
+                    gui.updateCameras();
                 }
-                if (viewMaterials[nextCamera.name])
-                    viewMaterials[nextCamera.name].setValues(viewMaterialOptions);
+                Object.keys(viewMaterials).forEach(name => viewMaterials[name].setValues(viewMaterialOptions));
 
                 pointsMaterial.setViewCamera(viewCamera);
                 render();
@@ -871,6 +944,10 @@
             init();
             var gui = initGUI();
             animate();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const sceneParam = urlParams.get('scene');
+            if (sceneParam) scenes[sceneParam]();
         </script>
         <canvas id="canvas2d" hidden></canvas>
     </body>

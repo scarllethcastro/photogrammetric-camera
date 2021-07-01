@@ -4,7 +4,6 @@
 
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
-uniform RadialDistortion uvDistortion;
 uniform sampler2DArray mapArray;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];

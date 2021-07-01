@@ -15,7 +15,6 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   constructor(options = {}) {
     super();
 
-    this.uniforms.screenSize = new Uniform(new Vector2());
     definePropertyUniform(this, 'size', 5);
     definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
@@ -29,11 +28,10 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'mapArray', null);
     definePropertyUniform(this, 'depthMapArray', null);
     definePropertyUniform(this, 'depthMap', null);
-    definePropertyUniform(this, 'screenSize', new Vector2());
     definePropertyUniform(this, 'diffuseColorGrey', true);
     definePropertyUniform(this, 'pixelRatio', 1.);
     definePropertyUniform(this, 'shadowMappingActivated', true);
-    
+    this.screenSize = new Vector2();
 
     // Defines
     this.defines.USE_COLOR = '';
@@ -138,16 +136,16 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   copyTexture(texture, texture2DArray, index, renderer) {
-      const width = texture2DArray.image.width;
-      const height = texture2DArray.image.height;
-      if (width != texture.image.width || height != texture.image.height) {
-          console.error("texture and texture2DArray dimensions width and height don't match.");
-          return;
-      }
-          
-      const position = new THREE.Vector3( 0, 0, index );
-      const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( width-1, height-1, 0 ) );
-      renderer.copyTextureToTexture3D(box, position, texture, texture2DArray);
+    const width = texture2DArray.image.width;
+    const height = texture2DArray.image.height;
+    if (width != texture.image.width || height != texture.image.height) {
+        console.error("texture and texture2DArray dimensions width and height don't match.");
+        return;
+    }
+        
+    const position = new THREE.Vector3( 0, 0, index );
+    const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( width-1, height-1, 0 ) );
+    renderer.copyTextureToTexture3D(box, position, texture, texture2DArray);
   }
 
   decreasingFunction(d) {
@@ -159,7 +157,6 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
     let viewPosition = new THREE.Vector3();
     mainCamera.getWorldPosition(viewPosition);
-    console.log('viewPosition: ', viewPosition);
     const nbCamerasLoaded = this.allCameras.length;
 
     let cameraDistanceArray = [];
@@ -170,7 +167,6 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     }
 
     cameraDistanceArray.sort( function(a, b) {return a[1] - b[1]} );
-    console.log('cameraDistanceArray sorted:\n', cameraDistanceArray);
 
     const k = this.defines.NUM_TEXTURES;
     // Prevention in the case when k + 1 > nbCamerasLoaded
@@ -185,21 +181,17 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   setTextureCameras(camera, texture, renderer) {
-    console.log('Trying to set camera ', camera.name);
 
     // Add this camera to allCameras if it isn't already there (including its texture and depthMap)
     if (this.allCameras.find((c) => c.cam.name == camera.name) == undefined) {
       
       let nextIndex = this.allCameras.length;
       
-      console.log('Adding camera ' + camera.name + ' at index ' + nextIndex);
-
       // Add the camera
       this.allCameras[nextIndex] = {
         cam: camera,
         structure: this.setCameraStructure(camera, nextIndex, 0)
       };
-      console.log('structure:\n', this.allCameras[nextIndex].structure);
 
       // Add it's texture
       if (!texture.image.data)
@@ -223,20 +215,14 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
     // Order them with respect to their weights
     this.allCameras.sort( (a,b) => b.structure.weight - a.structure.weight );
-    console.log('allCameras inside material:\n', this.allCameras);
 
     // Pass the best k cameras to the array textureCameras
     const nbCamerasLoaded = this.allCameras.length;
     const k = this.defines.NUM_TEXTURES;
     for (let i = 0; i < k; i++) {
       this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
-      //console.log('tex1:\n', this.depthMaps[i]);
-      //console.log('tex2:\n', this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture);
-      //if ((this.depthMaps[i] != this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture)) {
-       // console.log('DIFFERENT');
-        this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
-      //}
-    }
+      this.depthMaps[i] = this.allCameras[i % nbCamerasLoaded].cam.renderTarget.depthTexture;  // TODO: try to use depthMapArray later
+    } 
   }
 
   setE_Primes(cameraPosition) {
@@ -263,8 +249,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       els[3], els[7], els[11]).invert();
 
     const screenInverse = new Matrix3().set(
-      2/this.uniforms.screenSize.value.x, 0, -1,
-      0, 2/this.uniforms.screenSize.value.y, -1,
+      2/this.screenSize.x, 0, -1,
+      0, 2/this.screenSize.y, -1,
       0, 0, 1
     );
 
@@ -272,7 +258,6 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   initializeTexture2DArray(width, height, array, nbFormat, format, fillingValue) {
-
     const depth = this.MAX_TEXTURES;
     const size = width * height;
     const totalDataSize = nbFormat * size * depth;
@@ -314,7 +299,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
    setScreenSize(width, height) {
-     this.uniforms.screenSize.value.set(width, height);
+     this.screenSize.set(width, height);
    }
 }
 

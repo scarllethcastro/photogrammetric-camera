@@ -15,27 +15,10 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
 
       if (all(greaterThan(testBorder,vec2(0.))) && passShadowMapTest_i == 1.) {
         color += texture( mapArray, vec3( texCoord.xy, textureCamera_i.index ) ) * textureCamera_i.weight;
-        // switch (index) {
-        //   case 0:
-        //     color += vec4(1.,0.,0.,1.) * textureCamera_i.weight;
-        //     break;
-
-        //   case 1:
-        //     color += vec4(0.,1.,0.,1.) * textureCamera_i.weight;
-        //     break;
-
-        //   case 2:
-        //     color += vec4(0.,0.,1.,1.) * textureCamera_i.weight;
-        //     break;
-        // }
-
         scoresSum += textureCamera_i.weight;
       }
     }
-  } //else {
-  //   color += vec4(1., 1., 1., 1.);
-  //   scoresSum += textureCamera_i.weight;
-  // }
+  }
 }
 
 void shadowMapTest(mat4 m, vec3 position, TextureCamera textureCamera_i, sampler2D depthMap_i, inout float passShadowMapTest_i) {
