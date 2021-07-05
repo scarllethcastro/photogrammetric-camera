@@ -56,7 +56,7 @@ class OrientedImageMaterial extends ShaderMaterial {
         if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
             this.uvDistortion = camera.distos[0];
         } else {
-            this.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
+            this.uvDistortion = { C: new Vector2(), R: new Vector4() };
             this.uvDistortion.R.w = Infinity;
         }
     }
