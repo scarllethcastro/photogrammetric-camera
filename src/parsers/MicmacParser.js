@@ -1,4 +1,5 @@
 import { Vector2, Vector3, Vector4, Matrix4, Euler } from 'three';
+import PhotogrammetricCamera from '../cameras/PhotogrammetricCamera';
 import { default as BrownDistortion } from '../cameras/distortions/BrownDistortion';
 import { default as EbnerDistortion } from '../cameras/distortions/EbnerDistortion';
 import { default as FishEyeDistortion } from '../cameras/distortions/FishEyeDistortion';
