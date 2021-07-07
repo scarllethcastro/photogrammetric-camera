@@ -1,3 +1,4 @@
+#include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
 uniform bool diffuseColorGrey;
 
@@ -15,6 +16,8 @@ uniform sampler2D depthMap;
 varying vec4 vColor;
 
 void main() {
+  #include <logdepthbuf_fragment>
+
   vec4 finalColor = vColor;
 
   if (diffuseColorGrey) {
@@ -31,20 +34,20 @@ void main() {
 
   vec4 uvw = vPosition;
 
-  // For the shadowMapping, which is not distorted
-  vec4 uvwNotDistorted = textureCameraPostTransform * uvw;
-  uvwNotDistorted.xyz /= uvwNotDistorted.w;
+  // // For the shadowMapping, which is not distorted
+  // vec4 uvwNotDistorted = textureCameraPostTransform * uvw;
+  // uvwNotDistorted.xyz /= uvwNotDistorted.w;
 
-  // If using ShadowMapMaterial:
-  // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
+  // // If using ShadowMapMaterial:
+  // // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
 
-  float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
-  float distanceCamera = uvwNotDistorted.z;
+  // float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
+  // float distanceCamera = uvwNotDistorted.z;
 
-  vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
+  // vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
 
-  // ShadowMapping
-  if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
+  // // ShadowMapping
+  // if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
 
     // Don't texture if uvw.w < 0
     if (uvw.w > 0. && distort_radial(uvw, uvDistortion)) {
@@ -64,9 +67,9 @@ void main() {
         finalColor.rgb = vec3(0.2);
       }
     }
-  } else {
-    finalColor.rgb = vec3(0.2); // shadow color
-  }
+  // } else {
+  //   finalColor.rgb = vec3(0.2); // shadow color
+  // }
 
 #endif
 
