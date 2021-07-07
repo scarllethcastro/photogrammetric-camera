@@ -20,8 +20,8 @@ class NewMaterial extends ShaderMaterial {
         options.defines.USE_PROJECTIVE_TEXTURING = '';
         options.defines.EPSILON = 1e-3;
     }
-    options.defines.USE_LOGDEPTHBUF = 1;
-    options.defines.USE_LOGDEPTHBUF_EXT = 1;
+    // options.defines.USE_LOGDEPTHBUF = 1;
+    // options.defines.USE_LOGDEPTHBUF_EXT = 1;
 
     super(options);
 
