@@ -71,8 +71,9 @@ void main() {
   //   finalColor.rgb = vec3(0.2); // shadow color
   // }
 
-  finalColor = vec4(1.,0.,0.,1.);
+  
 #endif
+finalColor = vec4(1.,0.,0.,1.);
 
   gl_FragColor =  finalColor;
 }
