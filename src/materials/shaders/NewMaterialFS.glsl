@@ -49,28 +49,29 @@ void main() {
   // // ShadowMapping
   // if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
 
-    // Don't texture if uvw.w < 0
-    if (uvw.w > 0. && distort_radial(uvw, uvDistortion)) {
+    // // Don't texture if uvw.w < 0
+    // if (uvw.w > 0. && distort_radial(uvw, uvDistortion)) {
 
-      uvw = textureCameraPostTransform * uvw;
-      uvw.xyz /= uvw.w;
+    //   uvw = textureCameraPostTransform * uvw;
+    //   uvw.xyz /= uvw.w;
 
-      // If coordinates are valid, they will be between 0 and 1 after normalization
-      // Test if coordinates are valid, so we can texture
-      vec3 testBorder = min(uvw.xyz, 1. - uvw.xyz);
+    //   // If coordinates are valid, they will be between 0 and 1 after normalization
+    //   // Test if coordinates are valid, so we can texture
+    //   vec3 testBorder = min(uvw.xyz, 1. - uvw.xyz);
 
-      if (all(greaterThan(testBorder,vec3(0.))))
-      {
-        vec4 color = texture2D(map, uvw.xy);
-        finalColor.rgb = mix(finalColor.rgb, color.rgb, color.a);
-      } else {
-        finalColor.rgb = vec3(0.2);
-      }
-    }
+    //   if (all(greaterThan(testBorder,vec3(0.))))
+    //   {
+    //     vec4 color = texture2D(map, uvw.xy);
+    //     finalColor.rgb = mix(finalColor.rgb, color.rgb, color.a);
+    //   } else {
+    //     finalColor.rgb = vec3(0.2);
+    //   }
+    // }
   // } else {
   //   finalColor.rgb = vec3(0.2); // shadow color
   // }
 
+  finalColor = vec4(1.,0.,0.,1.);
 #endif
 
   gl_FragColor =  finalColor;
