@@ -24,6 +24,7 @@ void main() {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
+finalColor = vec4(1.,0.,0.,1.);
 #ifdef USE_PROJECTIVE_TEXTURING
   // Project the point in the texture image
   // p' = M' * (P - C')
@@ -71,9 +72,8 @@ void main() {
   //   finalColor.rgb = vec3(0.2); // shadow color
   // }
 
-  
+  finalColor = vec4(0.,1.,0.,1.);
 #endif
-finalColor = vec4(1.,0.,0.,1.);
 
   gl_FragColor =  finalColor;
 }
