@@ -19,6 +19,9 @@ class NewMaterial extends ShaderMaterial {
     if (map) {
         options.defines.USE_PROJECTIVE_TEXTURING = '';
         options.defines.EPSILON = 1e-3;
+        console.log('definido');
+    } else {
+        console.log('nao definido');
     }
     // options.defines.USE_LOGDEPTHBUF = 1;
     // options.defines.USE_LOGDEPTHBUF_EXT = 1;
