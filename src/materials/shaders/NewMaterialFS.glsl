@@ -24,7 +24,6 @@ void main() {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
-finalColor = vec4(1.,0.,0.,1.);
 #ifdef USE_PROJECTIVE_TEXTURING
   // Project the point in the texture image
   // p' = M' * (P - C')
@@ -64,9 +63,9 @@ finalColor = vec4(1.,0.,0.,1.);
       {
         vec4 color = texture2D(map, uvw.xy);
         finalColor.rgb = mix(finalColor.rgb, color.rgb, color.a);
-      } else {
-        finalColor.rgb = vec3(0.2);
-      }
+      }// else {
+      //   finalColor.rgb = vec3(0.2);
+      // }
     }
   // } else {
   //   finalColor.rgb = vec3(0.2); // shadow color
