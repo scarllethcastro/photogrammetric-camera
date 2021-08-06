@@ -1,3 +1,4 @@
+#include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
 #include <camera_structure>
 #include <tests_for_texturing>
@@ -13,6 +14,8 @@ uniform float pixelRatio;
 
 
 void main() {
+  #include <logdepthbuf_fragment>
+
   vec4 finalColor = vColor;
 
   if (diffuseColorGrey) {

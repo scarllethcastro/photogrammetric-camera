@@ -1,3 +1,4 @@
+#include <logdepthbuf_pars_vertex>
 #include <distortions/radial_pars_fragment>
 #include <camera_structure>
 #include <tests_for_texturing>
@@ -16,6 +17,10 @@ uniform mat3 viewProjectionScreenInverse;
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
 uniform bool shadowMappingActivated;
+
+bool isPerspectiveMatrix( mat4 m ) {
+	return m[ 2 ][ 3 ] == - 1.0;
+}
 
 
 void main() {
@@ -45,4 +50,6 @@ void main() {
       else
         passShadowMapTest[ i ] = 1.0;
     }
+
+    #include <logdepthbuf_vertex>
 }

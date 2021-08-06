@@ -39,7 +39,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
 
     // Maximum number of textures allowed
-    this.MAX_TEXTURES = options.MAX_TEXTURES || 40;
+    this.MAX_TEXTURES = options.maxTextures || 40;
 
     // Stores all the cameras already loaded, along with their corresponding structures
     this.allCameras = [];

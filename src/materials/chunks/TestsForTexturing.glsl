@@ -1,6 +1,6 @@
 void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
 
-  if (passShadowMapTest_i > 0.5) {
+  //if (passShadowMapTest_i > 0.5) {
 
     vec3 texCoord = vH_i * vec3(fragCoord.xy, 1.);
 
@@ -18,7 +18,7 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
         scoresSum += textureCamera_i.weight;
       }
     }
-  }
+  //}
 }
 
 void shadowMapTest(mat4 m, vec3 position, TextureCamera textureCamera_i, sampler2D depthMap_i, inout float passShadowMapTest_i) {
