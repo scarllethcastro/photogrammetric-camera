@@ -1,5 +1,8 @@
 #include <logdepthbuf_pars_vertex>
 
+attribute int buildingId;
+varying float vIsTheOne;
+
 uniform float size;
 #ifdef USE_PROJECTIVE_TEXTURING
 uniform vec3 textureCameraPosition;
@@ -24,4 +27,10 @@ void main() {
     vColor = vec4(color, 1.);
 
     #include <logdepthbuf_vertex>
+
+    if (buildingId == 348188270) {
+        vIsTheOne = 1.0;
+    } else {
+        vIsTheOne = 0.0;
+    }
 }

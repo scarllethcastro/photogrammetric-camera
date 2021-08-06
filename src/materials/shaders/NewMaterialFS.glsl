@@ -2,6 +2,8 @@
 #include <distortions/radial_pars_fragment>
 uniform bool diffuseColorGrey;
 
+varying float vIsTheOne;
+
 #ifdef USE_PROJECTIVE_TEXTURING
 uniform vec3 textureCameraPosition;
 uniform mat4 textureCameraPreTransform; // Contains the rotation and the intrinsics of the camera, but not the translation
@@ -73,6 +75,10 @@ void main() {
 
   // finalColor = vec4(0.,1.,0.,1.);
 #endif
+
+  if (vIsTheOne > 0.0) {
+    finalColor = vec4(1.,0.,0.,1.);
+  }
 
   gl_FragColor =  finalColor;
 }
