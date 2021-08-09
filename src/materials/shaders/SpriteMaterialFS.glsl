@@ -1,3 +1,4 @@
+#include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
 
 uniform bool diffuseColorGrey;
@@ -10,13 +11,15 @@ varying float passShadowMapTest;
 uniform float pixelRatio;
 
 void main() {
+  #include <logdepthbuf_fragment>
+
   vec4 finalColor = vColor;
 
   if (diffuseColorGrey) {
     finalColor.rgb = vec3(dot(vColor.rgb, vec3(0.333333)));
   }
 
-  if (passShadowMapTest > 0.5) {
+  // if (passShadowMapTest > 0.5) {
 
     vec3 texCoord = vH * vec3(gl_FragCoord.xy / pixelRatio, 1.);
 
@@ -40,9 +43,9 @@ void main() {
   	   finalColor.rgb = vec3(0.2); // shadow color
     }
 
-  } else {
-     finalColor.rgb = vec3(0.2); // shadow color
-  }
+  // } else {
+  //    finalColor.rgb = vec3(0.2); // shadow color
+  // }
 
   gl_FragColor =  finalColor;
 }

@@ -1,3 +1,5 @@
+#include <logdepthbuf_pars_vertex>
+
 // M^(-1) * screen -> this.viewProjectionScreenInverse
 // C -> uniform vec3 cameraPosition
 // M' -> this.textureCameraPostTransform * this.textureCameraPreTransform
@@ -16,6 +18,10 @@ uniform mat3 M_prime_Pre;
 uniform mat3 viewProjectionScreenInverse;
 varying mat3 vH;
 varying float passShadowMapTest;
+
+bool isPerspectiveMatrix( mat4 m ) {
+	return m[ 2 ][ 3 ] == - 1.0;
+}
 
 
 void main() {
@@ -51,4 +57,6 @@ void main() {
     } else {
       passShadowMapTest = 0.0;
     }
+
+    #include <logdepthbuf_vertex>
 }
