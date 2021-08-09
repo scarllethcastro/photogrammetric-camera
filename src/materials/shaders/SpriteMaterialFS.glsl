@@ -36,11 +36,13 @@ void main() {
       {
         finalColor = texture2D(map, texCoord.xy);
       } else {
-    	   finalColor.rgb = vec3(0.2); // shadow color
+    	   //finalColor.rgb = vec3(0.2); // shadow color
+         finalColor.rgb = vec3(1.,0.,0.);
       }
 
     } else {
-  	   finalColor.rgb = vec3(0.2); // shadow color
+  	   //finalColor.rgb = vec3(0.2); // shadow color
+       finalColor.rgb = vec3(0.,0.,1.);
     }
 
   // } else {
