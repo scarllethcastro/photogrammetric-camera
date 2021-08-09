@@ -36,11 +36,11 @@ void main() {
         switch (textureNumber) {
             case 1989571579:
                 break;
-            case 1989571579:
+            case 1989571578:
                 break;
-            case 1989571579:
+            case 1989571577:
                 break;
-            case 1989571579:
+            case 1989571551:
                 break;
         }
 
