@@ -200,7 +200,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
   setTextureCameras(camera, texture, renderer) {
     console.log('received camera: \n', camera);
-    console.log('allcameras now:\n', this.allCameras);
+    console.log('allcameras now:\n', this.allCameras.map(c => c.cam.name));
 
     // Add this camera to allCameras if it isn't already there (including its texture and depthMap)
     if (this.allCameras.find((c) => c.cam.name == camera.name) == undefined) {
