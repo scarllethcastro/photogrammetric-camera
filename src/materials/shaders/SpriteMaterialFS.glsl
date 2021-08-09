@@ -52,7 +52,7 @@ void main() {
   // }
 
   vec2 fragCoordCorrected = gl_FragCoord.xy / pixelRatio;
-  vec2 fragCoord = 2 * fragCoordCorrected;
+  vec2 fragCoord = 2.0 * fragCoordCorrected;
   fragCoord.x = fragCoord.x/screenSize.x;
   fragCoord.y = fragCoord.y/screenSize.y;
   fragCoord = fragCoord - 1.0;
