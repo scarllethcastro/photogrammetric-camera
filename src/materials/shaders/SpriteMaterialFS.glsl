@@ -51,31 +51,31 @@ void main() {
   //    finalColor.rgb = vec3(0.2); // shadow color
   // }
 
-  vec2 fragCoordCorrected = gl_FragCoord.xy / pixelRatio;
-  vec2 fragCoord = 2.0 * fragCoordCorrected;
-  fragCoord.x = fragCoord.x/screenSize.x;
-  fragCoord.y = fragCoord.y/screenSize.y;
-  fragCoord = fragCoord - 1.0;
+  // vec2 fragCoordCorrected = gl_FragCoord.xy / pixelRatio;
+  // vec2 fragCoord = 2.0 * fragCoordCorrected;
+  // fragCoord.x = fragCoord.x/screenSize.x;
+  // fragCoord.y = fragCoord.y/screenSize.y;
+  // fragCoord = fragCoord - 1.0;
 
-  //finalColor.rgb = vec3(0.,0.,0.);
+  finalColor.rgb = vec3(0.,0.,0.);
 
-  finalColor.rgb = vec3(fragCoord.x, fragCoord.y, 0.);
+  // finalColor.rgb = vec3(fragCoord.x, fragCoord.y, 0.);
 
   
-  // if (texCoord.z > 0.) {
-  //   finalColor.rgb = vec3(0.,1.,0.);
-  // }
-  // if (distort_radial_vec3(texCoord, uvDistortion)) {
-  //   finalColor.rgb += vec3(0.,0.,1.);
-  // }
+  if (texCoord.z > 0.) {
+    finalColor.rgb = vec3(0.,1.,0.);
+  }
+  if (distort_radial_vec3(texCoord, uvDistortion)) {
+    finalColor.rgb += vec3(0.,0.,1.);
+  }
 
-  // texCoord = M_prime_Post * texCoord;
-  // texCoord /= texCoord.z;
+  texCoord = M_prime_Post * texCoord;
+  texCoord /= texCoord.z;
 
-  // vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
-  // if (all(greaterThan(testBorder,vec2(0.)))) {
-  //   finalColor.rgb += vec3(0.5,0.,0.);
-  // }
+  vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
+  if (all(greaterThan(testBorder,vec2(0.)))) {
+    finalColor.rgb += vec3(0.5,0.,0.);
+  }
 
   gl_FragColor =  finalColor;
 }
