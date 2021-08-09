@@ -2,7 +2,7 @@
 
 attribute int buildingId;
 varying float vIsTheOne;
-varying int dontShow;
+varying float dontShow;
 uniform int textureYear;
 uniform int textureNumber;
 

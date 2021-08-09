@@ -3,7 +3,7 @@
 uniform bool diffuseColorGrey;
 
 varying float vIsTheOne;
-varying int dontShow;
+varying float dontShow;
 
 #ifdef USE_PROJECTIVE_TEXTURING
 uniform vec3 textureCameraPosition;
