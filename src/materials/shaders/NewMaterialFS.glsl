@@ -4,7 +4,7 @@ uniform bool diffuseColorGrey;
 
 varying float vIsTheOne;
 varying float dontShow;
-varying int vTextureNumber;
+varying float vTextureNumber;
 
 #ifdef USE_PROJECTIVE_TEXTURING
 uniform vec3 textureCameraPosition;
@@ -86,19 +86,16 @@ void main() {
 
 
   switch (vTextureNumber) {
-      case 1989571579:
+      case 1.0:
           finalColor.rgb = vec3(1.,0.,0.);
           break;
-      case 1989571578:
+      case 2.0:
           finalColor.rgb = vec3(0.,1.,0.);
           break;
-      case 1989571577:
+      case 3.0:
           finalColor.rgb = vec3(0.,0.,1.);
           break;
-      case 1989571551:
-          finalColor.rgb = vec3(0.,0.,0.);
-          break;
-      case 1989571533:
+      case 0.0:
           finalColor.rgb = vec3(0.,0.,0.);
           break;
   }
