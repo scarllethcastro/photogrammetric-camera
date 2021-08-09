@@ -21,7 +21,7 @@ void main() {
 
   // if (passShadowMapTest > 0.5) {
 
-    vec3 texCoord = vH * vec3(gl_FragCoord.xy / pixelRatio, 1.);
+    vec3 texCoord = vH * vec3(gl_FragCoord.xy /*/ pixelRatio*/, 1.);
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
