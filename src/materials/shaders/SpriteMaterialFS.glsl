@@ -21,7 +21,7 @@ void main() {
 
   // if (passShadowMapTest > 0.5) {
 
-    vec3 texCoord = vH * vec3(gl_FragCoord.xy /*/ pixelRatio*/, 1.);
+    vec3 texCoord = vH * vec3(gl_FragCoord.xy / pixelRatio, 1.);
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.z > 0. && distort_radial_vec3(texCoord, uvDistortion)) {
@@ -34,7 +34,8 @@ void main() {
 
       if (all(greaterThan(testBorder,vec2(0.))))
       {
-        finalColor = texture2D(map, texCoord.xy);
+        //finalColor = texture2D(map, texCoord.xy);
+        finalColor.rgb = vec3(0.,1.,0.);
       } else {
     	   //finalColor.rgb = vec3(0.2); // shadow color
          finalColor.rgb = vec3(1.,0.,0.);
