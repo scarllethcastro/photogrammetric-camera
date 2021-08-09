@@ -20,9 +20,9 @@ varying vec4 vColor;
 
 void main() {
 
-  if (dontShow > 0.0) {
-    discard;
-  }
+  // if (dontShow > 0.0) {
+  //   discard;
+  // }
 
   #include <logdepthbuf_fragment>
 
@@ -81,6 +81,27 @@ void main() {
 
   // finalColor = vec4(0.,1.,0.,1.);
 #endif
+
+
+
+  switch (textureNumber) {
+      case 1989571579:
+          finalColor.rgb = vec3(1.,0.,0.);
+          break;
+      case 1989571578:
+          finalColor.rgb = vec3(0.,1.,0.);
+          break;
+      case 1989571577:
+          finalColor.rgb = vec3(0.,0.,1.);
+          break;
+      case 1989571551:
+          finalColor.rgb = vec3(0.,0.,0.);
+          break;
+      case 1989571533:
+          finalColor.rgb = vec3(0.,0.,0.);
+          break;
+  }
+
 
   gl_FragColor =  finalColor;
 }

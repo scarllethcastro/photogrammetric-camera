@@ -5,6 +5,7 @@ varying float vIsTheOne;
 varying float dontShow;
 uniform int textureYear;
 uniform int textureNumber;
+varying int vTextureNumber;
 
 uniform float size;
 #ifdef USE_PROJECTIVE_TEXTURING
@@ -22,27 +23,28 @@ void main() {
 
     vec3 newPosition = position;
     dontShow = 0.0;
+    vTextureNumber = textureNumber;
 
     if (buildingId == 348188270) {
         vIsTheOne = 1.0;
 
-        switch (textureNumber) {
-            case 1989571579:
-                newPosition.z = 0.75 * position.z;
-                break;
-            case 1989571578:
-                newPosition.z = 0.60 * position.z;
-                break;
-            case 1989571577:
-                newPosition.z = 0.55 * position.z;
-                break;
-            case 1989571551:
-                dontShow = 1.0;
-                break;
-            case 1989571533:
-                dontShow = 1.0;
-                break;
-        }
+        // switch (textureNumber) {
+        //     case 1989571579:
+        //         newPosition.z = 0.75 * position.z;
+        //         break;
+        //     case 1989571578:
+        //         newPosition.z = 0.60 * position.z;
+        //         break;
+        //     case 1989571577:
+        //         newPosition.z = 0.55 * position.z;
+        //         break;
+        //     case 1989571551:
+        //         dontShow = 1.0;
+        //         break;
+        //     case 1989571533:
+        //         dontShow = 1.0;
+        //         break;
+        // }
 
     } else {
         vIsTheOne = 0.0;
