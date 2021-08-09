@@ -83,23 +83,23 @@ void main() {
   // finalColor = vec4(0.,1.,0.,1.);
 #endif
 
-
-
-  switch (vTextureNumber) {
-      case 1.0:
-          finalColor.rgb = vec3(1.,0.,0.);
-          break;
-      case 2.0:
-          finalColor.rgb = vec3(0.,1.,0.);
-          break;
-      case 3.0:
+if (vIsTheOne > 0.0) {
+  if (vTextureNumber == 0.0) {
+    finalColor.rgb = vec3(0.,0.,0.);
+  } else {
+    if (vTextureNumber == 1.0) {
+      finalColor.rgb = vec3(1.,0.,0.);
+    } else {
+      if (vTextureNumber == 2.0) {
+        finalColor.rgb = vec3(0.,1.,0.);
+      } else {
+        if (vTextureNumber == 3.0) {
           finalColor.rgb = vec3(0.,0.,1.);
-          break;
-      case 0.0:
-          finalColor.rgb = vec3(0.,0.,0.);
-          break;
+        }
+      }
+    }
   }
-
+}
 
   gl_FragColor =  finalColor;
 }
