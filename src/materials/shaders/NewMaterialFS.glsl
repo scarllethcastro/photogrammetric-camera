@@ -3,6 +3,7 @@
 uniform bool diffuseColorGrey;
 
 varying float vIsTheOne;
+varying int dontShow;
 
 #ifdef USE_PROJECTIVE_TEXTURING
 uniform vec3 textureCameraPosition;
@@ -18,6 +19,11 @@ uniform sampler2D depthMap;
 varying vec4 vColor;
 
 void main() {
+
+  if (dontShow > 0.0) {
+    discard;
+  }
+
   #include <logdepthbuf_fragment>
 
   vec4 finalColor = vColor;
@@ -75,10 +81,6 @@ void main() {
 
   // finalColor = vec4(0.,1.,0.,1.);
 #endif
-
-  // if (vIsTheOne > 0.0) {
-  //   finalColor = vec4(1.,0.,0.,1.);
-  // }
 
   gl_FragColor =  finalColor;
 }

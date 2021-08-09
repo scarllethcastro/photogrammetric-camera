@@ -2,6 +2,7 @@
 
 attribute int buildingId;
 varying float vIsTheOne;
+varying int dontShow;
 uniform int textureYear;
 uniform int textureNumber;
 
@@ -19,24 +20,27 @@ bool isPerspectiveMatrix( mat4 m ) {
 
 void main() {
 
+    vec3 newPosition = position;
+    dontShow = 0.0;
+
     if (buildingId == 348188270) {
         vIsTheOne = 1.0;
 
         switch (textureNumber) {
             case 1989571579:
-                position.z *= 0.75;
+                newPosition.z = 0.75 * position.z;
                 break;
             case 1989571578:
-                position.z *= 0.60;
+                newPosition.z = 0.60 * position.z;
                 break;
             case 1989571577:
-                position.z *= 0.55;
+                newPosition.z = 0.55 * position.z;
                 break;
             case 1989571551:
-                discard;
+                dontShow = 1.0;
                 break;
             case 1989571533:
-                discard;
+                dontShow = 1.0;
                 break;
         }
 
@@ -45,12 +49,12 @@ void main() {
     }
 
     gl_PointSize = size;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
 
 #ifdef USE_PROJECTIVE_TEXTURING
     mat4 m = modelMatrix;
     m[3].xyz -= textureCameraPosition;
-    vPosition = textureCameraPreTransform * m * vec4(position, 1.0);
+    vPosition = textureCameraPreTransform * m * vec4(newPosition, 1.0);
 #endif
     vColor = vec4(color, 1.);
 
