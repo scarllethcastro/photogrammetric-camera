@@ -60,9 +60,13 @@ class NewMaterial extends ShaderMaterial {
         this.uvDistortion.R.w = Infinity;
     }
 
-    if (camera.year && camera.number)
+    if (camera.year && camera.number) {
       this.textureYear = camera.year;
       this.textureNumber = camera.number;
+    } else {
+       console.log('didn\'t find the champs in:\n', camera);
+    }
+      
   }
 }
 
