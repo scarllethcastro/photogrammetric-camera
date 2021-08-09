@@ -18,6 +18,32 @@ bool isPerspectiveMatrix( mat4 m ) {
 }
 
 void main() {
+
+    if (buildingId == 348188270) {
+        vIsTheOne = 1.0;
+
+        switch (textureNumber) {
+            case 1989571579:
+                position.z *= 0.75;
+                break;
+            case 1989571578:
+                position.z *= 0.60;
+                break;
+            case 1989571577:
+                position.z *= 0.55;
+                break;
+            case 1989571551:
+                discard;
+                break;
+            case 1989571533:
+                discard;
+                break;
+        }
+
+    } else {
+        vIsTheOne = 0.0;
+    }
+
     gl_PointSize = size;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
@@ -29,22 +55,4 @@ void main() {
     vColor = vec4(color, 1.);
 
     #include <logdepthbuf_vertex>
-
-    if (buildingId == 348188270) {
-        vIsTheOne = 1.0;
-
-        switch (textureNumber) {
-            case 1989571579:
-                break;
-            case 1989571578:
-                break;
-            case 1989571577:
-                break;
-            case 1989571551:
-                break;
-        }
-
-    } else {
-        vIsTheOne = 0.0;
-    }
 }
