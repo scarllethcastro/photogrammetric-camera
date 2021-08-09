@@ -50,5 +50,9 @@ void main() {
   //    finalColor.rgb = vec3(0.2); // shadow color
   // }
 
+  if (texCoord.z > 0.) {
+    finalColor.rgb = vec3(0.,1.,0.);
+  }
+
   gl_FragColor =  finalColor;
 }
