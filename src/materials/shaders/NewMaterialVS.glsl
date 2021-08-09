@@ -28,41 +28,41 @@ void main() {
     if (buildingId == 348188270) {
         vIsTheOne = 1.0;
 
-        // switch (textureNumber) {
-        //     case 1989571579:
-        //         newPosition.z = 0.75 * position.z;
-        //         break;
-        //     case 1989571578:
-        //         newPosition.z = 0.60 * position.z;
-        //         break;
-        //     case 1989571577:
-        //         newPosition.z = 0.55 * position.z;
-        //         break;
-        //     case 1989571551:
-        //         dontShow = 1.0;
-        //         break;
-        //     case 1989571533:
-        //         dontShow = 1.0;
-        //         break;
-        // }
-
         switch (textureNumber) {
             case 1989571579:
-                vTextureNumber = 1.0;
+                newPosition.z = 0.75 * position.z;
                 break;
             case 1989571578:
-                vTextureNumber = 2.0;
+                newPosition.z = 0.60 * position.z;
                 break;
             case 1989571577:
-                vTextureNumber = 3.0;
+                newPosition.z = 0.55 * position.z;
                 break;
             case 1989571551:
-                vTextureNumber = 0.0;
+                dontShow = 1.0;
                 break;
             case 1989571533:
-                vTextureNumber = 0.0;
+                dontShow = 1.0;
                 break;
         }
+
+        // switch (textureNumber) {
+        //     case 1989571579:
+        //         vTextureNumber = 1.0;
+        //         break;
+        //     case 1989571578:
+        //         vTextureNumber = 2.0;
+        //         break;
+        //     case 1989571577:
+        //         vTextureNumber = 3.0;
+        //         break;
+        //     case 1989571551:
+        //         vTextureNumber = 0.0;
+        //         break;
+        //     case 1989571533:
+        //         vTextureNumber = 0.0;
+        //         break;
+        // }
 
     } else {
         vIsTheOne = 0.0;
