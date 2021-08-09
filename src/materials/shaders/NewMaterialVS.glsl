@@ -2,6 +2,8 @@
 
 attribute int buildingId;
 varying float vIsTheOne;
+uniform int textureYear;
+uniform int textureNumber;
 
 uniform float size;
 #ifdef USE_PROJECTIVE_TEXTURING
@@ -30,6 +32,18 @@ void main() {
 
     if (buildingId == 348188270) {
         vIsTheOne = 1.0;
+
+        switch (textureNumber) {
+            case 1989571579:
+                break;
+            case 1989571579:
+                break;
+            case 1989571579:
+                break;
+            case 1989571579:
+                break;
+        }
+
     } else {
         vIsTheOne = 0.0;
     }

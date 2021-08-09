@@ -76,9 +76,9 @@ void main() {
   // finalColor = vec4(0.,1.,0.,1.);
 #endif
 
-  if (vIsTheOne > 0.0) {
-    finalColor = vec4(1.,0.,0.,1.);
-  }
+  // if (vIsTheOne > 0.0) {
+  //   finalColor = vec4(1.,0.,0.,1.);
+  // }
 
   gl_FragColor =  finalColor;
 }

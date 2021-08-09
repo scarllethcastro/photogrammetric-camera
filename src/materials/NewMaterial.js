@@ -13,6 +13,8 @@ class NewMaterial extends ShaderMaterial {
     const map = pop(options, 'map', null);
     const depthMap = pop(options, 'depthMap', null);
     const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
+    const textureYear = pop(options, 'textureYear', null);
+    const textureNumber = pop(options, 'textureNumber', null);
 
     options.defines = options.defines || {};
     options.defines.USE_COLOR = '';
@@ -31,6 +33,8 @@ class NewMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'map', map);
     definePropertyUniform(this, 'depthMap', depthMap);
     definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
+    definePropertyUniform(this, 'textureYear', textureYear);
+    definePropertyUniform(this, 'textureNumber', textureNumber);
 
     this.vertexShader = NewMaterialVS;
 
@@ -42,19 +46,23 @@ class NewMaterial extends ShaderMaterial {
   }
 
   setCamera(camera) {
-      camera.getWorldPosition(this.textureCameraPosition);
-      this.textureCameraPreTransform.copy(camera.matrixWorldInverse);
-      this.textureCameraPreTransform.setPosition(0, 0, 0);
-      this.textureCameraPreTransform.premultiply(camera.preProjectionMatrix);
-      this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
-      this.textureCameraPostTransform.premultiply(textureMatrix);
+    camera.getWorldPosition(this.textureCameraPosition);
+    this.textureCameraPreTransform.copy(camera.matrixWorldInverse);
+    this.textureCameraPreTransform.setPosition(0, 0, 0);
+    this.textureCameraPreTransform.premultiply(camera.preProjectionMatrix);
+    this.textureCameraPostTransform.copy(camera.postProjectionMatrix);
+    this.textureCameraPostTransform.premultiply(textureMatrix);
 
-      if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
-          this.uvDistortion = camera.distos[0];
-      } else {
-          this.uvDistortion = { C: new Vector2(), R: new Vector4() };
-          this.uvDistortion.R.w = Infinity;
-      }
+    if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
+        this.uvDistortion = camera.distos[0];
+    } else {
+        this.uvDistortion = { C: new Vector2(), R: new Vector4() };
+        this.uvDistortion.R.w = Infinity;
+    }
+
+    if (camera.year && camera.number)
+      this.textureYear = camera.year;
+      this.textureNumber = camera.number;
   }
 }
 
