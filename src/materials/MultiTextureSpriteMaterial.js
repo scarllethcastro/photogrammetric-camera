@@ -159,40 +159,48 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     mainCamera.getWorldPosition(viewPosition);
     const nbCamerasLoaded = this.allCameras.length;
 
-    let cameraDistanceArray = [];
-    for (let i = 0; i < nbCamerasLoaded; i++) {
-        let textureCameraPosition = new THREE.Vector3();
-        this.allCameras[i].cam.getWorldPosition(textureCameraPosition);
-        cameraDistanceArray[i] = [ this.allCameras[i].cam.name, viewPosition.distanceTo(textureCameraPosition) ];
-    }
+    if (nbCamerasLoaded == 1) {
 
-    console.log('cameraDistanceArray before sorting:\n', cameraDistanceArray);
+      this.allCameras[0].structure.weight = 1.0;
 
-    cameraDistanceArray.sort( function(a, b) {return a[1] - b[1]} );
+    } else {
 
-    console.log('cameraDistanceArray after sorting:\n', cameraDistanceArray);
+      let cameraDistanceArray = [];
+      for (let i = 0; i < nbCamerasLoaded; i++) {
+          let textureCameraPosition = new THREE.Vector3();
+          this.allCameras[i].cam.getWorldPosition(textureCameraPosition);
+          cameraDistanceArray[i] = [ this.allCameras[i].cam.name, viewPosition.distanceTo(textureCameraPosition) ];
+      }
 
-    const k = this.defines.NUM_TEXTURES;
-    console.log('k is ', k);
-    // Prevention in the case when k + 1 > nbCamerasLoaded
-    const d_kplus1 = this.decreasingFunction(cameraDistanceArray[ ((k + 1) > nbCamerasLoaded) ? (nbCamerasLoaded - 1) : k ][1]);
-    console.log('d_kplus1 = ', d_kplus1);
+      console.log('cameraDistanceArray before sorting:\n', cameraDistanceArray);
 
-    console.log('RESULT:\n');
-    for (let i = 0; i < nbCamerasLoaded; i++) {
-      let cameraName = this.allCameras[i].cam.name;
-      console.log('camera: ', cameraName);
-      let cameraDistance = (cameraDistanceArray.find((pair) => pair[0] == cameraName))[1];
-      console.log('distance: ', cameraDistance);
-      let d_i = this.decreasingFunction(cameraDistance);
-      console.log('d_i: ', d_i);
-      this.allCameras[i].structure.weight = d_i - d_kplus1;
-      console.log('weight: ', this.allCameras[i].structure.weight);
-    }
+      cameraDistanceArray.sort( function(a, b) {return a[1] - b[1]} );
+
+      console.log('cameraDistanceArray after sorting:\n', cameraDistanceArray);
+
+      const k = this.defines.NUM_TEXTURES;
+      console.log('k is ', k);
+      // Prevention in the case when k + 1 > nbCamerasLoaded
+      const d_kplus1 = this.decreasingFunction(cameraDistanceArray[ ((k + 1) > nbCamerasLoaded) ? (nbCamerasLoaded - 1) : k ][1]);
+      console.log('d_kplus1 = ', d_kplus1);
+
+      console.log('RESULT:\n');
+      for (let i = 0; i < nbCamerasLoaded; i++) {
+        let cameraName = this.allCameras[i].cam.name;
+        console.log('camera: ', cameraName);
+        let cameraDistance = (cameraDistanceArray.find((pair) => pair[0] == cameraName))[1];
+        console.log('distance: ', cameraDistance);
+        let d_i = this.decreasingFunction(cameraDistance);
+        console.log('d_i: ', d_i);
+        this.allCameras[i].structure.weight = d_i - d_kplus1;
+        console.log('weight: ', this.allCameras[i].structure.weight);
+      }
+    }    
   }
 
   setTextureCameras(camera, texture, renderer) {
     console.log('received camera: \n', camera);
+    console.log('allcameras now:\n', this.allCameras);
 
     // Add this camera to allCameras if it isn't already there (including its texture and depthMap)
     if (this.allCameras.find((c) => c.cam.name == camera.name) == undefined) {
@@ -228,6 +236,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       // Add it's depthMap
       // (later when the depthMapArray works)
 
+    } else {
+      console.log('found camera:\n', this.allCameras.find((c) => c.cam.name == camera.name));
     }
 
     console.log('going to update weights');
