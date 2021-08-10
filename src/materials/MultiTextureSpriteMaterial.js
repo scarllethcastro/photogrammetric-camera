@@ -76,6 +76,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     // Shaders
     this.vertexShader = unrollLoops(MultiTextureSpriteMaterialVS, this.defines);
     this.fragmentShader = unrollLoops(MultiTextureSpriteMaterialFS, this.defines);
+
+    this.isMultiTextureSpriteMaterial = true;
   }
 
   setCameraStructure(camera, index, weight) {

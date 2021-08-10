@@ -36,6 +36,8 @@ class SpriteMaterial extends ShaderMaterial {
     this.vertexShader = SpriteMaterialVS;
 
     this.fragmentShader = SpriteMaterialFS;
+
+    this.isSpriteMaterial = true;
   }
 
   setCamera(camera) {
