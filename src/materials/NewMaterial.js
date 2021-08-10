@@ -43,7 +43,7 @@ class NewMaterial extends ShaderMaterial {
     ${NewMaterialFS}
     `;
 
-    this.isNewMaterial = true;
+    this.isPCNewMaterial = true;
   }
 
   setCamera(camera) {

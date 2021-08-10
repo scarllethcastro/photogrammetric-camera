@@ -37,7 +37,7 @@ class SpriteMaterial extends ShaderMaterial {
 
     this.fragmentShader = SpriteMaterialFS;
 
-    //this.isSpriteMaterial = true;
+    this.isPCSpriteMaterial = true;
   }
 
   setCamera(camera) {
