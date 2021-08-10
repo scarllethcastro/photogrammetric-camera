@@ -32,6 +32,8 @@ class SpriteMaterial extends ShaderMaterial {
 
     this.defines.USE_COLOR = '';
     this.defines.EPSILON = 1e-3;
+    this.defines.USE_LOGDEPTHBUF = 1;
+    this.defines.USE_LOGDEPTHBUF_EXT = 1;
 
     this.vertexShader = SpriteMaterialVS;
 
