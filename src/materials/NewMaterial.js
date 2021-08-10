@@ -63,10 +63,7 @@ class NewMaterial extends ShaderMaterial {
     if (camera.year && camera.number) {
       this.textureYear = camera.year;
       this.textureNumber = camera.number;
-    } else {
-       console.log('didn\'t find the champs in:\n', camera);
-    }
-      
+    } 
   }
 }
 
