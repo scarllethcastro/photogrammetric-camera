@@ -2,9 +2,11 @@
 #include <distortions/radial_pars_fragment>
 uniform bool diffuseColorGrey;
 
-varying float vIsTheOne;
-varying float dontShow;
-varying float vTextureNumber;
+#ifdef USE_BUILDING_DATE
+  varying float vIsTheOne;
+  varying float dontShow;
+  varying float vTextureNumber;
+#endif
 
 #ifdef USE_PROJECTIVE_TEXTURING
 uniform vec3 textureCameraPosition;
@@ -20,12 +22,13 @@ uniform sampler2D depthMap;
 varying vec4 vColor;
 
 void main() {
-
-  if (dontShow > 0.0) {
-    discard;
-  }
-
   #include <logdepthbuf_fragment>
+
+#ifdef USE_BUILDING_DATE
+  if (dontShow > 0.0) {
+      discard;
+  }
+#endif
 
   vec4 finalColor = vColor;
 
