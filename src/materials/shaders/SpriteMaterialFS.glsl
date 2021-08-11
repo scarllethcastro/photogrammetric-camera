@@ -35,16 +35,13 @@ void main() {
 
       if (all(greaterThan(testBorder,vec2(0.))))
       {
-        //finalColor = texture2D(map, texCoord.xy);
-        finalColor.rgb = vec3(0.,1.,0.);
+        finalColor = texture2D(map, texCoord.xy);
       } else {
-    	   //finalColor.rgb = vec3(0.2); // shadow color
-         finalColor.rgb = vec3(1.,0.,0.);
+    	   finalColor.rgb = vec3(0.2); // shadow color
       }
 
     } else {
-  	   //finalColor.rgb = vec3(0.2); // shadow color
-       finalColor.rgb = vec3(0.,0.,1.);
+  	   finalColor.rgb = vec3(0.2); // shadow color
     }
 
   // } else {
