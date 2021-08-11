@@ -1,21 +1,33 @@
 #include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
-#include <camera_structure_for_sprite>
+#include <camera_structure_for_mesh>
 #include <tests_for_texturing>
+
+#ifdef USE_BUILDING_DATE
+  varying float vIsTheOne;
+  varying float dontShow;
+  varying float vTextureNumber;
+#endif
 
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform sampler2DArray mapArray;
-uniform TextureCameraForSprite textureCameras[NUM_TEXTURES];
+uniform TextureCameraForMesh textureCameras[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
+varying vec4 vPosition[NUM_TEXTURES];
 varying vec4 vColor;
 uniform float pixelRatio;
-uniform float opacity;
 
 
 void main() {
   #include <logdepthbuf_fragment>
+
+#ifdef USE_BUILDING_DATE
+  if (dontShow > 0.0) {
+      discard;
+  }
+#endif
 
   vec4 finalColor = vColor;
 
@@ -26,12 +38,10 @@ void main() {
   float scoresSum = 0.;
   vec4 color = vec4(0.);
 
-  vec3 texCoord;
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    texCoord = vH[ i ] * vec3(gl_FragCoord.xy / pixelRatio, 1.);
-    allTests(color, texCoord, textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i );
+    allTestsForMesh(color, vPosition[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i );
   }
 
   // Normalize color
@@ -42,5 +52,5 @@ void main() {
     finalColor.rgb = vec3(0.2); // shadow color
   }
 
-  gl_FragColor =  vec4(finalColor.rgb, opacity);
+  gl_FragColor =  finalColor;
 }

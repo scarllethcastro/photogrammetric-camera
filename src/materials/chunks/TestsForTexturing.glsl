@@ -1,8 +1,8 @@
-void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
+void allTests(inout vec4 color, vec3 texCoord, TextureCameraForSprite textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
 
   //if (passShadowMapTest_i > 0.5) {
 
-    vec3 texCoord = vH_i * vec3(fragCoord.xy, 1.);
+    // vec3 texCoord = vH_i * vec3(fragCoord.xy, 1.);
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.z > 0. && distort_radial_vec3(texCoord, textureCamera_i.uvDistortion)) {
@@ -21,7 +21,30 @@ void allTests(inout vec4 color, vec4 fragCoord, mat3 vH_i, TextureCamera texture
   //}
 }
 
-void shadowMapTest(mat4 m, vec3 position, TextureCamera textureCamera_i, sampler2D depthMap_i, inout float passShadowMapTest_i) {
+void allTestsForMesh(inout vec4 color, vec3 texCoord, TextureCameraForSprite textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
+
+  //if (passShadowMapTest_i > 0.5) {
+
+    // vec3 texCoord = vH_i * vec3(fragCoord.xy, 1.);
+
+    // Don't texture if texCoord.z < 0 (z = w in this case)
+    if (texCoord.w > 0. && distort_radial(texCoord, textureCamera_i.uvDistortion)) {
+
+       texCoord = textureCamera_i.postTransform * texCoord;
+       texCoord.xyz /= texCoord.w;
+
+      // Test if coordinates are valid, so we can texture
+      vec3 testBorder = min(texCoord.xyz, 1. - texCoord.xyz);
+
+      if (all(greaterThan(testBorder,vec3(0.)))) {
+        color += texture( mapArray, vec3( texCoord.xy, textureCamera_i.index ) ) * textureCamera_i.weight;
+        scoresSum += textureCamera_i.weight;
+      }
+    }
+  //}
+}
+
+void shadowMapTest(mat4 m, vec3 position, TextureCameraForSprite textureCamera_i, sampler2D depthMap_i, inout float passShadowMapTest_i) {
   m[3].xyz -= textureCamera_i.position;
   vec4 uvwNotDistorted = textureCamera_i.postTransform * textureCamera_i.preTransform * m * vec4(position, 1.0);
   uvwNotDistorted.xyz /= uvwNotDistorted.w;

@@ -1,6 +1,6 @@
 #include <logdepthbuf_pars_vertex>
 #include <distortions/radial_pars_fragment>
-#include <camera_structure>
+#include <camera_structure_for_sprite>
 #include <tests_for_texturing>
 
 // M^(-1) * screen -> this.viewProjectionScreenInverse
@@ -11,7 +11,7 @@
 
 uniform float size;
 varying vec4 vColor;
-uniform TextureCamera textureCameras[NUM_TEXTURES];
+uniform TextureCameraForSprite textureCameras[NUM_TEXTURES];
 uniform sampler2D depthMaps[NUM_TEXTURES];
 uniform mat3 viewProjectionScreenInverse;
 varying mat3 vH[NUM_TEXTURES];

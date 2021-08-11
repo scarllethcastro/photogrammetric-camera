@@ -13,3 +13,4 @@ export { default as NewMaterial } from './materials/NewMaterial';
 export { default as ShadowMapMaterial } from './materials/ShadowMapMaterial';
 export { default as SpriteMaterial } from './materials/SpriteMaterial';
 export { default as MultiTextureSpriteMaterial } from './materials/MultiTextureSpriteMaterial';
+export { default as MultiTextureMaterial } from './materials/MultiTextureMaterial';
