@@ -21,7 +21,7 @@ void allTests(inout vec4 color, vec3 texCoord, TextureCameraForSprite textureCam
   //}
 }
 
-void allTestsForMesh(inout vec4 color, vec3 texCoord, TextureCameraForSprite textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
+void allTestsForMesh(inout vec4 color, vec4 texCoord, TextureCameraForSprite textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
 
   //if (passShadowMapTest_i > 0.5) {
 

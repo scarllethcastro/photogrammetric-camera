@@ -59,6 +59,7 @@
             var OrientedImageMaterial = ThreePhotogrammetricCamera.OrientedImageMaterial;
             var NewMaterial = ThreePhotogrammetricCamera.NewMaterial;
             var ShadowMapMaterial = ThreePhotogrammetricCamera.ShadowMapMaterial;
+            var MultiTextureMaterial = ThreePhotogrammetricCamera.MultiTextureMaterial;
             var MultiTextureSpriteMaterial = ThreePhotogrammetricCamera.MultiTextureSpriteMaterial;
         </script>
         <script src="js/dat.gui.min.js"></script>
@@ -70,7 +71,7 @@
             //import ImageUtils from '../extras/ImageUtils.js';
             var orbitTarget, orbitControls;
             var scene, renderer, world, plyGroup, cameras, screenQuads, viewCameraGUI, textureCameraGUI;
-            var textureMaterial, wireMaterial, pointsMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
+            var textureMaterial, wireMaterial, pointsMaterial, multiTextureMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
             var textures = {}, uvTexture, whiteTexture, dataTextures = {};
             var textureLoader = new THREE.TextureLoader();
             var prevCamera = new PhotogrammetricCamera();
@@ -196,6 +197,7 @@
                 
                 textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
                 pointsMaterial.setDepthMaps([whiteTexture]);
+                multiTextureMaterial.setDepthMaps([whiteTexture]);
 
                 renderer.setRenderTarget(renderTarget);
                 renderer.render(world, camera);
@@ -203,6 +205,7 @@
 
                 textureMaterial.depthMap = renderTarget.depthTexture;
                 pointsMaterial.setTextureCameras(camera, textures[camera.name] || uvTexture, renderer);
+                multiTextureMaterial.setTextureCameras(camera, textures[camera.name] || uvTexture, renderer);
 
                 updateScreenQuads(camera);
 
@@ -491,6 +494,7 @@
                 
                 setMaterial(textureMaterial, textureCamera);
                 pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
+                multiTextureMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
 
                 updateScreenQuads(textureCamera);                
                 //////////////////////////////////////////////////
@@ -562,9 +566,11 @@
                 pointsMaterial = new MultiTextureSpriteMaterial({numTextures: 3, opacity: 1, transparent: true});
                 pointsMaterial.setScreenSize(window.innerWidth, window.innerHeight);
 
+                multiTextureMaterial = new MultiTextureMaterial({numTextures: 3});
 
-                sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(-1, 32, 32), textureMaterial);
-                plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 100, 100), textureMaterial);
+
+                sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(-1, 32, 32), multiTextureMaterial);
+                plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 100, 100), multiTextureMaterial);
                 sphere.scale.set(sphereRadius, sphereRadius, sphereRadius);
                 viewCamera.add(sphere);
                 world.add(plane);

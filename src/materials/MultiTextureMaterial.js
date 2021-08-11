@@ -16,6 +16,7 @@ class MultiTextureMaterial extends ShaderMaterial {
     super();
 
     definePropertyUniform(this, 'size', 5);
+
     // definePropertyUniform(this, 'textureCameraPosition', new Vector3());
     // definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
     // definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
@@ -23,15 +24,15 @@ class MultiTextureMaterial extends ShaderMaterial {
     // definePropertyUniform(this, 'M_prime_Pre', new Matrix3());
     // definePropertyUniform(this, 'M_prime_Post', new Matrix3());
     // definePropertyUniform(this, 'E_prime', new Vector3());
-    definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
+
     definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'mapArray', null);
     definePropertyUniform(this, 'depthMapArray', null);
     definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'diffuseColorGrey', true);
     definePropertyUniform(this, 'pixelRatio', 1.);
-    definePropertyUniform(this, 'textureYear', textureYear);
-    definePropertyUniform(this, 'textureNumber', textureNumber);
+    definePropertyUniform(this, 'textureYear', null);
+    definePropertyUniform(this, 'textureNumber', null);
     definePropertyUniform(this, 'shadowMappingActivated', true);
     
     this.screenSize = new Vector2();
@@ -62,12 +63,14 @@ class MultiTextureMaterial extends ShaderMaterial {
             position: new Vector3(),
             preTransform: new Matrix4(),
             postTransform: new Matrix4(),
-            // E_prime: new Vector3(),
-            // M_prime_Pre: new Matrix3(),
-            // M_prime_Post: new Matrix3(),
+            E_prime: new Vector3(),
+            M_prime_Pre: new Matrix3(),
+            M_prime_Post: new Matrix3(),
             uvDistortion: { C: new THREE.Vector2(), R: new THREE.Vector4() },
             index: -1,
-            weight: 0
+            weight: 0,
+            textureYear: null,
+            textureNumber: null,
           };
           this.textureCameras[i].uvDistortion.R.w = Infinity;
           this.depthMaps[i] = null;
@@ -362,9 +365,9 @@ struct TextureCameraForMesh {
     vec3 position;
     mat4 preTransform;
     mat4 postTransform;
-    // vec3 E_prime;
-    // mat3 M_prime_Pre;
-    // mat3 M_prime_Post;
+    vec3 E_prime;
+    mat3 M_prime_Pre;
+    mat3 M_prime_Post;
     RadialDistortion uvDistortion;
     int index;
     float weight;
