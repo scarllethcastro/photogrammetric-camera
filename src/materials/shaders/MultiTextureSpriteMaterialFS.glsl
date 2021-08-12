@@ -1,12 +1,12 @@
 #include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
-#include <camera_structure_for_sprite>
+#include <camera_structure>
 #include <tests_for_texturing>
 
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform sampler2DArray mapArray;
-uniform TextureCameraForSprite textureCameras[NUM_TEXTURES];
+uniform TextureCamera textureCameras[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
 varying vec4 vColor;

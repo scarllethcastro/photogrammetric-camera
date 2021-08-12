@@ -1,6 +1,6 @@
 #include <logdepthbuf_pars_vertex>
 #include <distortions/radial_pars_fragment>
-#include <camera_structure_for_mesh>
+#include <camera_structure>
 #include <tests_for_texturing>
 
 #ifdef USE_BUILDING_DATE
@@ -14,11 +14,9 @@
 
 uniform float size;
 varying vec4 vColor;
-uniform TextureCameraForMesh textureCameras[NUM_TEXTURES];
-uniform sampler2D depthMaps[NUM_TEXTURES];
+uniform TextureCamera textureCameras[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
 varying vec4 vPosition[NUM_TEXTURES];
-uniform bool shadowMappingActivated;
 
 
 bool isPerspectiveMatrix( mat4 m ) {
@@ -77,18 +75,18 @@ void main() {
     // ShadowMapping
 
     mat4 m = modelMatrix;
-    #pragma unroll_loop
-    for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-      if ( shadowMappingActivated )
-        shadowMapTest(m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
-      else
-        passShadowMapTest[ i ] = 1.0;
-    }
+    // #pragma unroll_loop
+    // for ( int i = 0; i < NUM_TEXTURES; i++ ) {
+    //   if ( shadowMappingActivated )
+    //     shadowMapTest(m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
+    //   else
+    //     passShadowMapTest[ i ] = 1.0;
+    // }
 
     // Texture coordinates calculation
 
-    #pragma unroll_loop
     mat4 m_withTranslation;
+    #pragma unroll_loop
     for ( int i = 0; i < NUM_TEXTURES; i++ ) {
       m_withTranslation = m;
       m_withTranslation[3].xyz -= textureCameras[ i ].position;

@@ -1,7 +1,7 @@
 import { ShaderMaterial, ShaderChunk, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
 import { definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
-import MultiTextureMaterialVS from './shaders/MultiTextureSpriteMaterialVS.glsl';
-import MultiTextureMaterialFS from './shaders/MultiTextureSpriteMaterialFS.glsl';
+import MultiTextureMaterialVS from './shaders/MultiTextureMaterialVS.glsl';
+import MultiTextureMaterialFS from './shaders/MultiTextureMaterialFS.glsl';
 import TestsForTexturing from './chunks/TestsForTexturing.glsl';
 
 
@@ -25,14 +25,14 @@ class MultiTextureMaterial extends ShaderMaterial {
     // definePropertyUniform(this, 'M_prime_Post', new Matrix3());
     // definePropertyUniform(this, 'E_prime', new Vector3());
 
-    definePropertyUniform(this, 'map', null);
+    // definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'mapArray', null);
     definePropertyUniform(this, 'depthMapArray', null);
-    definePropertyUniform(this, 'depthMap', null);
+    // definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'diffuseColorGrey', true);
     definePropertyUniform(this, 'pixelRatio', 1.);
-    definePropertyUniform(this, 'textureYear', null);
-    definePropertyUniform(this, 'textureNumber', null);
+    // definePropertyUniform(this, 'textureYear', null);
+    // definePropertyUniform(this, 'textureNumber', null);
     definePropertyUniform(this, 'shadowMappingActivated', true);
     
     this.screenSize = new Vector2();
@@ -94,9 +94,9 @@ class MultiTextureMaterial extends ShaderMaterial {
     structure.position = new Vector3();
     structure.preTransform = new Matrix4();
     structure.postTransform = new Matrix4();
-    // structure.M_prime_Pre = new Matrix3();
-    // structure.M_prime_Post = new Matrix3();
-    // structure.E_prime = new Vector3();
+    structure.M_prime_Pre = new Matrix3();
+    structure.M_prime_Post = new Matrix3();
+    structure.E_prime = new Vector3();
 
     camera.getWorldPosition(structure.position);
     structure.preTransform.copy(camera.matrixWorldInverse);
@@ -130,7 +130,10 @@ class MultiTextureMaterial extends ShaderMaterial {
     if (camera.year && camera.number) {
         structure.textureYear = camera.year;
         structure.textureNumber = camera.number;
-    } 
+    } else {
+        structure.textureYear = null;
+        structure.textureNumber = null;
+    }
     
     return structure;
   }
@@ -359,8 +362,8 @@ class MultiTextureMaterial extends ShaderMaterial {
    }
 }
 
-ShaderChunk["camera_structure_for_mesh"] = `
-struct TextureCameraForMesh {
+ShaderChunk["camera_structure"] = `
+struct TextureCamera {
 
     vec3 position;
     mat4 preTransform;

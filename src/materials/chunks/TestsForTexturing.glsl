@@ -1,4 +1,30 @@
-void allTests(inout vec4 color, vec3 texCoord, TextureCameraForSprite textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
+void shadowMapTest(bool useUvw, vec4 uvw, mat4 m, vec3 position, TextureCamera textureCamera_i, sampler2D depthMap_i, inout float passShadowMapTest_i) {
+  
+  vec4 uvwNotDistorted;
+
+  if (useUvw) {
+    uvwNotDistorted = textureCamera_i.postTransform * uvw;
+  } else {
+    m[3].xyz -= textureCamera_i.position;
+    uvwNotDistorted = textureCamera_i.postTransform * textureCamera_i.preTransform * m * vec4(position, 1.0);
+  }
+  
+  uvwNotDistorted.xyz /= uvwNotDistorted.w;
+
+  // If using ShadowMapMaterial:
+  // float minDist = unpackRGBAToDepth(texture2D(depthMap_i, uvwNotDistorted.xy));
+
+  float minDist = texture2D(depthMap_i, uvwNotDistorted.xy).r;
+  float distanceCamera = uvwNotDistorted.z;
+  vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
+  if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
+    passShadowMapTest_i = 1.0;
+  } else {
+    passShadowMapTest_i = 0.0;
+  }
+}
+
+void allTests(inout vec4 color, vec3 texCoord, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
 
   //if (passShadowMapTest_i > 0.5) {
 
@@ -21,11 +47,16 @@ void allTests(inout vec4 color, vec3 texCoord, TextureCameraForSprite textureCam
   //}
 }
 
-void allTestsForMesh(inout vec4 color, vec4 texCoord, TextureCameraForSprite textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
+void allTestsForMesh(inout vec4 color, vec4 texCoord, TextureCamera textureCamera_i, inout float scoresSum, sampler2DArray mapArray, sampler2D depthMap_i, bool shadowMappingActivated, int index) {
 
-  //if (passShadowMapTest_i > 0.5) {
+  // ShadowMapping
+  float passShadowMapTest_i = 0.0;
+  if ( shadowMappingActivated )
+    shadowMapTest(true, texCoord, mat4(0), vec3(0.), textureCamera_i, depthMap_i, passShadowMapTest_i);
+  else
+    passShadowMapTest_i = 1.0;
 
-    // vec3 texCoord = vH_i * vec3(fragCoord.xy, 1.);
+  if (passShadowMapTest_i > 0.5) {
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.w > 0. && distort_radial(texCoord, textureCamera_i.uvDistortion)) {
@@ -38,26 +69,17 @@ void allTestsForMesh(inout vec4 color, vec4 texCoord, TextureCameraForSprite tex
 
       if (all(greaterThan(testBorder,vec3(0.)))) {
         color += texture( mapArray, vec3( texCoord.xy, textureCamera_i.index ) ) * textureCamera_i.weight;
+        //color += vec4(0.,1.,0.,1.);
         scoresSum += textureCamera_i.weight;
+      } else {
+        // color += vec4(0.,0.,1.,1.);
+        // scoresSum += textureCamera_i.weight;
       }
+    } else {
+      // color += vec4(1.,0.,0.,1.);
+      // scoresSum += textureCamera_i.weight;
     }
-  //}
-}
-
-void shadowMapTest(mat4 m, vec3 position, TextureCameraForSprite textureCamera_i, sampler2D depthMap_i, inout float passShadowMapTest_i) {
-  m[3].xyz -= textureCamera_i.position;
-  vec4 uvwNotDistorted = textureCamera_i.postTransform * textureCamera_i.preTransform * m * vec4(position, 1.0);
-  uvwNotDistorted.xyz /= uvwNotDistorted.w;
-
-  // If using ShadowMapMaterial:
-  // float minDist = unpackRGBAToDepth(texture2D(depthMap_i, uvwNotDistorted.xy));
-
-  float minDist = texture2D(depthMap_i, uvwNotDistorted.xy).r;
-  float distanceCamera = uvwNotDistorted.z;
-  vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
-  if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
-    passShadowMapTest_i = 1.0;
-  } else {
-    passShadowMapTest_i = 0.0;
   }
+  // color += vec4(0.,1.,0.,1.);
+  // scoresSum += textureCamera_i.weight;
 }

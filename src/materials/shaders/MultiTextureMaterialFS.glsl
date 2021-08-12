@@ -1,6 +1,6 @@
 #include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
-#include <camera_structure_for_mesh>
+#include <camera_structure>
 #include <tests_for_texturing>
 
 #ifdef USE_BUILDING_DATE
@@ -12,7 +12,9 @@
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform sampler2DArray mapArray;
-uniform TextureCameraForMesh textureCameras[NUM_TEXTURES];
+uniform sampler2D depthMaps[NUM_TEXTURES];
+uniform bool shadowMappingActivated;
+uniform TextureCamera textureCameras[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
 varying float passShadowMapTest[NUM_TEXTURES];
 varying vec4 vPosition[NUM_TEXTURES];
@@ -41,7 +43,7 @@ void main() {
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTestsForMesh(color, vPosition[ i ], textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i );
+    allTestsForMesh(color, vPosition[ i ], textureCameras[ i ], scoresSum, mapArray, depthMaps[ i ], shadowMappingActivated, i );
   }
 
   // Normalize color

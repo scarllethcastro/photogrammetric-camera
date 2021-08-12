@@ -1,6 +1,6 @@
 #include <logdepthbuf_pars_vertex>
 #include <distortions/radial_pars_fragment>
-#include <camera_structure_for_sprite>
+#include <camera_structure>
 #include <tests_for_texturing>
 
 // M^(-1) * screen -> this.viewProjectionScreenInverse
@@ -11,7 +11,7 @@
 
 uniform float size;
 varying vec4 vColor;
-uniform TextureCameraForSprite textureCameras[NUM_TEXTURES];
+uniform TextureCamera textureCameras[NUM_TEXTURES];
 uniform sampler2D depthMaps[NUM_TEXTURES];
 uniform mat3 viewProjectionScreenInverse;
 varying mat3 vH[NUM_TEXTURES];
@@ -46,7 +46,7 @@ void main() {
     #pragma unroll_loop
     for ( int i = 0; i < NUM_TEXTURES; i++ ) {
       if ( shadowMappingActivated )
-        shadowMapTest(m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
+        shadowMapTest(false, vec4(0.), m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
       else
         passShadowMapTest[ i ] = 1.0;
     }
