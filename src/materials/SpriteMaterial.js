@@ -1,5 +1,5 @@
 import { Uniform, ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
-import { definePropertyUniform, textureMatrix } from './Material.js';
+import { pop, definePropertyUniform, textureMatrix } from './Material.js';
 import SpriteMaterialVS from './shaders/SpriteMaterialVS.glsl';
 import SpriteMaterialFS from './shaders/SpriteMaterialFS.glsl';
 
@@ -11,27 +11,46 @@ import SpriteMaterialFS from './shaders/SpriteMaterialFS.glsl';
 // P -> attribute vec3 position;
 
 class SpriteMaterial extends ShaderMaterial {
-  constructor() {
-    super();
+  constructor(options = {}) {
 
-    this.uniforms.screenSize = new Uniform(new Vector2());
-    definePropertyUniform(this, 'size', 5);
-    definePropertyUniform(this, 'textureCameraPosition', new Vector3());
-    definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
-    definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
-    definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix3());
-    definePropertyUniform(this, 'M_prime_Pre', new Matrix3());
-    definePropertyUniform(this, 'M_prime_Post', new Matrix3());
-    definePropertyUniform(this, 'E_prime', new Vector3());
-    definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
-    definePropertyUniform(this, 'map', null);
-    definePropertyUniform(this, 'depthMap', null);
-    definePropertyUniform(this, 'screenSize', new Vector2());
-    definePropertyUniform(this, 'diffuseColorGrey', true);
-    definePropertyUniform(this, 'pixelRatio', 1.);
+    const size = pop(options, 'size', 5);
+    const textureCameraPosition = pop(options, 'textureCameraPosition', new Vector3());
+    const textureCameraPreTransform = pop(options, 'textureCameraPreTransform', new Matrix4());
+    const textureCameraPostTransform = pop(options, 'textureCameraPostTransform', new Matrix4());
+    const viewProjectionScreenInverse = pop(options, 'viewProjectionScreenInverse', new Matrix3());
+    const M_prime_Pre = pop(options, 'M_prime_Pre', new Matrix3());
+    const M_prime_Post = pop(options, 'M_prime_Post', new Matrix3());
+    const E_prime = pop(options, 'E_prime', new Vector3());
+    const uvDistortion = pop(options, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
+    const map = pop(options, 'map', null);
+    const depthMap = pop(options, 'depthMap', null);
+    const screenSize = pop(options, 'screenSize', new Vector2());
+    const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
+    const pixelRatio = pop(options, 'pixelRatio', 1.);
+    const opacity = pop(options, 'opacity', 1.0);
 
-    this.defines.USE_COLOR = '';
-    this.defines.EPSILON = 1e-3;
+    options.defines = options.defines || {};
+    options.defines.USE_COLOR = '';
+    options.defines.EPSILON = 1e-3;
+
+    super(options);
+
+    definePropertyUniform(this, 'size', size);
+    definePropertyUniform(this, 'textureCameraPosition', textureCameraPosition);
+    definePropertyUniform(this, 'textureCameraPreTransform', textureCameraPreTransform);
+    definePropertyUniform(this, 'textureCameraPostTransform', textureCameraPostTransform);
+    definePropertyUniform(this, 'viewProjectionScreenInverse', viewProjectionScreenInverse);
+    definePropertyUniform(this, 'M_prime_Pre', M_prime_Pre);
+    definePropertyUniform(this, 'M_prime_Post', M_prime_Post);
+    definePropertyUniform(this, 'E_prime', E_prime);
+    definePropertyUniform(this, 'uvDistortion', uvDistortion);
+    definePropertyUniform(this, 'map', map);
+    definePropertyUniform(this, 'depthMap', depthMap);
+    definePropertyUniform(this, 'screenSize', screenSize);
+    definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
+    definePropertyUniform(this, 'pixelRatio', pixelRatio);
+    definePropertyUniform(this, 'opacity', opacity);
+
 
     this.vertexShader = SpriteMaterialVS;
 

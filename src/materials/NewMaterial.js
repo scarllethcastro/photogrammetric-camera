@@ -15,6 +15,7 @@ class NewMaterial extends ShaderMaterial {
     const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
     const textureYear = pop(options, 'textureYear', null);
     const textureNumber = pop(options, 'textureNumber', null);
+    const opacity = pop(options, 'opacity', 1.0);
 
     options.defines = options.defines || {};
     options.defines.USE_COLOR = '';
@@ -35,6 +36,7 @@ class NewMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
     definePropertyUniform(this, 'textureYear', textureYear);
     definePropertyUniform(this, 'textureNumber', textureNumber);
+    definePropertyUniform(this, 'opacity', opacity);
 
     this.vertexShader = NewMaterialVS;
 

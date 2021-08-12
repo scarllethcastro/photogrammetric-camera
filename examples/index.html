@@ -424,10 +424,13 @@
                     transparent: true,
                 });
                 */
+
                 textureMaterial = new NewMaterial({
                   map: uvTexture,
                   size: 3,
-                });
+                  opacity: 1.0,
+                  transparent: true,
+                });   
 
 //              shadowMapMaterial = new ShadowMapMaterial();
 //              shadowMapMaterial = new THREE.MeshDepthMaterial();
@@ -770,6 +773,9 @@
                 };
                 debugGUI.add(debug, 'saveAllAsGeoJSON');
                 debugGUI.add(debug, 'saveViewAsGML');
+
+                const materialGUI = gui.addFolder('Material');
+                materialGUI.add(textureMaterial, 'opacity', 0, 1);
 
                 gui.clear();
                 return gui;

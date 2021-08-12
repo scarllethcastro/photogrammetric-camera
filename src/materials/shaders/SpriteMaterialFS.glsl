@@ -9,7 +9,7 @@ varying mat3 vH;
 varying vec4 vColor;
 varying float passShadowMapTest;
 uniform float pixelRatio;
-uniform vec2 screenSize;
+uniform float opacity;
 
 void main() {
   #include <logdepthbuf_fragment>
@@ -48,5 +48,5 @@ void main() {
   //    finalColor.rgb = vec3(0.2); // shadow color
   // }
 
-  gl_FragColor =  finalColor;
+  gl_FragColor =  vec4(finalColor.rgb, opacity);
 }

@@ -553,11 +553,13 @@
                 textureMaterial = new NewMaterial({
                   map: uvTexture,
                   size: 3,
+                  opacity: 1,
+                  transparent: true,
                 });
 
                 shadowMapMaterial = new ShadowMapMaterial();
 
-                pointsMaterial = new MultiTextureSpriteMaterial({numTextures: 3});
+                pointsMaterial = new MultiTextureSpriteMaterial({numTextures: 3, opacity: 1, transparent: true});
                 pointsMaterial.setScreenSize(window.innerWidth, window.innerHeight);
 
 
@@ -898,6 +900,10 @@
                 };
                 debugGUI.add(debug, 'saveAllAsGeoJSON');
                 debugGUI.add(debug, 'saveViewAsGML');
+
+                const materialGUI = gui.addFolder('Material');
+                materialGUI.add(textureMaterial, 'opacity', 0, 1).name('Mesh opacity');
+                materialGUI.add(pointsMaterial, 'opacity', 0, 1).name('Points opacity');
 
                 gui.clear();
                 return gui;

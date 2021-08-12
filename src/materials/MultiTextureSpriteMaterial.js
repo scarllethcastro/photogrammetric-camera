@@ -1,5 +1,5 @@
 import { Uniform, ShaderMaterial, ShaderChunk, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
-import { definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
+import { pop, definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureSpriteMaterialVS from './shaders/MultiTextureSpriteMaterialVS.glsl';
 import MultiTextureSpriteMaterialFS from './shaders/MultiTextureSpriteMaterialFS.glsl';
 import TestsForTexturing from './chunks/TestsForTexturing.glsl';
@@ -13,30 +13,35 @@ import TestsForTexturing from './chunks/TestsForTexturing.glsl';
 
 class MultiTextureSpriteMaterial extends ShaderMaterial {
   constructor(options = {}) {
-    super();
-
-    definePropertyUniform(this, 'size', 5);
-    definePropertyUniform(this, 'textureCameraPosition', new Vector3());
-    definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
-    definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
-    definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix3());
-    definePropertyUniform(this, 'M_prime_Pre', new Matrix3());
-    definePropertyUniform(this, 'M_prime_Post', new Matrix3());
-    definePropertyUniform(this, 'E_prime', new Vector3());
-    definePropertyUniform(this, 'uvDistortion', {R: new Vector4(), C: new Vector3()});
-    definePropertyUniform(this, 'map', null);
-    definePropertyUniform(this, 'mapArray', null);
-    definePropertyUniform(this, 'depthMapArray', null);
-    definePropertyUniform(this, 'depthMap', null);
-    definePropertyUniform(this, 'diffuseColorGrey', true);
-    definePropertyUniform(this, 'pixelRatio', 1.);
-    definePropertyUniform(this, 'shadowMappingActivated', true);
-    this.screenSize = new Vector2();
+    
+    const size = pop(options, 'size', 5);
+    const viewProjectionScreenInverse = pop(options, 'viewProjectionScreenInverse', new Matrix3());
+    const mapArray = pop(options, 'mapArray', null);
+    const depthMapArray = pop(options, 'depthMapArray', null);
+    const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
+    const pixelRatio = pop(options, 'pixelRatio', 1.);
+    const shadowMappingActivated = pop(options, 'shadowMappingActivated', true);
+    const numTextures = pop(options, 'numTextures', 1);
+    const opacity = pop(options, 'opacity', 1.0);
 
     // Defines
-    this.defines.USE_COLOR = '';
-    this.defines.EPSILON = 1e-3;
-    this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
+    options.defines = options.defines || {};
+    options.defines.USE_COLOR = '';
+    options.defines.EPSILON = 1e-3;
+    options.defines.NUM_TEXTURES = numTextures;
+
+    super(options);
+
+    definePropertyUniform(this, 'size', size);
+    definePropertyUniform(this, 'viewProjectionScreenInverse', viewProjectionScreenInverse);
+    definePropertyUniform(this, 'mapArray', mapArray);
+    definePropertyUniform(this, 'depthMapArray', depthMapArray);
+    definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
+    definePropertyUniform(this, 'pixelRatio', pixelRatio);
+    definePropertyUniform(this, 'shadowMappingActivated', shadowMappingActivated);
+    definePropertyUniform(this, 'opacity', opacity);
+
+    this.screenSize = new Vector2();
 
     // Maximum number of textures allowed
     this.MAX_TEXTURES = options.maxTextures || 40;

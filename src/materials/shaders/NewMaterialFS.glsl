@@ -1,6 +1,7 @@
 #include <logdepthbuf_pars_fragment>
 #include <distortions/radial_pars_fragment>
 uniform bool diffuseColorGrey;
+uniform float opacity;
 
 #ifdef USE_BUILDING_DATE
   varying float vIsTheOne;
@@ -104,5 +105,5 @@ void main() {
 //   }
 // }
 
-  gl_FragColor =  finalColor;
+  gl_FragColor =  vec4(finalColor.rgb, opacity);
 }
