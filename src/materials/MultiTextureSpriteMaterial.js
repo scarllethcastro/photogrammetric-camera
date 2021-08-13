@@ -1,8 +1,9 @@
-import { Uniform, ShaderMaterial, ShaderChunk, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
+import {
+  ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4, Box3, DataTexture2DArray, UnsignedByteType, RGBAFormat,
+} from 'three';
 import { pop, definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureSpriteMaterialVS from './shaders/MultiTextureSpriteMaterialVS.glsl';
 import MultiTextureSpriteMaterialFS from './shaders/MultiTextureSpriteMaterialFS.glsl';
-import TestsForTexturing from './chunks/TestsForTexturing.glsl';
 
 
 // M^(-1) * screen -> this.viewProjectionScreenInverse
@@ -65,7 +66,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
             E_prime: new Vector3(),
             M_prime_Pre: new Matrix3(),
             M_prime_Post: new Matrix3(),
-            uvDistortion: { C: new THREE.Vector2(), R: new THREE.Vector4() },
+            uvDistortion: { C: new Vector2(), R: new Vector4() },
             index: -1,
             weight: 0,
             textureYear: null,
@@ -119,7 +120,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
         structure.uvDistortion = camera.distos[0];
     } else {
-        structure.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
+        structure.uvDistortion = { C: new Vector2(), R: new Vector4() };
         structure.uvDistortion.R.w = Infinity;
     }
 
@@ -160,8 +161,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
         return;
     }
         
-    const position = new THREE.Vector3( 0, 0, index );
-    const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( width-1, height-1, 0 ) );
+    const position = new Vector3( 0, 0, index );
+    const box = new Box3( new Vector3( 0, 0, 0 ), new Vector3( width-1, height-1, 0 ) );
     renderer.copyTextureToTexture3D(box, position, texture, texture2DArray);
   }
 
@@ -172,7 +173,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
   updateWeights(mainCamera) {
 
-    let viewPosition = new THREE.Vector3();
+    let viewPosition = new Vector3();
     mainCamera.getWorldPosition(viewPosition);
     const nbCamerasLoaded = this.allCameras.length;
 
@@ -184,7 +185,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
       let cameraDistanceArray = [];
       for (let i = 0; i < nbCamerasLoaded; i++) {
-          let textureCameraPosition = new THREE.Vector3();
+          let textureCameraPosition = new Vector3();
           this.allCameras[i].cam.getWorldPosition(textureCameraPosition);
           cameraDistanceArray[i] = [ this.allCameras[i].cam.name, viewPosition.distanceTo(textureCameraPosition) ];
       }
@@ -325,17 +326,17 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       data[i] = fillingValue;
     }
 
-    this[array] = new THREE.DataTexture2DArray( data, width, height, depth );
+    this[array] = new DataTexture2DArray( data, width, height, depth );
     this[array].format = format;
-    this[array].type = THREE.UnsignedByteType;
+    this[array].type = UnsignedByteType;
   }
 
   initializeMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'mapArray', 4, THREE.RGBAFormat, 0);
+    this.initializeTexture2DArray(width, height, 'mapArray', 4, RGBAFormat, 0);
   }
 
   initializeDepthMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, THREE.RGBAFormat, 1);
+    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, RGBAFormat, 1);
   }
 
   setDepthMaps(depthMapArray) {
@@ -360,39 +361,5 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
      this.screenSize.set(width, height);
    }
 }
-
-// ShaderChunk["camera_structure"] = `
-// struct TextureCameraForSprite {
-
-//     vec3 position;
-//     mat4 preTransform;
-//     mat4 postTransform;
-//     vec3 E_prime;
-//     mat3 M_prime_Pre;
-//     mat3 M_prime_Post;
-//     RadialDistortion uvDistortion;
-//     int index;
-//     float weight;
-
-// };
-
-// struct TextureCameraForMesh {
-
-//   vec3 position;
-//   mat4 preTransform;
-//   mat4 postTransform;
-//   vec3 E_prime;
-//   mat3 M_prime_Pre;
-//   mat3 M_prime_Post;
-//   RadialDistortion uvDistortion;
-//   int index;
-//   float weight;
-//   int textureYear;
-//   int textureNumber;
-
-// };
-// `;
-
-// ShaderChunk["tests_for_texturing"] = TestsForTexturing;
 
 export default MultiTextureSpriteMaterial;

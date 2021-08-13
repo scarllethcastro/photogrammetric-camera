@@ -60,54 +60,16 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
     vColor = vec4(color, 1.);
 
-    // // Homography
-
-    // vec4 P = modelMatrix * vec4( position, 1.0 );
-    // P.xyz = P.xyz/P.w-cameraPosition;
-    // vec3 N = P.xyz;
-    // mat3 fraction;
-    // #pragma unroll_loop
-    // for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    //   fraction = mat3(N.x*textureCameras[ i ].E_prime, N.y*textureCameras[ i ].E_prime, N.z*textureCameras[ i ].E_prime) / dot(N, P.xyz);
-    //   vH[ i ] = (textureCameras[ i ].M_prime_Pre + fraction) * viewProjectionScreenInverse;
-    // }
-
-    // ShadowMapping
-
-    mat4 m = modelMatrix;
-    // #pragma unroll_loop
-    // for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    //   if ( shadowMappingActivated )
-    //     shadowMapTest(m, position, textureCameras[ i ], depthMaps[ i ], passShadowMapTest[ i ]);
-    //   else
-    //     passShadowMapTest[ i ] = 1.0;
-    // }
-
+    
     // Texture coordinates calculation
 
     mat4 m_withTranslation;
     #pragma unroll_loop
     for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-      m_withTranslation = m;
+      m_withTranslation = modelMatrix;
       m_withTranslation[3].xyz -= textureCameras[ i ].position;
       vPosition[ i ] = textureCameras[ i ].preTransform * m_withTranslation * vec4(newPosition, 1.0);
     }
-    // m[3].xyz -= textureCameraPosition;
-    // vPosition = textureCameraPreTransform * m * vec4(newPosition, 1.0);
-
 
     #include <logdepthbuf_vertex>
 }
-
-////////////////////////////////////////////////////////////
-
-
-
-// uniform vec3 textureCameraPosition;
-// uniform mat4 textureCameraPreTransform; // Contains the rotation and the intrinsics of the camera, but not the translation
-
-
-
-
-
-

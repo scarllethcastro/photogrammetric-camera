@@ -1,38 +1,21 @@
-import { ShaderMaterial, ShaderChunk, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
+import {
+  ShaderMaterial, ShaderChunk, Vector2, Vector3, Vector4, Matrix3, Matrix4, Box3, DataTexture2DArray, UnsignedByteType, RGBAFormat,
+} from 'three';
 import { definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureMaterialVS from './shaders/MultiTextureMaterialVS.glsl';
 import MultiTextureMaterialFS from './shaders/MultiTextureMaterialFS.glsl';
 import TestsForTexturing from './chunks/TestsForTexturing.glsl';
 
 
-// M^(-1) * screen -> this.viewProjectionScreenInverse
-// C -> uniform vec3 cameraPosition
-// M' -> this.textureCameraPostTransform * this.textureCameraPreTransform
-// C' -> this.textureCameraPosition
-// P -> attribute vec3 position;
-
 class MultiTextureMaterial extends ShaderMaterial {
   constructor(options = {}) {
     super();
 
     definePropertyUniform(this, 'size', 5);
-
-    // definePropertyUniform(this, 'textureCameraPosition', new Vector3());
-    // definePropertyUniform(this, 'textureCameraPreTransform', new Matrix4());
-    // definePropertyUniform(this, 'textureCameraPostTransform', new Matrix4());
-    // definePropertyUniform(this, 'viewProjectionScreenInverse', new Matrix3());
-    // definePropertyUniform(this, 'M_prime_Pre', new Matrix3());
-    // definePropertyUniform(this, 'M_prime_Post', new Matrix3());
-    // definePropertyUniform(this, 'E_prime', new Vector3());
-
-    // definePropertyUniform(this, 'map', null);
     definePropertyUniform(this, 'mapArray', null);
     definePropertyUniform(this, 'depthMapArray', null);
-    // definePropertyUniform(this, 'depthMap', null);
     definePropertyUniform(this, 'diffuseColorGrey', true);
     definePropertyUniform(this, 'pixelRatio', 1.);
-    // definePropertyUniform(this, 'textureYear', null);
-    // definePropertyUniform(this, 'textureNumber', null);
     definePropertyUniform(this, 'shadowMappingActivated', true);
     
     this.screenSize = new Vector2();
@@ -66,7 +49,7 @@ class MultiTextureMaterial extends ShaderMaterial {
             E_prime: new Vector3(),
             M_prime_Pre: new Matrix3(),
             M_prime_Post: new Matrix3(),
-            uvDistortion: { C: new THREE.Vector2(), R: new THREE.Vector4() },
+            uvDistortion: { C: new Vector2(), R: new Vector4() },
             index: -1,
             weight: 0,
             textureYear: null,
@@ -105,22 +88,10 @@ class MultiTextureMaterial extends ShaderMaterial {
     structure.postTransform.copy(camera.postProjectionMatrix);
     structure.postTransform.premultiply(textureMatrix);
 
-    // var elsPre = structure.preTransform.elements;
-    // structure.M_prime_Pre.set(
-    //   elsPre[0], elsPre[4], elsPre[8],
-    //   elsPre[1], elsPre[5], elsPre[9],
-    //   elsPre[3], elsPre[7], elsPre[11]);
-
-    // var elsPost = structure.postTransform.elements;
-    // structure.M_prime_Post.set(
-    //   elsPost[0], elsPost[4], elsPost[12],
-    //   elsPost[1], elsPost[5], elsPost[13],
-    //   elsPost[3], elsPost[7], elsPost[15]);
-
     if (camera.distos && camera.distos.length == 1 && camera.distos[0].isRadialDistortion) {
         structure.uvDistortion = camera.distos[0];
     } else {
-        structure.uvDistortion = { C: new THREE.Vector2(), R: new THREE.Vector4() };
+        structure.uvDistortion = { C: new Vector2(), R: new Vector4() };
         structure.uvDistortion.R.w = Infinity;
     }
 
@@ -161,8 +132,8 @@ class MultiTextureMaterial extends ShaderMaterial {
         return;
     }
         
-    const position = new THREE.Vector3( 0, 0, index );
-    const box = new THREE.Box3( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( width-1, height-1, 0 ) );
+    const position = new Vector3( 0, 0, index );
+    const box = new Box3( new Vector3( 0, 0, 0 ), new Vector3( width-1, height-1, 0 ) );
     renderer.copyTextureToTexture3D(box, position, texture, texture2DArray);
   }
 
@@ -173,7 +144,7 @@ class MultiTextureMaterial extends ShaderMaterial {
 
   updateWeights(mainCamera) {
 
-    let viewPosition = new THREE.Vector3();
+    let viewPosition = new Vector3();
     mainCamera.getWorldPosition(viewPosition);
     const nbCamerasLoaded = this.allCameras.length;
 
@@ -185,7 +156,7 @@ class MultiTextureMaterial extends ShaderMaterial {
 
       let cameraDistanceArray = [];
       for (let i = 0; i < nbCamerasLoaded; i++) {
-          let textureCameraPosition = new THREE.Vector3();
+          let textureCameraPosition = new Vector3();
           this.allCameras[i].cam.getWorldPosition(textureCameraPosition);
           cameraDistanceArray[i] = [ this.allCameras[i].cam.name, viewPosition.distanceTo(textureCameraPosition) ];
       }
@@ -326,17 +297,17 @@ class MultiTextureMaterial extends ShaderMaterial {
       data[i] = fillingValue;
     }
 
-    this[array] = new THREE.DataTexture2DArray( data, width, height, depth );
+    this[array] = new DataTexture2DArray( data, width, height, depth );
     this[array].format = format;
-    this[array].type = THREE.UnsignedByteType;
+    this[array].type = UnsignedByteType;
   }
 
   initializeMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'mapArray', 4, THREE.RGBAFormat, 0);
+    this.initializeTexture2DArray(width, height, 'mapArray', 4, RGBAFormat, 0);
   }
 
   initializeDepthMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, THREE.RGBAFormat, 1);
+    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, RGBAFormat, 1);
   }
 
   setDepthMaps(depthMapArray) {

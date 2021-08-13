@@ -31,7 +31,7 @@ void main() {
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
     texCoord = vH[ i ] * vec3(gl_FragCoord.xy / pixelRatio, 1.);
-    allTests(color, texCoord, textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i );
+    allTestsForSprite(color, texCoord, textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i );
   }
 
   // Normalize color

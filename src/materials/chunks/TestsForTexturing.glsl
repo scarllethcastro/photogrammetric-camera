@@ -24,11 +24,10 @@ void shadowMapTest(bool useUvw, vec4 uvw, mat4 m, vec3 position, TextureCamera t
   }
 }
 
-void allTests(inout vec4 color, vec3 texCoord, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
+void allTestsForSprite(inout vec4 color, vec3 texCoord, TextureCamera textureCamera_i, float passShadowMapTest_i, inout float scoresSum, sampler2DArray mapArray, int index) {
 
+  // ShadowMapping
   //if (passShadowMapTest_i > 0.5) {
-
-    // vec3 texCoord = vH_i * vec3(fragCoord.xy, 1.);
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.z > 0. && distort_radial_vec3(texCoord, textureCamera_i.uvDistortion)) {
@@ -56,7 +55,7 @@ void allTestsForMesh(inout vec4 color, vec4 texCoord, TextureCamera textureCamer
   else
     passShadowMapTest_i = 1.0;
 
-  if (passShadowMapTest_i > 0.5) {
+  // if (passShadowMapTest_i > 0.5) {
 
     // Don't texture if texCoord.z < 0 (z = w in this case)
     if (texCoord.w > 0. && distort_radial(texCoord, textureCamera_i.uvDistortion)) {
@@ -79,7 +78,7 @@ void allTestsForMesh(inout vec4 color, vec4 texCoord, TextureCamera textureCamer
       // color += vec4(1.,0.,0.,1.);
       // scoresSum += textureCamera_i.weight;
     }
-  }
+  // }
   // color += vec4(0.,1.,0.,1.);
   // scoresSum += textureCamera_i.weight;
 }
