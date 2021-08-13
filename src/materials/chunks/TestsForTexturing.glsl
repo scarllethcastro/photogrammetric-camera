@@ -38,7 +38,7 @@ void allTestsForSprite(inout vec4 color, vec3 texCoord, TextureCamera textureCam
       // Test if coordinates are valid, so we can texture
       vec2 testBorder = min(texCoord.xy, 1. - texCoord.xy);
 
-      if (all(greaterThan(testBorder,vec2(0.))) && passShadowMapTest_i == 1.) {
+      if (all(greaterThan(testBorder,vec2(0.)))) {
         //color += texture( mapArray, vec3( texCoord.xy, textureCamera_i.index ) ) * textureCamera_i.weight;
         color += vec4(0.,1.,0.,1.);
         scoresSum += textureCamera_i.weight;
