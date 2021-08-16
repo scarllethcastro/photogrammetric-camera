@@ -43,11 +43,11 @@ void allTestsForSprite(inout vec4 color, vec3 texCoord, TextureCamera textureCam
         //color += vec4(0.,1.,0.,1.);
         scoresSum += textureCamera_i.weight;
       } else {
-        color += vec4(0.,0.,1.,1.);
+        color += vec4(0.,0.,1.,1.) * textureCamera_i.weight;
         scoresSum += textureCamera_i.weight;
       }
     } else {
-      color += vec4(1.,0.,0.,1.);
+      color += vec4(1.,0.,0.,1.) * textureCamera_i.weight;
       scoresSum += textureCamera_i.weight;
     }
   //}
