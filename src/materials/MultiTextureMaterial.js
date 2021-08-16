@@ -21,6 +21,7 @@ class MultiTextureMaterial extends ShaderMaterial {
     const sigma = pop(options, 'sigma', 0.5);
     
     // Defines
+    options.defines = options.defines || {};
     options.defines.USE_COLOR = '';
     options.defines.EPSILON = 1e-3;
     options.defines.NUM_TEXTURES = numTextures;
