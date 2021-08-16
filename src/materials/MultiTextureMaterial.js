@@ -1,7 +1,7 @@
 import {
   ShaderMaterial, ShaderChunk, Vector2, Vector3, Vector4, Matrix3, Matrix4, Box3, DataTexture2DArray, UnsignedByteType, RGBAFormat,
 } from 'three';
-import { definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
+import { pop, definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureMaterialVS from './shaders/MultiTextureMaterialVS.glsl';
 import MultiTextureMaterialFS from './shaders/MultiTextureMaterialFS.glsl';
 import TestsForTexturing from './chunks/TestsForTexturing.glsl';
@@ -9,23 +9,35 @@ import TestsForTexturing from './chunks/TestsForTexturing.glsl';
 
 class MultiTextureMaterial extends ShaderMaterial {
   constructor(options = {}) {
-    super();
-
-    definePropertyUniform(this, 'size', 5);
-    definePropertyUniform(this, 'mapArray', null);
-    definePropertyUniform(this, 'depthMapArray', null);
-    definePropertyUniform(this, 'diffuseColorGrey', true);
-    definePropertyUniform(this, 'pixelRatio', 1.);
-    definePropertyUniform(this, 'shadowMappingActivated', true);
     
-    this.screenSize = new Vector2();
-
+    const size = pop(options, 'size', 5);
+    const mapArray = pop(options, 'mapArray', null);
+    const depthMapArray = pop(options, 'depthMapArray', null);
+    const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
+    const pixelRatio = pop(options, 'pixelRatio', 1.);
+    const shadowMappingActivated = pop(options, 'shadowMappingActivated', true);
+    const opacity = pop(options, 'opacity', 1.0);
+    const sigma = pop(options, 'sigma', 0.5);
+    
     // Defines
     this.defines.USE_COLOR = '';
     this.defines.EPSILON = 1e-3;
     this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
     if (options.defines && options.defines.USE_BUILDING_DATE)
         this.defines.USE_BUILDING_DATE = '';
+
+    super();
+
+    definePropertyUniform(this, 'size', size);
+    definePropertyUniform(this, 'mapArray', mapArray);
+    definePropertyUniform(this, 'depthMapArray', depthMapArray);
+    definePropertyUniform(this, 'diffuseColorGrey', diffuseColorGrey);
+    definePropertyUniform(this, 'pixelRatio', pixelRatio);
+    definePropertyUniform(this, 'shadowMappingActivated', shadowMappingActivated);
+    definePropertyUniform(this, 'opacity', opacity);
+    
+    this.screenSize = new Vector2();
+    this.sigma = sigma;
 
     // Maximum number of textures allowed
     this.MAX_TEXTURES = options.maxTextures || 40;
@@ -138,8 +150,7 @@ class MultiTextureMaterial extends ShaderMaterial {
   }
 
   decreasingFunction(d) {
-    const sigma = 0.5;
-    return 1./(sigma*sigma + d*d);
+    return 1./(this.sigma * this.sigma + d * d);
   }
 
   updateWeights(mainCamera) {

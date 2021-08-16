@@ -20,6 +20,7 @@ varying float passShadowMapTest[NUM_TEXTURES];
 varying vec4 vPosition[NUM_TEXTURES];
 varying vec4 vColor;
 uniform float pixelRatio;
+uniform float opacity;
 
 
 void main() {
@@ -54,5 +55,5 @@ void main() {
     finalColor.rgb = vec3(0.2); // shadow color
   }
 
-  gl_FragColor =  finalColor;
+  gl_FragColor =  vec4(finalColor.rgb, opacity);
 }
