@@ -328,9 +328,26 @@ class MultiTextureMaterial extends ShaderMaterial {
     }
   }
 
-   setScreenSize(width, height) {
-     this.screenSize.set(width, height);
-   }
+  getTexturingCameras() {
+    var texCameras = [];
+    const numCamerasLoaded = this.allCameras.length;
+    const numTextures = this.defines.NUM_TEXTURES;
+
+    if (numCamerasLoaded == 0)
+      return [];
+    else if (numCamerasLoaded <= numTextures)
+      this.allCameras.forEach( c => texCameras.push(c.cam) );
+    else {
+      for (let i = 0; i < numTextures; i++) {
+        texCameras.push(this.allCameras[i].cam);
+      }
+    }
+    return texCameras;
+  }
+
+  setScreenSize(width, height) {
+    this.screenSize.set(width, height);
+  }
 }
 
 ShaderChunk["camera_structure"] = `

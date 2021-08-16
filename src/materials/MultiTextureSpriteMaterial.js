@@ -24,6 +24,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     const shadowMappingActivated = pop(options, 'shadowMappingActivated', true);
     const numTextures = pop(options, 'numTextures', 1);
     const opacity = pop(options, 'opacity', 1.0);
+    const sigma = pop(options, 'sigma', 0.5);
 
     // Defines
     options.defines = options.defines || {};
@@ -43,6 +44,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     definePropertyUniform(this, 'opacity', opacity);
 
     this.screenSize = new Vector2();
+    this.sigma = sigma;
 
     // Maximum number of textures allowed
     this.MAX_TEXTURES = options.maxTextures || 40;
@@ -167,8 +169,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   decreasingFunction(d) {
-    const sigma = 0.5;
-    return 1./(sigma*sigma + d*d);
+    return 1./(this.sigma * this.sigma + d * d);
   }
 
   updateWeights(mainCamera) {
@@ -357,9 +358,26 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     }
   }
 
-   setScreenSize(width, height) {
-     this.screenSize.set(width, height);
-   }
+  getTexturingCameras() {
+    var texCameras = [];
+    const numCamerasLoaded = this.allCameras.length;
+    const numTextures = this.defines.NUM_TEXTURES;
+
+    if (numCamerasLoaded == 0)
+      return [];
+    else if (numCamerasLoaded <= numTextures)
+      this.allCameras.forEach( c => texCameras.push(c.cam) );
+    else {
+      for (let i = 0; i < numTextures; i++) {
+        texCameras.push(this.allCameras[i].cam);
+      }
+    }
+    return texCameras;
+  }
+
+  setScreenSize(width, height) {
+    this.screenSize.set(width, height);
+  }
 }
 
 export default MultiTextureSpriteMaterial;
