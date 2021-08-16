@@ -23,6 +23,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     const pixelRatio = pop(options, 'pixelRatio', 1.);
     const shadowMappingActivated = pop(options, 'shadowMappingActivated', true);
     const numTextures = pop(options, 'numTextures', 1);
+    const maxTextures = pop(options, 'maxTextures', 40);
     const opacity = pop(options, 'opacity', 1.0);
     const sigma = pop(options, 'sigma', 0.5);
 
@@ -47,7 +48,10 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     this.sigma = sigma;
 
     // Maximum number of textures allowed
-    this.MAX_TEXTURES = options.maxTextures || 40;
+    this.maxTextures = maxTextures;
+
+    // Number of textures used (k)
+    this.numTextures = numTextures;
 
     // Stores all the cameras already loaded, along with their corresponding structures
     this.allCameras = [];
@@ -60,7 +64,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
       this.textureCameras = [];
       this.depthMaps = [];
 
-      for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
+      for (let i = 0; i < this.numTextures; i++) {
           this.textureCameras[i] = {
             position: new Vector3(),
             preTransform: new Matrix4(),
@@ -197,7 +201,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
       console.log('cameraDistanceArray after sorting:\n', cameraDistanceArray);
 
-      const k = this.defines.NUM_TEXTURES;
+      const k = this.numTextures;
       console.log('k is ', k);
       // Prevention in the case when k + 1 > nbCamerasLoaded
       const d_kplus1 = this.decreasingFunction(cameraDistanceArray[ ((k + 1) > nbCamerasLoaded) ? (nbCamerasLoaded - 1) : k ][1]);
@@ -271,7 +275,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
     // Pass the best k cameras to the array textureCameras
     const nbCamerasLoaded = this.allCameras.length;
-    const k = this.defines.NUM_TEXTURES;
+    const k = this.numTextures;
     for (let i = 0; i < k; i++) {
       this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
 
@@ -286,7 +290,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   setE_Primes(cameraPosition) {
-    for (let i = 0; i < this.defines.NUM_TEXTURES; i++) {
+    for (let i = 0; i < this.numTextures; i++) {
       this.textureCameras[i].E_prime.subVectors(cameraPosition, this.textureCameras[i].position).applyMatrix3(this.textureCameras[i].M_prime_Pre);
     }
   }
@@ -318,7 +322,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   }
 
   initializeTexture2DArray(width, height, array, nbFormat, format, fillingValue) {
-    const depth = this.MAX_TEXTURES;
+    const depth = this.maxTextures;
     const size = width * height;
     const totalDataSize = nbFormat * size * depth;
     const data = new Uint8Array( totalDataSize );
@@ -343,12 +347,12 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   setDepthMaps(depthMapArray) {
     switch (depthMapArray.length) {
       case 1:
-        for (let i = 0; i < this.defines.NUM_TEXTURES; i++)
+        for (let i = 0; i < this.numTextures; i++)
           this.depthMaps[i] = depthMapArray[0];
         break;
 
-      case this.defines.NUM_TEXTURES:
-        for (let i = 0; i < this.defines.NUM_TEXTURES; i++)
+      case this.numTextures:
+        for (let i = 0; i < this.numTextures; i++)
           this.depthMaps[i] = depthMapArray[i];
         break;
 
@@ -361,7 +365,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
   getTexturingCameras() {
     var texCameras = [];
     const numCamerasLoaded = this.allCameras.length;
-    const numTextures = this.defines.NUM_TEXTURES;
+    const numTextures = this.numTextures;
 
     if (numCamerasLoaded == 0)
       return [];
