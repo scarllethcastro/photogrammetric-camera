@@ -16,17 +16,18 @@ class MultiTextureMaterial extends ShaderMaterial {
     const diffuseColorGrey = pop(options, 'diffuseColorGrey', true);
     const pixelRatio = pop(options, 'pixelRatio', 1.);
     const shadowMappingActivated = pop(options, 'shadowMappingActivated', true);
+    const numTextures = pop(options, 'numTextures', 1);
     const opacity = pop(options, 'opacity', 1.0);
     const sigma = pop(options, 'sigma', 0.5);
     
     // Defines
-    this.defines.USE_COLOR = '';
-    this.defines.EPSILON = 1e-3;
-    this.defines.NUM_TEXTURES = (options.numTextures === undefined) ? 1 : options.numTextures;
+    options.defines.USE_COLOR = '';
+    options.defines.EPSILON = 1e-3;
+    options.defines.NUM_TEXTURES = numTextures;
     if (options.defines && options.defines.USE_BUILDING_DATE)
-        this.defines.USE_BUILDING_DATE = '';
+      options.defines.USE_BUILDING_DATE = '';
 
-    super();
+    super(options);
 
     definePropertyUniform(this, 'size', size);
     definePropertyUniform(this, 'mapArray', mapArray);
