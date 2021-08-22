@@ -1,4 +1,4 @@
-import { Uniform, ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
+import { ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4 } from 'three';
 import { pop, definePropertyUniform, textureMatrix } from './Material.js';
 import SpriteMaterialVS from './shaders/SpriteMaterialVS.glsl';
 import SpriteMaterialFS from './shaders/SpriteMaterialFS.glsl';

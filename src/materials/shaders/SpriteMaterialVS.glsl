@@ -50,9 +50,23 @@ void main() {
     // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
 
     float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
-    float distanceCamera = uvwNotDistorted.z;
+    bool shadowMapTest;
+
+    #if defined( USE_LOGDEPTHBUF ) && defined( USE_LOGDEPTHBUF_EXT )
+
+      float glPosition_w = uvwNotDistorted.w / 2.0;
+      float glFragDepthEXT = log2(glPosition_w + 1.0) * logDepthBufFC * 0.5;
+      shadowMapTest = glFragDepthEXT <= (minDist + EPSILON);
+
+    #else
+
+      float distanceCamera = uvwNotDistorted.z;
+      shadowMapTest = distanceCamera <= (minDist + EPSILON);
+
+    #endif
+
     vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
-    if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
+    if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && shadowMapTest ) {
       passShadowMapTest = 1.0;
     } else {
       passShadowMapTest = 0.0;
