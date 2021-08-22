@@ -72,8 +72,9 @@
             var orbitTarget, orbitControls;
             var scene, renderer, world, plyGroup, cameras, screenQuads, viewCameraGUI, textureCameraGUI;
             var textureMaterial, wireMaterial, pointsMaterial, multipleTextureMaterial, shadowMapMaterial, viewMaterialOptions = {}, viewMaterials = {};
-            var textures = {}, uvTexture, whiteTexture, dataTextures = {};
+            var textures = {}, uvTexture, whiteTexture, dataTextures = {}, depthMapArray, maxTextures, numTextures;
             var textureLoader = new THREE.TextureLoader();
+            var depthMapRenderTarget;
             var prevCamera = new PhotogrammetricCamera();
             var viewCamera = new PhotogrammetricCamera();
             var nextCamera = new PhotogrammetricCamera();
@@ -181,34 +182,26 @@
             }
 
             function createDepthMap(camera) {
-
-                var renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
-                camera.renderTarget = renderTarget;
-                renderTarget.texture.format = THREE.RGBFormat;
-                renderTarget.texture.type = THREE.UnsignedByteType;
-                renderTarget.texture.minFilter = THREE.NearestFilter;
-                renderTarget.texture.magFilter = THREE.NearestFilter;
-                renderTarget.texture.generateMipmaps = false;
-                renderTarget.stencilBuffer = false;
-                renderTarget.depthBuffer = true;
-                renderTarget.depthTexture = new THREE.DepthTexture();
-                renderTarget.depthTexture.format = THREE.DepthFormat;
-                renderTarget.depthTexture.type = THREE.UnsignedIntType;      
                 
                 textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                pointsMaterial.setDepthMaps([whiteTexture]);
-                multipleTextureMaterial.setDepthMaps([whiteTexture]);
 
-                renderer.setRenderTarget(renderTarget);
+                plyGroup.children.forEach( p => p.material = textureMaterial);
+                plane.material = textureMaterial;
+                sphere.material = textureMaterial;
+
+                const index = multipleTextureMaterial.allCameras.find(c => c.cam.name == camera.name).structure.index;
+
+                renderer.setRenderTarget(depthMapRenderTarget, index);
                 renderer.render(world, camera);
                 renderer.setRenderTarget(null);
 
-                textureMaterial.depthMap = renderTarget.depthTexture;
-                pointsMaterial.setTextureCameras(camera, textures[camera.name] || uvTexture, renderer);
-                multipleTextureMaterial.setTextureCameras(camera, textures[camera.name] || uvTexture, renderer);
+                //textureMaterial.depthMap = renderTarget.depthTexture;
 
-                updateScreenQuads(camera);
+                plyGroup.children.forEach( p => p.material = pointsMaterial);
+                plane.material = multipleTextureMaterial;
+                sphere.material = multipleTextureMaterial;
 
+                // updateScreenQuads(camera);
             }
 
             function handleOrientation(camera) {
@@ -309,6 +302,10 @@
                 });
             }
 
+            function loadOrientedImage(orientationUrl, imageUrl, source, name) {
+                loadImage(imageUrl, source, name).then(() => loadOrientation(orientationUrl, source, name));
+            }
+
             function loadJSON(path, file) {
                 file = file || 'index.json';
                 var source = new FetchSource(path);
@@ -369,117 +366,12 @@
 
                 ////// For the demo
                 screenQuads.children[0].material.uniforms.uTexture.value = textures[camera.name] || uvTexture;
-                screenQuads.children[1].material.uniforms.uTexture.value = camera.renderTarget ? camera.renderTarget.depthTexture : uvTexture;
+                //screenQuads.children[1].material.uniforms.uTexture.value = camera.renderTarget ? camera.renderTarget.depthTexture : uvTexture;
                 ///////////////////
             }
 
             function setTexture(camera) {
 
-                // TODO: Work later on this ongoing version to put the depthMaps in a texture2DArray too.
-                // For now, it doesn't work and one thing that may be related is the fact that when we do
-                // renderTarget.setTexture(pointsMaterial.depthMapArray), this strangely changes the depth
-                // property of the depthMapArray from 40 to 1.
-
-                // //////////////////////////////////////////////////
-                // // Ongoing version
-                // //////////////////////////////////////////////////
-
-                // if (!camera) return;
-                // console.log('Texture:', camera.name);
-                // textureCamera = camera;
-                // textureCamera.updateProjectionMatrix();
-
-                
-                // let renderTarget = textureCamera.renderTarget;
-                // const renderTargetWidth = 1024;
-                // const renderTargetHeight = 1024;
-
-                // if (!pointsMaterial.depthMapArray) {
-                //     //const depthWidth = renderTarget.texture.image.width;
-                //     //const depthHeight = renderTarget.texture.image.height;
-                //     pointsMaterial.initializeDepthMapArray(renderTargetWidth, renderTargetHeight);
-                // }
-                // console.log('depthMapArray:\n', pointsMaterial.depthMapArray);
-
-                // if (!renderTarget) {
-                //     renderTarget = new THREE.WebGLRenderTarget( 1024, 1024 ); // window.innerWidth, window.innerHeight );
-                //     textureCamera.renderTarget = renderTarget;
-                //     //renderTarget.texture.format = THREE.RGBAFormat;
-                //     //renderTarget.texture.type = THREE.UnsignedByteType;
-                //     // renderTarget.texture.minFilter = THREE.NearestFilter;
-                //     // renderTarget.texture.magFilter = THREE.NearestFilter;
-                //     // renderTarget.texture.generateMipmaps = false;
-                //     // renderTarget.stencilBuffer = false;
-                //     renderTarget.depthBuffer = true;
-                //     renderTarget.depthTexture = new THREE.DepthTexture();
-                //     renderTarget.depthTexture.format = THREE.DepthFormat;
-                //     renderTarget.depthTexture.type = THREE.UnsignedIntType;
-                //     renderTarget.setTexture(pointsMaterial.depthMapArray);
-                // }
-                // console.log('renderTarget.texture:\n', renderTarget.texture);
-
-                // pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
-                // let depthMapIndex;
-
-                // if ( cameraIndex != undefined ) {
-                //     depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
-                //     //pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
-                // }
-
-
-                // //renderer.setRenderTarget(renderTarget);
-                // renderer.setRenderTarget(renderTarget, depthMapIndex);
-                // setMaterial(textureMaterial, textureCamera);
-                // textureMaterial.depthMap = whiteTexture; // depthMap at far plane = no shadows
-                
-                // pointsMaterial.setDepthMaps([whiteTexture]);
-                // //pointsMaterial.shadowMappingActivated = false;
-
-                // //////////////////////////////
-                // sphere.material = shadowMapMaterial;
-                // plane.material = shadowMapMaterial;
-                // plyGroup.children.forEach( p => p.material = shadowMapMaterial);
-                // //////////////////////////////
-
-                // renderer.render(world, textureCamera);
-
-                // //////////////////////////////
-                // sphere.material = textureMaterial;
-                // plane.material = textureMaterial;
-                // plyGroup.children.forEach( p => p.material = pointsMaterial);
-                // //////////////////////////////
-
-                // screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                // //screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.texture || uvTexture;
-                // //screenQuads.children[2].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
-
-                // renderer.setRenderTarget(null);
-                // //textureMaterial.depthMap = renderTarget.texture;
-                // pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
-                // //pointsMaterial.shadowMappingActivated = true;
-
-                // ////// Doesn't work for now, drawImage doesn'accept the depth texture
-                // //pointsMaterial.createImageData(renderTarget.texture);
-                // //console.log('texture:\n', renderTarget.texture);
-                // //console.log('dataTexture:\n', renderTargetTexture);
-                // //console.log('depth texture:\n', renderTarget.depthTexture);
-
-                // //////////////////////////////////////////////////
-
-                // // let cameraIndex = pointsMaterial.allCameras.findIndex( c => c.cam.name = camera.name );
-                // // if ( cameraIndex != undefined ) {
-                // //     let depthMapIndex = pointsMaterial.allCameras[cameraIndex].structure.index;
-                // //     renderer.setRenderTarget(renderTarget, );
-                // //     pointsMaterial.copyTexture(renderTarget.texture, pointsMaterial.depthMapArray, depthMapIndex, renderer);
-                // // }
-                // //////////////////////////////////////////////////
-
-
-
-                //////////////////////////////////////////////////
-                // Working version
-                //////////////////////////////////////////////////
                 if (!camera) return;
 
                 // update texture camera name
@@ -497,7 +389,6 @@
                 multipleTextureMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
 
                 updateScreenQuads(textureCamera);                
-                //////////////////////////////////////////////////
             }
 
             function setCamera(camera) {
@@ -510,10 +401,7 @@
                 const index = array.findIndex(cam => cam.name == camera.name);
                 return array[(index + delta + array.length) %  array.length];
             }
-
-            function loadOrientedImage(orientationUrl, imageUrl, source, name) {
-                loadImage(imageUrl, source, name).then(() => loadOrientation(orientationUrl, source, name));
-            }
+                        
 
 
             function init() {
@@ -534,6 +422,23 @@
                 whiteData.set([255, 255, 255]);
                 whiteTexture = new THREE.DataTexture( whiteData, 1, 1, THREE.RGBFormat );
                 whiteTexture.name = 'white';
+                numTextures = 9;
+                maxTextures = 40;
+
+                // DepthMapArray and DepthMapRenderTarget
+                depthMapArray = new THREE.DataTexture2DArray();
+                depthMapArray.format = THREE.DepthFormat;
+                depthMapArray.type = THREE.UnsignedShortType;
+                depthMapArray.image.depth = maxTextures;
+                depthMapRenderTarget = new THREE.WebGLRenderTarget( 1024, 1024, maxTextures ); // window.innerWidth, window.innerHeight );
+                depthMapRenderTarget.texture.format = THREE.RGBFormat;
+                depthMapRenderTarget.texture.type = THREE.UnsignedByteType;
+                depthMapRenderTarget.texture.minFilter = THREE.NearestFilter;
+                depthMapRenderTarget.texture.magFilter = THREE.NearestFilter;
+                depthMapRenderTarget.texture.generateMipmaps = false;
+                depthMapRenderTarget.stencilBuffer = false;
+                depthMapRenderTarget.depthBuffer = true;
+                depthMapRenderTarget.depthTexture = depthMapArray;
 
 
                 // materials
@@ -563,10 +468,10 @@
 
                 shadowMapMaterial = new ShadowMapMaterial();
 
-                pointsMaterial = new MultiTextureSpriteMaterial({numTextures: 3, opacity: 1, transparent: true});
+                pointsMaterial = new MultiTextureSpriteMaterial({numTextures: numTextures, maxTextures: maxTextures, depthMapArray: depthMapArray, opacity: 1, transparent: true });
                 pointsMaterial.setScreenSize(window.innerWidth, window.innerHeight);
 
-                multipleTextureMaterial = new MultiTextureMaterial({numTextures: 3});
+                multipleTextureMaterial = new MultiTextureMaterial({numTextures: numTextures, maxTextures: maxTextures, depthMapArray: depthMapArray});
 
 
                 sphere = new THREE.Mesh(new THREE.SphereBufferGeometry(-1, 32, 32), multipleTextureMaterial);

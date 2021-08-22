@@ -1,5 +1,5 @@
 import {
-  ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4, Box3, DataTexture2DArray, UnsignedByteType, RGBAFormat,
+  ShaderMaterial, Vector2, Vector3, Vector4, Matrix3, Matrix4, Box3, DataTexture2DArray, UnsignedByteType, RGBAFormat,  DepthFormat, UnsignedShortType,
 } from 'three';
 import { pop, definePropertyUniform, textureMatrix, unrollLoops } from './Material.js';
 import MultiTextureSpriteMaterialVS from './shaders/MultiTextureSpriteMaterialVS.glsl';
@@ -58,13 +58,11 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     // Stores all the cameras already loaded, along with their corresponding structures
     this.allCameras = [];
 
-    // Array of cameras and depth maps
+    // Array of cameras
     var textureCameras;
-    var depthMaps;
 
     this.textureCamerasSetDefault = () => {
       this.textureCameras = [];
-      this.depthMaps = [];
 
       for (let i = 0; i < this.numTextures; i++) {
           this.textureCameras[i] = {
@@ -81,13 +79,11 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
             textureNumber: null,
           };
           this.textureCameras[i].uvDistortion.R.w = Infinity;
-          this.depthMaps[i] = null;
       }
     }
     this.textureCamerasSetDefault();
 
     definePropertyUniform(this, 'textureCameras', textureCameras);
-    definePropertyUniform(this, 'depthMaps', depthMaps);
 
     // Shaders
     this.vertexShader = unrollLoops(MultiTextureSpriteMaterialVS, this.defines);
@@ -265,9 +261,6 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
       this.copyTexture(texture, this.mapArray, nextIndex, renderer);
 
-      // Add it's depthMap
-      // (later when the depthMapArray works)
-
     } else {
       if (this.verbose)
         console.log('found camera:\n', this.allCameras.find((c) => c.cam.name == camera.name));
@@ -290,16 +283,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     const k = this.numTextures;
     for (let i = 0; i < k; i++) {
       this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
-
-      // TODO: try to use depthMapArray later
-      let renderTarget = this.allCameras[i % nbCamerasLoaded].cam.renderTarget;
-      if (renderTarget != undefined)
-        this.depthMaps[i] = renderTarget.depthTexture;
-      else
-        this.depthMaps[i] = null;
     }
-    if (this.verbose)
-      console.log('depthmaps:\n', this.depthMaps);
   }
 
   setE_Primes(cameraPosition) {
@@ -334,11 +318,37 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     this.viewProjectionScreenInverse.multiply(screenInverse);
   }
 
-  initializeTexture2DArray(width, height, array, nbFormat, format, fillingValue) {
+  setDepthMap(camera, renderer) {
+
+    const cam = this.allCameras.find( c => c.cam.name == camera.name );
+    if (cam == undefined)
+      return;
+
+    if (!camera.renderTarget)
+      return;
+
+    if (!this.depthMapArray) {
+      if (this.verbose)
+        console.log('initializing depthMapArray');
+      const width = camera.renderTarget.width;
+      const height = camera.renderTarget.height;
+      this.initializeDepthMapArray(width, height);
+    }
+
+    const index = cam.structure.index;
+
+    this.copyTexture(camera.renderTarget.depthTexture, this.depthMapArray, index, renderer);
+  }
+
+  initializeTexture2DArray(width, height, array, nbFormat, format, type, fillingValue) {
     const depth = this.maxTextures;
     const size = width * height;
     const totalDataSize = nbFormat * size * depth;
-    const data = new Uint8Array( totalDataSize );
+    var data;
+    if (array == 'mapArray')
+      data = new Uint8Array( totalDataSize );
+    else if (array == 'depthMapArray')
+      data = new Uint16Array( totalDataSize );
 
     for ( let i = 0; i < totalDataSize; i++ ) {
       data[i] = fillingValue;
@@ -346,33 +356,18 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
 
     this[array] = new DataTexture2DArray( data, width, height, depth );
     this[array].format = format;
-    this[array].type = UnsignedByteType;
+    this[array].type = type;
+
+    if (array == 'depthMapArray')
+      this[array].unpackAlignment = 4;
   }
 
   initializeMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'mapArray', 4, RGBAFormat, 0);
+    this.initializeTexture2DArray(width, height, 'mapArray', 4, RGBAFormat, UnsignedByteType, 0);
   }
 
   initializeDepthMapArray(width, height) {
-    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, RGBAFormat, 1);
-  }
-
-  setDepthMaps(depthMapArray) {
-    switch (depthMapArray.length) {
-      case 1:
-        for (let i = 0; i < this.numTextures; i++)
-          this.depthMaps[i] = depthMapArray[0];
-        break;
-
-      case this.numTextures:
-        for (let i = 0; i < this.numTextures; i++)
-          this.depthMaps[i] = depthMapArray[i];
-        break;
-
-      default:
-        console.error('Number of depthMaps passed to MultiTextureSpriteMaterial.setDepthMaps() should be equal to NUM_TEXTURES defined in initialization or 1.');
-        break;
-    }
+    this.initializeTexture2DArray(width, height, 'depthMapArray', 4, DepthFormat, UnsignedShortType, 1);
   }
 
   getTexturingCameras() {

@@ -12,7 +12,7 @@
 precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform sampler2DArray mapArray;
-uniform sampler2D depthMaps[NUM_TEXTURES];
+uniform sampler2DArray depthMapArray;
 uniform bool shadowMappingActivated;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
 varying mat3 vH[NUM_TEXTURES];
@@ -44,7 +44,7 @@ void main() {
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTestsForMesh(color, vPosition[ i ], textureCameras[ i ], scoresSum, mapArray, depthMaps[ i ], shadowMappingActivated, i );
+    allTestsForMesh(color, vPosition[ i ], textureCameras[ i ], scoresSum, mapArray, depthMapArray, shadowMappingActivated, i );
   }
 
   // Normalize color
