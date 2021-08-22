@@ -349,7 +349,7 @@
                     renderTarget.depthBuffer = true;
                     renderTarget.depthTexture = new THREE.DepthTexture();
                     renderTarget.depthTexture.format = THREE.DepthFormat;
-                    renderTarget.depthTexture.type = THREE.UnsignedIntType;
+                    renderTarget.depthTexture.type = THREE.UnsignedShortType;
                 }
 
                 renderer.setRenderTarget(renderTarget);
@@ -363,7 +363,7 @@
 
                 ////// For the demo
                 screenQuads.children[0].material.uniforms.uTexture.value = textures[textureCamera.name] || uvTexture;
-                screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
+                //screenQuads.children[1].material.uniforms.uTexture.value = renderTarget.depthTexture || uvTexture;
                 ///////////////////
 
                 renderer.setRenderTarget(null);
