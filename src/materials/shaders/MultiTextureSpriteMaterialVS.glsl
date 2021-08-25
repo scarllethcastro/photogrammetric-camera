@@ -1,4 +1,7 @@
 #include <logdepthbuf_pars_vertex>
+#if defined( USE_LOGDEPTHBUF ) && defined( USE_LOGDEPTHBUF_EXT )
+	uniform float logDepthBufFC;
+#endif
 #include <distortions/radial_pars_fragment>
 #include <camera_structure>
 #include <tests_for_texturing>
@@ -19,10 +22,6 @@ varying vec3 n;
 varying vec4 passShadowMapTest[NUM_TEXTURES_BY_FOUR];
 uniform bool shadowMappingActivated;
 
-
-#if defined( USE_LOGDEPTHBUF ) && defined( USE_LOGDEPTHBUF_EXT )
-	uniform float logDepthBufFC;
-#endif
 
 bool isPerspectiveMatrix( mat4 m ) {
 	return m[ 2 ][ 3 ] == - 1.0;
