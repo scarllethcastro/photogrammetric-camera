@@ -1,7 +1,6 @@
 #include <logdepthbuf_pars_vertex>
 #include <distortions/radial_pars_fragment>
 #include <camera_structure>
-#include <tests_for_texturing>
 
 #ifdef USE_BUILDING_DATE
     attribute int buildingId;

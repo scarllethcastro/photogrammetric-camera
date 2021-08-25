@@ -20,6 +20,10 @@ varying vec4 passShadowMapTest[NUM_TEXTURES_BY_FOUR];
 uniform bool shadowMappingActivated;
 
 
+#if defined( USE_LOGDEPTHBUF ) && defined( USE_LOGDEPTHBUF_EXT )
+	uniform float logDepthBufFC;
+#endif
+
 bool isPerspectiveMatrix( mat4 m ) {
 	return m[ 2 ][ 3 ] == - 1.0;
 }
