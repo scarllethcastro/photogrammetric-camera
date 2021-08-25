@@ -33,6 +33,8 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     options.defines.USE_COLOR = '';
     options.defines.EPSILON = 1e-3;
     options.defines.NUM_TEXTURES = numTextures;
+    var numTexturesByFour = parseInt(numTextures / 4, 10) + 1;
+    options.defines.NUM_TEXTURES_BY_FOUR = numTexturesByFour;
 
     super(options);
 
@@ -71,6 +73,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
             postTransform: new Matrix4(),
             E_prime: new Vector3(),
             M_prime_Pre: new Matrix3(),
+            H_prime: new Matrix3(),
             M_prime_Post: new Matrix3(),
             uvDistortion: { C: new Vector2(), R: new Vector4() },
             index: -1,
@@ -99,6 +102,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     structure.preTransform = new Matrix4();
     structure.postTransform = new Matrix4();
     structure.M_prime_Pre = new Matrix3();
+    structure.H_prime = new Matrix3();
     structure.M_prime_Post = new Matrix3();
     structure.E_prime = new Vector3();
 
@@ -222,6 +226,17 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     }    
   }
 
+  sortAndUpdateTextureCameras() {
+    this.allCameras.sort( (a,b) => b.structure.weight - a.structure.weight );
+
+    // Pass the best k cameras to the array textureCameras
+    const nbCamerasLoaded = this.allCameras.length;
+    const k = this.numTextures;
+    for (let i = 0; i < k; i++) {
+      this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
+    }
+  }
+
   setTextureCameras(camera, texture, renderer) {
     if (this.verbose) {
       console.log('received camera: \n', camera);
@@ -274,27 +289,26 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     if (this.verbose)
       console.log('going to sort cameras');
     // Order them with respect to their weights
-    this.allCameras.sort( (a,b) => b.structure.weight - a.structure.weight );
+    this.sortAndUpdateTextureCameras();
     if (this.verbose)
       console.log('allcameras after sorting:\n', this.allCameras);
-
-    // Pass the best k cameras to the array textureCameras
-    const nbCamerasLoaded = this.allCameras.length;
-    const k = this.numTextures;
-    for (let i = 0; i < k; i++) {
-      this.textureCameras[i] = this.allCameras[i % nbCamerasLoaded].structure;
-    }
   }
 
-  setE_Primes(cameraPosition) {
+  setE_primes(cameraPosition) {
     for (let i = 0; i < this.numTextures; i++) {
       this.textureCameras[i].E_prime.subVectors(cameraPosition, this.textureCameras[i].position).applyMatrix3(this.textureCameras[i].M_prime_Pre);
     }
   }
 
+  setH_primes() {
+    for (let i = 0; i < this.numTextures; i++) {
+      this.textureCameras[i].H_prime.multiplyMatrices(this.textureCameras[i].M_prime_Pre, this.viewProjectionScreenInverse);
+    }
+  }
+
   setViewCamera(camera) {
     camera.updateMatrixWorld(); // the matrixWorldInverse should be up to date
-    this.setE_Primes(camera.position);
+    this.setE_primes(camera.position);
 
     var viewProjectionTransformMat4 = new Matrix4();
     viewProjectionTransformMat4.copy(camera.matrixWorldInverse);
@@ -316,6 +330,13 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
     );
 
     this.viewProjectionScreenInverse.multiply(screenInverse);
+
+    this.setH_primes();
+
+    if (this.allCameras.length > 0) {
+      this.updateWeights(camera);
+      this.sortAndUpdateTextureCameras();
+    }
   }
 
   setDepthMap(camera, renderer) {

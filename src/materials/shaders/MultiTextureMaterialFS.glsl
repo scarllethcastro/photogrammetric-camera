@@ -10,14 +10,13 @@
 #endif
 
 precision highp sampler2DArray;
+uniform mat4 modelMatrix;
 uniform bool diffuseColorGrey;
 uniform sampler2DArray mapArray;
 uniform sampler2DArray depthMapArray;
 uniform bool shadowMappingActivated;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
-varying mat3 vH[NUM_TEXTURES];
-varying float passShadowMapTest[NUM_TEXTURES];
-varying vec4 vPosition[NUM_TEXTURES];
+varying vec3 vNewPosition;
 varying vec4 vColor;
 uniform float pixelRatio;
 uniform float opacity;
@@ -40,11 +39,18 @@ void main() {
 
   float scoresSum = 0.;
   vec4 color = vec4(0.);
+  mat4 m_withTranslation;
+  vec4 texCoord;
 
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    allTestsForMesh(color, vPosition[ i ], textureCameras[ i ], scoresSum, mapArray, depthMapArray, shadowMappingActivated, i );
+
+    m_withTranslation = modelMatrix;
+    m_withTranslation[3].xyz -= textureCameras[ i ].position;
+    texCoord = textureCameras[ i ].preTransform * m_withTranslation * vec4(vNewPosition, 1.0);
+
+    allTestsForMesh(color, texCoord, textureCameras[ i ], scoresSum, mapArray, depthMapArray, shadowMappingActivated, i );
   }
 
   // Normalize color

@@ -15,8 +15,7 @@
 uniform float size;
 varying vec4 vColor;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
-varying float passShadowMapTest[NUM_TEXTURES];
-varying vec4 vPosition[NUM_TEXTURES];
+varying vec3 vNewPosition;
 
 
 bool isPerspectiveMatrix( mat4 m ) {
@@ -60,16 +59,7 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
     vColor = vec4(color, 1.);
 
-    
-    // Texture coordinates calculation
-
-    mat4 m_withTranslation;
-    #pragma unroll_loop
-    for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-      m_withTranslation = modelMatrix;
-      m_withTranslation[3].xyz -= textureCameras[ i ].position;
-      vPosition[ i ] = textureCameras[ i ].preTransform * m_withTranslation * vec4(newPosition, 1.0);
-    }
+    vNewPosition = newPosition;
 
     #include <logdepthbuf_vertex>
 }

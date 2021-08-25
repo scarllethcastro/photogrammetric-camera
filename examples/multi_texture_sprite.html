@@ -388,7 +388,7 @@
                 pointsMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
                 multipleTextureMaterial.setTextureCameras(textureCamera, textures[textureCamera.name] || uvTexture, renderer);
 
-                updateScreenQuads(textureCamera);                
+                updateScreenQuads(textureCamera);
             }
 
             function setCamera(camera) {
@@ -401,7 +401,7 @@
                 const index = array.findIndex(cam => cam.name == camera.name);
                 return array[(index + delta + array.length) %  array.length];
             }
-                        
+
 
 
             function init() {
@@ -422,7 +422,7 @@
                 whiteData.set([255, 255, 255]);
                 whiteTexture = new THREE.DataTexture( whiteData, 1, 1, THREE.RGBFormat );
                 whiteTexture.name = 'white';
-                numTextures = 9;
+                numTextures = 40;
                 maxTextures = 40;
 
                 // DepthMapArray and DepthMapRenderTarget
@@ -858,6 +858,7 @@
                 Object.keys(viewMaterials).forEach(name => viewMaterials[name].setValues(viewMaterialOptions));
 
                 pointsMaterial.setViewCamera(viewCamera);
+                multipleTextureMaterial.setViewCamera(viewCamera);
                 render();
             }
 

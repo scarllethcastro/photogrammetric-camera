@@ -7,8 +7,8 @@ precision highp sampler2DArray;
 uniform bool diffuseColorGrey;
 uniform sampler2DArray mapArray;
 uniform TextureCamera textureCameras[NUM_TEXTURES];
-varying mat3 vH[NUM_TEXTURES];
-varying float passShadowMapTest[NUM_TEXTURES];
+varying vec3 n;
+varying vec4 passShadowMapTest[NUM_TEXTURES_BY_FOUR];
 varying vec4 vColor;
 uniform float pixelRatio;
 uniform float opacity;
@@ -25,13 +25,31 @@ void main() {
 
   float scoresSum = 0.;
   vec4 color = vec4(0.);
-
+  vec3 screenCoord;
   vec3 texCoord;
+  int index;
+  int coordinate;
+  float passShadowMapTest_i;
+
   // For each textureCamera
   #pragma unroll_loop
   for ( int i = 0; i < NUM_TEXTURES; i++ ) {
-    texCoord = vH[ i ] * vec3(gl_FragCoord.xy / pixelRatio, 1.);
-    allTestsForSprite(color, texCoord, textureCameras[ i ], passShadowMapTest[ i ], scoresSum, mapArray, i );
+    screenCoord = vec3(gl_FragCoord.xy / pixelRatio, 1.);
+    texCoord = textureCameras[ i ].H_prime * screenCoord + dot(n, screenCoord) * textureCameras[ i ].E_prime;
+
+    index = i / 4;
+    coordinate = int(mod(float( i ), 4.0));
+
+    if (coordinate == 0)
+      passShadowMapTest_i = passShadowMapTest[ index ].x;
+    else if (coordinate == 1)
+      passShadowMapTest_i = passShadowMapTest[ index ].y;
+    else if (coordinate == 2)
+      passShadowMapTest_i = passShadowMapTest[ index ].z;
+    else
+      passShadowMapTest_i = passShadowMapTest[ index ].w;
+
+    allTestsForSprite(color, texCoord, textureCameras[ i ], passShadowMapTest_i, scoresSum, mapArray, i );
   }
 
   // Normalize color
