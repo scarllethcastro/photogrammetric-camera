@@ -338,7 +338,7 @@
                     renderTarget.texture.generateMipmaps = false;
                     renderTarget.stencilBuffer = false;
                     renderTarget.depthBuffer = true;
-                    renderTarget.depthTexture = new THREE.DepthTexture();
+                    renderTarget.depthTexture = new THREE.DataTexture();
                     renderTarget.depthTexture.format = THREE.DepthFormat;
                     renderTarget.depthTexture.type = THREE.UnsignedIntType;
                 }

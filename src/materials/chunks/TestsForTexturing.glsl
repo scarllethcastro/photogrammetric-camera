@@ -21,7 +21,7 @@ void shadowMapTest(bool useUvw, vec4 uvw, mat4 m, vec3 position, TextureCamera t
 
     float glPosition_w = uvwNotDistorted.w / 2.0;
     float glFragDepthEXT = log2(glPosition_w + 1.0) * logDepthBufFC * 0.5;
-    passShadowMapTest = glFragDepthEXT <= (minDist + EPSILON);
+    passShadowMapTest = (glFragDepthEXT >= (minDist - EPSILON - 0.001)) && (glFragDepthEXT <= (minDist + EPSILON + 0.001));
 
 	#else
 

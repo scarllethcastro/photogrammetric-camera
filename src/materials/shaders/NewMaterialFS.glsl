@@ -47,20 +47,33 @@ void main() {
 
   vec4 uvw = vPosition;
 
-  // // For the shadowMapping, which is not distorted
-  // vec4 uvwNotDistorted = textureCameraPostTransform * uvw;
-  // uvwNotDistorted.xyz /= uvwNotDistorted.w;
+  // For the shadowMapping, which is not distorted
+  vec4 uvwNotDistorted = textureCameraPostTransform * uvw;
+  uvwNotDistorted.xyz /= uvwNotDistorted.w;
 
-  // // If using ShadowMapMaterial:
-  // // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
+  // If using ShadowMapMaterial:
+  // float minDist = unpackRGBAToDepth(texture2D(depthMap, uvwNotDistorted.xy));
 
-  // float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
-  // float distanceCamera = uvwNotDistorted.z;
+  float minDist = texture2D(depthMap, uvwNotDistorted.xy).r;
+  bool passShadowMapTest;
 
-  // vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
+  #if defined( USE_LOGDEPTHBUF ) && defined( USE_LOGDEPTHBUF_EXT )
 
-  // // ShadowMapping
-  // if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && distanceCamera <= minDist + EPSILON ) {
+    float glPosition_w = uvwNotDistorted.w / 2.0;
+    float glFragDepthEXT = log2(glPosition_w + 1.0) * logDepthBufFC * 0.5;
+    passShadowMapTest = (glFragDepthEXT >= (minDist - EPSILON - 0.001)) && (glFragDepthEXT <= (minDist + EPSILON + 0.001));
+
+	#else
+
+    float distanceCamera = uvwNotDistorted.z;
+    passShadowMapTest = distanceCamera <= (minDist + EPSILON);
+
+	#endif
+
+  vec3 testBorderNotDistorted = min(uvwNotDistorted.xyz, 1. - uvwNotDistorted.xyz);
+
+  // ShadowMapping
+  if ( all(greaterThan(testBorderNotDistorted,vec3(0.))) && passShadowMapTest ) {
 
     // Don't texture if uvw.w < 0
     if (uvw.w > 0. && distort_radial(uvw, uvDistortion)) {
@@ -76,34 +89,17 @@ void main() {
       {
         vec4 color = texture2D(map, uvw.xy);
         finalColor.rgb = mix(finalColor.rgb, color.rgb, color.a);
-      }// else {
-      //   finalColor.rgb = vec3(0.2);
-      // }
+      } else {
+        finalColor.rgb = vec3(0.2);
+      }
+    } else {
+      finalColor.rgb = vec3(0.2);
     }
-  // } else {
-  //   finalColor.rgb = vec3(0.2); // shadow color
-  // }
+  } else {
+    finalColor.rgb = vec3(0.2); // shadow color
+  }
 
-  // finalColor = vec4(0.,1.,0.,1.);
 #endif
-
-// if (vIsTheOne > 0.0) {
-//   if (vTextureNumber == 0.0) {
-//     finalColor.rgb = vec3(0.,0.,0.);
-//   } else {
-//     if (vTextureNumber == 1.0) {
-//       finalColor.rgb = vec3(1.,0.,0.);
-//     } else {
-//       if (vTextureNumber == 2.0) {
-//         finalColor.rgb = vec3(0.,1.,0.);
-//       } else {
-//         if (vTextureNumber == 3.0) {
-//           finalColor.rgb = vec3(0.,0.,1.);
-//         }
-//       }
-//     }
-//   }
-// }
 
   gl_FragColor =  vec4(finalColor.rgb, opacity);
 }
