@@ -214,7 +214,7 @@ class MultiTextureSpriteMaterial extends ShaderMaterial {
         let cameraName = this.allCameras[i].cam.name;
         let cameraDistance = (cameraDistanceArray.find((pair) => pair[0] == cameraName))[1];
         let d_i = this.decreasingFunction(cameraDistance);
-        this.allCameras[i].structure.weight = (cameraDistance < 0.001) ? 1.0 : d_i - d_kplus1;
+        this.allCameras[i].structure.weight = (cameraDistance < 0.001) ? 10 * (d_i - d_kplus1) : d_i - d_kplus1;
 
         if (this.verbose) {
           console.log('camera: ', cameraName);
